@@ -1,0 +1,468 @@
+/* Configuración básica y Colores */
+:root {
+    --color-fondo: #f0f2f5;
+    --color-blanco: #ffffff;
+    --color-primario: #007bff;
+    --color-primario-hover: #0056b3;
+    --color-texto: #333;
+    --color-gris: #ccc;
+    --sombra-caja: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--color-fondo);
+    color: var(--color-texto);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* Regla base para cajas */
+* {
+    box-sizing: border-box;
+}
+
+/* Contenedor de la App */
+.app-container {
+    width: 100%;
+    max-width: 500px;
+    background: var(--color-blanco);
+    border-radius: 12px;
+    box-shadow: var(--sombra-caja);
+    overflow: hidden;
+}
+
+/*
+ * EL TRUCO PRINCIPAL:
+ * 1. Ocultamos todas las "pantallas"
+ * 2. Mostramos solo la que tenga la clase ".activa"
+ */
+.pantalla {
+    display: none; /* Oculta por defecto */
+    padding: 25px 30px;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.pantalla.activa {
+    display: block; /* Muestra la pantalla activa */
+}
+
+/* Animación simple de fundido */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Estilos de elementos comunes */
+h1, h2, h3 {
+    text-align: center;
+    color: var(--color-primario);
+    margin-top: 0;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+    border: 1px solid var(--color-gris);
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+button {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--color-blanco);
+    background-color: var(--color-primario);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+button:hover, button:focus {
+    background-color: var(--color-primario-hover);
+    outline: none;
+}
+
+/* Separadores */
+hr {
+    border: none;
+    border-top: 1px solid var(--color-fondo);
+    margin: 20px 0;
+}
+
+/* Mensaje de Error */
+#mensajeError {
+    color: #e74c3c;
+    text-align: center;
+    min-height: 20px;
+    font-weight: bold;
+}
+
+
+
+
+
+
+
+
+/* --- Estilos del Lobby --- */
+.selector-patrones {
+    display: flex;
+    flex-wrap: wrap; /* Para que pasen abajo en móviles */
+    gap: 10px; /* Espacio entre botones */
+    margin-bottom: 20px;
+}
+
+.selector-patrones .patron {
+    /* Sobrescribimos el width: 100% de los botones normales */
+    width: auto; 
+    flex-grow: 1; /* Para que ocupen el espacio */
+    background-color: var(--color-gris);
+    color: var(--color-texto);
+    font-weight: normal;
+}
+
+.selector-patrones .patron.seleccionado {
+    background-color: var(--color-primario);
+    color: var(--color-blanco);
+    font-weight: bold;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* --- PASO 7: ESTILOS DE PANTALLAS DE JUEGO --- */
+
+/* --- 3. PANTALLA JUEGO (ANFITRIÓN) --- */
+
+/* Contenedor para los displays "Actual" y "Anterior" */
+.displays-anfitrion {
+    display: flex; /* Pone los displays uno al lado del otro */
+    gap: 15px; /* Espacio entre ellos */
+    margin: 20px 0;
+}
+
+/* Estilo individual de cada display */
+.display {
+    flex-grow: 1; /* Ocupan el espacio disponible */
+    flex-basis: 0; /* Parten del mismo tamaño */
+    padding: 15px;
+    background: var(--color-fondo);
+    border-radius: 8px;
+    text-align: center;
+}
+
+.display span {
+    display: block;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.display strong {
+    font-size: 36px;
+    color: var(--color-primario);
+}
+
+/* El display "Anterior" es menos importante */
+#display-anterior strong {
+    font-size: 24px;
+    color: #888;
+}
+
+/* Tablero de 75 Fichas (Anfitrión) */
+.tablero-anfitrion {
+    display: flex; /* Pone las 5 columnas (B,I,N,G,O) una al lado de la otra */
+    justify-content: center;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.columna-anfitrion {
+    display: flex;
+    flex-direction: column; /* Apila las celdas verticalmente */
+    flex-grow: 1;
+}
+
+.celda-anfitrion {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 40px;
+    border: 1px solid var(--color-gris);
+    font-size: 14px;
+}
+
+/* Celda de header (B, I, N, G, O) */
+.celda-anfitrion.celda-header {
+    background-color: var(--color-primario);
+    color: var(--color-blanco);
+    font-weight: bold;
+}
+
+/* Ficha marcada en el tablero del anfitrión */
+.celda-anfitrion.marcada {
+    background-color: #ffc107; /* Un amarillo para destacar */
+    color: var(--color-texto);
+    font-weight: bold;
+}
+
+
+/* --- 4. PANTALLA JUEGO (JUGADOR) --- */
+
+/* Info "Jugando por:" y "Última ficha:" */
+.info-jugador {
+    display: flex;
+    justify-content: space-between; /* Pone los textos en extremos opuestos */
+    padding: 10px;
+    background: var(--color-fondo);
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.info-jugador p {
+    margin: 0;
+    font-size: 14px;
+}
+
+.info-jugador strong {
+    color: var(--color-primario);
+}
+
+/* La Cartilla (La parte más importante) */
+.cartilla {
+    display: grid; /* Usamos CSS Grid, perfecto para esto */
+    grid-template-columns: repeat(5, 1fr); /* 5 columnas de igual tamaño */
+    border: 2px solid var(--color-primario);
+    border-radius: 8px;
+    overflow: hidden; /* Para que las esquinas se vean bien */
+}
+
+.celda {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    background: var(--color-blanco);
+    border-right: 1px solid var(--color-gris);
+    border-bottom: 1px solid var(--color-gris);
+    aspect-ratio: 1 / 1; /* Mantiene las celdas cuadradas */
+    user-select: none; /* Evita que el texto se seleccione al hacer clic */
+}
+
+/* Quitamos bordes innecesarios para un look más limpio */
+.celda:nth-child(5n) { /* Cada 5ta celda (columna O) */
+    border-right: none;
+}
+.celda:nth-last-child(-n + 5) { /* Las últimas 5 celdas (fila 5) */
+    border-bottom: none;
+}
+
+/* Encabezado B-I-N-G-O de la cartilla */
+.celda.celda-header {
+    background: var(--color-primario);
+    color: var(--color-blanco);
+    font-size: 22px;
+    cursor: default;
+    border: none;
+    border-bottom: 2px solid var(--color-primario);
+}
+
+/* Celda "GRATIS" */
+.celda[data-numero="GRATIS"] {
+    font-size: 14px;
+    color: var(--color-primario);
+}
+
+/* -- Estados de la Celda (Jugador) -- */
+
+/* 1. Celda 'marcada' (El jugador hizo clic) */
+.celda.marcada {
+    background-color: rgba(0, 123, 255, 0.7); /* Azul translúcido */
+    color: white;
+}
+.celda.marcada[data-numero="GRATIS"] {
+    background-color: rgba(0, 123, 255, 0.7);
+}
+
+/* 2. Celda 'llamada' (La ficha acaba de salir) */
+.celda.llamada {
+    /* Hacemos una animación de "pulso" */
+    animation: pulsar 1s ease-out;
+}
+
+@keyframes pulsar {
+    0% { transform: scale(1); background-color: #fff29e; }
+    50% { transform: scale(1.1); background-color: #ffc107; }
+    100% { transform: scale(1); background-color: #fff29e; }
+}
+
+/* Queremos que 'marcada' gane sobre 'llamada' */
+.celda.marcada.llamada {
+    animation: none; /* Si ya estaba marcada, no la animamos */
+}
+
+
+
+
+
+
+
+
+/* --- PASO 8: ESTILOS DEL MODAL DE FIN DE JUEGO --- */
+
+/* El fondo oscuro translúcido */
+.modal-overlay {
+    position: fixed; /* Se superpone a todo */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    
+    /* Centra el contenido del modal */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    /* Oculto por defecto */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
+    z-index: 1000; /* Asegura que esté por encima de todo */
+}
+
+/* La clase que lo hace visible */
+.modal-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* La caja blanca del modal */
+.modal-contenido {
+    background: var(--color-blanco);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    text-align: center;
+    
+    /* Animación de entrada */
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay.visible .modal-contenido {
+    transform: scale(1); /* Escala a tamaño normal cuando es visible */
+}
+
+.modal-contenido h2 {
+    margin-top: 0;
+    font-size: 28px;
+    color: var(--color-primario);
+}
+
+.modal-contenido p {
+    font-size: 18px;
+    margin-bottom: 25px;
+}
+
+/* El botón "Volver al Lobby" */
+#btnVolverAlLobby {
+    width: auto; /* No ocupa todo el ancho */
+    padding: 12px 25px;
+}
+
+
+
+
+
+/* --- PASO 9: ESTILOS DEL BOTÓN DE BINGO FALSO --- */
+
+/* Esta clase la pondremos con JS cuando haya un error */
+button.bingo-falso {
+    background-color: #e74c3c; /* Color rojo de error */
+    animation: shake 0.5s ease-in-out; /* Aplicamos la animación */
+}
+
+/* La animación de "temblor" (shake) */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-10px); }
+    40% { transform: translateX(10px); }
+    60% { transform: translateX(-10px); }
+    80% { transform: translateX(10px); }
+}
+
+
+
+
+
+
+
+/* --- PASO 10: ESTILOS DEL HISTORIAL DE FICHAS --- */
+
+.historial-fichas {
+    margin: 20px 0;
+    padding: 10px;
+    background: var(--color-fondo);
+    border-radius: 8px;
+}
+
+.historial-fichas strong {
+    font-size: 14px;
+    color: var(--color-texto);
+}
+
+.historial-scroll {
+    width: 100%;
+    max-height: 200px; /* Altura máxima, luego scroll */
+    overflow-y: auto; /* Scroll vertical */
+    margin-top: 8px;
+    padding: 5px;
+    background: #fff;
+    border: 1px solid var(--color-gris);
+    border-radius: 4px;
+    
+    /* Para que las fichas se pongan una al lado de la otra */
+    display: flex;
+    flex-wrap: wrap; /* Pasan a la siguiente línea si no caben */
+    gap: 5px; /* Espacio entre fichas */
+}
+
+/* Estilo para cada ficha en el historial */
+.historial-scroll .ficha-hist {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 3px 6px;
+    background: #e9ecef;
+    border-radius: 4px;
+    color: var(--color-texto);
+}
+
+.historial-scroll span {
+    font-size: 12px;
+    color: #888;
+}
