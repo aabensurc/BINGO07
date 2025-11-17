@@ -2,7 +2,6 @@
 const socket = io();
 
 // --- 1. ELEMENTOS DEL DOM ---
-// (Sin cambios aquí)
 const pantallaBienvenida = document.getElementById('pantalla-bienvenida');
 const pantallaLobby = document.getElementById('pantalla-lobby');
 const pantallaJuegoAnfitrion = document.getElementById('pantalla-juego-anfitrion');
@@ -30,13 +29,26 @@ const historialContenedor = document.getElementById('historialContenedor');
 const modalFinJuego = document.getElementById('modalFinJuego');
 const modalGanadorTexto = document.getElementById('modalGanadorTexto');
 const btnVolverAlLobby = document.getElementById('btnVolverAlLobby');
+const checkAutomatico = document.getElementById('checkAutomatico');
+const inputIntervalo = document.getElementById('inputIntervalo');
+
+// --- ¡NUEVO! Elementos de Voz ---
+const btnMute = document.getElementById('btnMute');
+const iconoSonido = document.getElementById('icono-sonido');
+const iconoMute = document.getElementById('icono-mute');
 
 // --- 2. ESTADO DEL CLIENTE ---
 let patronSeleccionado = 'linea';
 let miCartilla = null;
 let soyAnfitrion = false;
 const PLAYER_ID_KEY = 'bingoPlayerId';
-let misMarcas = []; // <-- ¡NUEVO! Un array para guardar las marcas (ej: [10, 25, 70])
+let misMarcas = [];
+let temporizadorSorteo = null;
+
+// --- ¡NUEVO! Estado de Voz ---
+let estaMuteado = false;
+let vozSeleccionada = null;
+const synth = window.speechSynthesis;
 
 // --- 3. FUNCIÓN UTILITARIA PRINCIPAL ---
 function cambiarPantalla(idSiguientePantalla) {
@@ -46,9 +58,64 @@ function cambiarPantalla(idSiguientePantalla) {
     document.getElementById(idSiguientePantalla).classList.add('activa');
 }
 
+// --- ¡NUEVO! FUNCIONES DE VOZ ---
+/**
+ * Busca y carga la mejor voz en español disponible en el navegador
+ */
+function cargarVoz() {
+    // getVoices() puede tardar un momento en cargar
+    const voces = synth.getVoices();
+    
+    // Damos prioridad a voces "nativas" de alta calidad
+    vozSeleccionada = voces.find(v => v.lang === 'es-ES' && v.localService);
+    if (!vozSeleccionada) vozSeleccionada = voces.find(v => v.lang === 'es-US' && v.localService);
+    if (!vozSeleccionada) vozSeleccionada = voces.find(v => v.lang === 'es-MX' && v.localService);
+    
+    // Si no, buscamos cualquier voz en español
+    if (!vozSeleccionada) vozSeleccionada = voces.find(v => v.lang.startsWith('es-'));
+
+    // Si no encontramos nada, usamos la primera voz disponible (mejor que nada)
+    if (!vozSeleccionada && voces.length > 0) {
+        vozSeleccionada = voces[0];
+    }
+    
+    if (vozSeleccionada) {
+        console.log('Voz seleccionada:', vozSeleccionada.name, `(${vozSeleccionada.lang})`);
+    } else {
+        console.log('No se encontraron voces para SpeechSynthesis.');
+    }
+}
+
+// Cargamos las voces al inicio
+cargarVoz();
+if (synth.onvoiceschanged !== undefined) {
+    synth.onvoiceschanged = cargarVoz;
+}
+
+/**
+ * Lee un texto en voz alta usando la API del navegador
+ * @param {string} texto - El texto a decir
+ */
+function hablar(texto) {
+    // 1. Si está muteado, no hace nada
+    if (estaMuteado || !vozSeleccionada || !synth) return;
+
+    // 2. Detiene cualquier cosa que estuviera diciendo antes
+    synth.cancel(); 
+
+    // 3. Crea el "anuncio"
+    const anuncio = new SpeechSynthesisUtterance(texto);
+    anuncio.voice = vozSeleccionada;
+    anuncio.lang = vozSeleccionada.lang;
+    anuncio.rate = 0.95; // Velocidad (0.95 es un poco más pausado)
+    anuncio.pitch = 1.0; // Tono
+    
+    // 4. ¡Lo dice en voz alta!
+    synth.speak(anuncio);
+}
+
 // --- 4. LÓGICA DE EVENTOS (CLICS DEL USUARIO) ---
 
-// (Eventos de Bienvenida, Lobby, Anfitrión - Sin cambios)
 btnCrearPartida.addEventListener('click', () => {
     const nombre = inputNombre.value.trim();
     if (!nombre) {
@@ -78,70 +145,100 @@ btnEmpezarPartida.addEventListener('click', () => {
     socket.emit('empezarPartida', { patron: patronSeleccionado });
 });
 btnSortearFicha.addEventListener('click', () => {
+    if (checkAutomatico.checked) return; 
     btnSortearFicha.disabled = true;
     socket.emit('sortearFicha');
 });
 
-// -- PANTALLA 4: JUEGO (JUGADOR) --
+checkAutomatico.addEventListener('change', () => {
+    if (checkAutomatico.checked) {
+        let intervalo = parseInt(inputIntervalo.value, 10);
+        if (isNaN(intervalo) || intervalo < 5) intervalo = 5;
+        if (intervalo > 30) intervalo = 30;
+        inputIntervalo.value = intervalo;
+        inputIntervalo.disabled = true;
+        btnSortearFicha.disabled = true;
+        const milisegundos = intervalo * 1000;
+        const funcionSorteo = () => {
+            if (!btnSortearFicha.disabled) {
+                btnSortearFicha.disabled = true;
+                socket.emit('sortearFicha');
+            }
+        };
+        temporizadorSorteo = setInterval(funcionSorteo, milisegundos);
+        btnSortearFicha.disabled = true;
+        socket.emit('sortearFicha');
+    } else {
+        if (temporizadorSorteo) {
+            clearInterval(temporizadorSorteo);
+            temporizadorSorteo = null;
+        }
+        btnSortearFicha.disabled = false;
+        inputIntervalo.disabled = false;
+    }
+});
+
 cartillaJugador.addEventListener('click', (e) => {
     const celda = e.target;
     if (celda.classList.contains('celda') && celda.dataset.numero) {
         if (celda.dataset.numero === 'GRATIS') return;
-        
         celda.classList.toggle('marcada');
-        
-        // --- ¡NUEVO! GUARDAR MARCAS ---
         const numero = parseInt(celda.dataset.numero);
         if (celda.classList.contains('marcada')) {
-            // Si no está en el array, añadirlo
             if (!misMarcas.includes(numero)) misMarcas.push(numero);
         } else {
-            // Si está, quitarlo
             misMarcas = misMarcas.filter(n => n !== numero);
         }
-        // Guardar en localStorage
         const playerId = localStorage.getItem(PLAYER_ID_KEY);
         if (playerId) {
             localStorage.setItem(`bingoMarks-${playerId}`, JSON.stringify(misMarcas));
         }
-        // --- FIN DE NUEVO CÓDIGO ---
     }
 });
-
 btnCantarBingo.addEventListener('click', () => {
     socket.emit('cantarBingo');
     btnCantarBingo.disabled = true;
     btnCantarBingo.textContent = 'VERIFICANDO...';
 });
 
-// -- MODAL: Botón Volver al Lobby --
 btnVolverAlLobby.addEventListener('click', () => {
     modalFinJuego.classList.remove('visible');
-    
-    // Limpiamos pantallas de juego
     cartillaJugador.innerHTML = '';
     tableroControlAnfitrion.innerHTML = '';
     fichaActual.textContent = '--';
     fichaAnterior.textContent = '--';
     jugadorFicha.textContent = '--';
     limpiarHistorialDeFichas();
-    
-    // --- ¡NUEVO! LIMPIEZA DE RONDA ---
-    // Borramos las marcas de la ronda anterior
     const playerId = localStorage.getItem(PLAYER_ID_KEY);
     if (playerId) {
         localStorage.removeItem(`bingoMarks-${playerId}`);
     }
-    misMarcas = []; // Reseteamos el array local
-    // --- FIN DE NUEVO CÓDIGO ---
-
-    // Reactivamos botones
+    misMarcas = [];
+    if (temporizadorSorteo) {
+        clearInterval(temporizadorSorteo);
+        temporizadorSorteo = null;
+    }
+    checkAutomatico.checked = false;
+    inputIntervalo.disabled = false;
     btnCantarBingo.disabled = false;
     btnCantarBingo.textContent = '¡CANTAR BINGO!';
     btnSortearFicha.disabled = false;
-
-    // Regresamos al lobby
     cambiarPantalla('pantalla-lobby');
+});
+
+// --- ¡NUEVO! Evento del Botón Mute ---
+btnMute.addEventListener('click', () => {
+    estaMuteado = !estaMuteado; // Invierte el estado
+    
+    // Cambia el ícono
+    if (estaMuteado) {
+        iconoSonido.style.display = 'none';
+        iconoMute.style.display = 'block';
+        synth.cancel(); // Si estaba hablando, lo calla
+    } else {
+        iconoSonido.style.display = 'block';
+        iconoMute.style.display = 'none';
+    }
 });
 
 
@@ -157,7 +254,6 @@ socket.on('connect', () => {
     }
 });
 
-// -- EVENTOS DEL LOBBY --
 socket.on('partidaCreada', (datos) => {
     soyAnfitrion = true;
     localStorage.setItem(PLAYER_ID_KEY, datos.playerId);
@@ -176,10 +272,10 @@ socket.on('unionExitosa', (datos) => {
     cambiarPantalla('pantalla-lobby');
 });
 
-// (errorUnion y actualizarLobby - Sin cambios)
 socket.on('errorUnion', (mensaje) => {
     mensajeError.textContent = mensaje;
 });
+
 socket.on('actualizarLobby', (datos) => {
     lobbyListaJugadores.innerHTML = '';
     datos.jugadores.forEach(jugador => {
@@ -193,48 +289,67 @@ socket.on('actualizarLobby', (datos) => {
     });
 });
 
-// -- EVENTOS DE INICIO DE JUEGO --
 socket.on('partidaIniciada', (datos) => {
     limpiarHistorialDeFichas();
-    
-    // --- ¡NUEVO! LIMPIEZA DE RONDA ---
-    // Limpiamos marcas viejas al empezar una nueva partida
     const playerId = localStorage.getItem(PLAYER_ID_KEY);
     if (playerId) {
         localStorage.removeItem(`bingoMarks-${playerId}`);
     }
     misMarcas = [];
-    // --- FIN DE NUEVO CÓDIGO ---
-
     if (soyAnfitrion) {
         generarTableroAnfitrion();
         cambiarPantalla('pantalla-juego-anfitrion');
     } else {
         jugadorPatron.textContent = datos.patronTexto;
         miCartilla = datos.cartilla;
-        generarCartillaVisual(datos.cartilla); // Dibuja la cartilla LIMPIA
+        generarCartillaVisual(datos.cartilla);
         cambiarPantalla('pantalla-juego-jugador');
+        
+        // --- ¡NUEVO! Habla al iniciar ---
+        // Espera un segundo para que la UI cargue
+        setTimeout(() => {
+            hablar(`Iniciando juego. Jugando por ${datos.patronTexto}`);
+        }, 1000);
     }
 });
 
-// (fichaAnunciada, bingoFalso, juegoTerminado - Sin cambios)
 socket.on('fichaAnunciada', (datos) => {
     const { ficha } = datos;
     actualizarHistorialDeFichas(ficha);
+
     if (soyAnfitrion) {
         fichaAnterior.textContent = fichaActual.textContent;
         fichaActual.textContent = ficha.ficha;
+        
         const celda = document.querySelector(`.celda-anfitrion[data-ficha="${ficha.ficha}"]`);
-        if (celda) celda.classList.add('marcada');
+        if (celda) {
+            celda.classList.add('marcada');
+        }
+        
         btnSortearFicha.disabled = false;
+
     } else {
         jugadorFicha.textContent = ficha.ficha;
+        
+        // --- ¡NUEVO! Habla la ficha ---
+        // Leemos la letra con espacios (B -> "Be")
+        const letraParaHablar = ficha.letra.split('').join(' '); 
+        hablar(`${letraParaHablar} ${ficha.numero}`);
+        // --- FIN DE NUEVO CÓDIGO ---
+
         const celda = cartillaJugador.querySelector(`.celda[data-numero="${String(ficha.numero)}"]`);
-        if (celda) celda.classList.add('llamada');
+        if (celda) {
+            celda.classList.add('llamada');
+        }
     }
 });
+
 socket.on('bingoFalso', () => {
     console.log('El servidor dijo: Bingo Falso.');
+    
+    // --- ¡NUEVO! Habla el error ---
+    hablar('Bingo Falso');
+
     btnCantarBingo.classList.add('bingo-falso');
     btnCantarBingo.textContent = '¡BINGO FALSO!';
     setTimeout(() => {
@@ -243,49 +358,48 @@ socket.on('bingoFalso', () => {
         btnCantarBingo.textContent = '¡CANTAR BINGO!';
     }, 1000);
 });
+
 socket.on('juegoTerminado', (datos) => {
+    // --- ¡NUEVO! Habla el ganador ---
+    hablar(`¡BINGO! El ganador es ${datos.nombreGanador}`);
+    
     modalGanadorTexto.textContent = `El ganador es: ${datos.nombreGanador}`;
     modalFinJuego.classList.add('visible');
+    
+    if (temporizadorSorteo) {
+        clearInterval(temporizadorSorteo);
+        temporizadorSorteo = null;
+    }
     btnCantarBingo.disabled = true;
     btnSortearFicha.disabled = true;
 });
 
-// -- EVENTOS DE ERROR Y RECONEXIÓN --
 socket.on('errorJuego', (mensaje) => {
-    // ¡El anfitrión se fue! Es el fin.
-    
-    // --- ¡NUEVO! LIMPIEZA TOTAL DE SESIÓN ---
     const playerId = localStorage.getItem(PLAYER_ID_KEY);
     if (playerId) {
-        localStorage.removeItem(`bingoMarks-${playerId}`); // Borra las marcas
+        localStorage.removeItem(`bingoMarks-${playerId}`);
     }
-    localStorage.removeItem(PLAYER_ID_KEY); // Borra el Pase VIP
-    // --- FIN DE NUEVO CÓDIGO ---
-
+    localStorage.removeItem(PLAYER_ID_KEY);
     alert(mensaje);
     location.reload();
 });
 
 socket.on('forzarLimpieza', () => {
-    // El servidor no encontró nuestro Pase VIP
     const playerId = localStorage.getItem(PLAYER_ID_KEY);
     if (playerId) {
-        localStorage.removeItem(`bingoMarks-${playerId}`); // Borra marcas huérfanas
+        localStorage.removeItem(`bingoMarks-${playerId}`);
     }
-    localStorage.removeItem(PLAYER_ID_KEY); // Borra el Pase VIP inválido
+    localStorage.removeItem(PLAYER_ID_KEY);
     pantallaBienvenida.querySelector('.form-unirse').style.display = 'block';
 });
 
 socket.on('reconexionExitosa', (datos) => {
     console.log('¡Reconexión exitosa!', datos);
-    
     soyAnfitrion = datos.esAnfitrion;
     limpiarHistorialDeFichas();
-    
     datos.fichasHistorial.forEach(ficha => {
         actualizarHistorialDeFichas(ficha);
     });
-
     if (soyAnfitrion) {
         generarTableroAnfitrion();
         datos.fichasHistorial.forEach(ficha => {
@@ -294,29 +408,29 @@ socket.on('reconexionExitosa', (datos) => {
         });
         if (datos.ultimaFicha) fichaActual.textContent = datos.ultimaFicha.ficha;
         if (datos.anteriorFicha) fichaAnterior.textContent = datos.anteriorFicha.ficha;
-        
+        checkAutomatico.checked = false;
         cambiarPantalla('pantalla-juego-anfitrion');
     } else {
         jugadorPatron.textContent = datos.patronTexto;
         miCartilla = datos.cartilla;
-        generarCartillaVisual(datos.cartilla); // Dibuja la cartilla
-        
-        // --- ¡NUEVO! RESTAURAR MARCAS ---
+        generarCartillaVisual(datos.cartilla);
         const playerId = localStorage.getItem(PLAYER_ID_KEY);
         const savedMarks = JSON.parse(localStorage.getItem(`bingoMarks-${playerId}`) || '[]');
-        misMarcas = savedMarks; // Sincroniza nuestro array local
-        
+        misMarcas = savedMarks;
         savedMarks.forEach(numero => {
             const celda = cartillaJugador.querySelector(`.celda[data-numero="${String(numero)}"]`);
             if (celda) {
-                celda.classList.add('marcada'); // Aplica la marca guardada
+                celda.classList.add('marcada');
             }
         });
-        // --- FIN DE NUEVO CÓDIGO ---
-
         if (datos.fichasHistorial.length > 0) {
             jugadorFicha.textContent = datos.fichasHistorial[datos.fichasHistorial.length - 1].ficha;
         }
+        
+        // --- ¡NUEVO! Habla al reconectar ---
+        setTimeout(() => {
+            hablar('Bienvenido de vuelta. ¡Ponte al día!');
+        }, 1000);
         
         cambiarPantalla('pantalla-juego-jugador');
     }
@@ -324,7 +438,6 @@ socket.on('reconexionExitosa', (datos) => {
 
 
 // --- 6. FUNCIONES HELPERS (GENERACIÓN DE UI) ---
-// (Sin cambios en las funciones de generación)
 function generarCartillaVisual(cartilla) {
     cartillaJugador.innerHTML = '';
     const letras = ['B', 'I', 'N', 'G', 'O'];

@@ -4,30 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bingo Sockets</title>
+    <!-- 1. Enlazamos nuestra hoja de estilos -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+    <!-- El "contenedor" de nuestra aplicación -->
     <div class="app-container">
 
+        <!-- 
+            PANTALLA 1: BIENVENIDA / CONEXIÓN
+        -->
         <section id="pantalla-bienvenida" class="pantalla activa">
             <h1>Bingo Familiar</h1>
             <div class="form-unirse">
                 <input type="text" id="inputNombre" placeholder="Ingresa tu Nombre" maxlength="15">
-                
                 <hr>
-                
                 <button id="btnCrearPartida">Crear Nueva Partida</button>
-                
                 <hr>
-                
                 <input type="text" id="inputClave" placeholder="Ingresa la Clave" maxlength="5">
                 <button id="btnUnirsePartida">Unirse a la Partida</button>
-
                 <p id="mensajeError"></p>
             </div>
         </section>
 
+        <!-- 
+            PANTALLA 2: LOBBY / SALA DE ESPERA
+        -->
         <section id="pantalla-lobby" class="pantalla">
             <h2>Sala de Espera</h2>
             <p>Clave de la Partida: <strong id="lobbyClave">---</strong></p>
@@ -51,12 +54,33 @@
             <hr>
             <h3>Jugadores Conectados:</h3>
             <ul id="lobbyListaJugadores">
-                </ul>
+                <!-- La lista se llenará con JS -->
+            </ul>
         </section>
 
+        <!-- 
+            PANTALLA 3: JUEGO (ANFITRIÓN)
+        -->
         <section id="pantalla-juego-anfitrion" class="pantalla">
             <h2>Tablero del Anfitrión</h2>
             <button id="btnSortearFicha">Sortear Siguiente Ficha</button>
+
+            <!-- Controles del sorteo automático -->
+            <div class="controles-automaticos">
+                <label class="switch-label">
+                    <input type="checkbox" id="checkAutomatico">
+                    <span class="slider"></span>
+                    Sorteo Automático
+                </label>
+                
+                <label class="intervalo-label">
+                    Cada:
+                    <input type="number" id="inputIntervalo" min="5" max="30" value="7">
+                    seg.
+                </label>
+            </div>
+
+            <!-- Displays de Sorteo Actual y Anterior -->
             <div class="displays-anfitrion">
                 <div class="display" id="display-actual">
                     <span>Sorteo Actual</span>
@@ -67,33 +91,61 @@
                     <strong id="fichaAnterior">--</strong>
                 </div>
             </div>
+            
+            <!-- ¡¡ESTE ES EL DIV QUE FALTABA!! -->
             <div id="tableroControlAnfitrion" class="tablero-anfitrion">
-                </div>
+                <!-- El tablero de 75 números se generará con JS -->
+            </div>
         </section>
 
+        <!-- 
+            PANTALLA 4: JUEGO (JUGADOR)
+            (Esta sección debe ser "hermana" de la pantalla 3, no estar dentro)
+        -->
         <section id="pantalla-juego-jugador" class="pantalla">
             <div class="info-jugador">
                 <p>Jugando por: <strong id="jugadorPatron">---</strong></p>
                 <p>Última ficha: <strong id="jugadorFicha">--</strong></p>
-            </div>
+                
+                <!-- Este es el nuevo botón de mute -->
+                <button id="btnMute" class="btn-icono">
+                    <!-- Usamos un SVG (imagen vectorial) para el ícono -->
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M11.536 14.01A8.473 8.473 0 0 0 14.026 8a8.473 8.473 0 0 0-2.49-6.01l-1.414 1.414A6.476 6.476 0 0 1 12.025 8a6.476 6.476 0 0 1-1.903 4.596l1.414 1.414zM10.121 12.596A4.5 4.5 0 0 0 11.025 8a4.5 4.5 0 0 0-.904-2.596l-1.414 1.414A2.5 2.5 0 0 1 9.025 8a2.5 2.5 0 0 1-.314 1.182l1.414 1.414zM8 10a1 1 0 0 0 1-1V5a1 1 0 0 0-2 0v4a1 1 0 0 0 1 1zM6.343 4.343A1 1 0 0 1 5 4V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H6.343zM4.343 1 1 4.343V11H4v3l3-3h1L4.343 1z"/>
+                        <!-- Añadiremos otro <path> para el "tachado" cuando esté en mute -->
+                    </svg>
+                </button>
+            </div>      
             <h2>Tu Cartilla</h2>
             <div id="cartillaJugador" class="cartilla" style="margin-bottom: 10px;">
-                </div>
+                <!-- La cartilla de 5x5 se generará con JS -->
+            </div>
 
+            <!-- Botón de Bingo (movido por ti) -->
             <button id="btnCantarBingo">¡CANTAR BINGO!</button>    
             
+            <!-- Historial de Fichas -->
             <div class="historial-fichas">
                 <strong>Fichas Salidas:</strong>
                 <div id="historialContenedor" class="historial-scroll">
                     <span>Esperando fichas...</span>
                 </div>
             </div>
-            
         </section>
 
-    </div> <script src="/socket.io/socket.io.js"></script>
+    </div> <!-- fin de .app-container -->
+
+
+    <!-- 
+        Scripts (El orden importa)
+    -->
+    <script src="/socket.io/socket.io.js"></script>
+    <!-- El 'defer' es crucial para que no falle al cargar -->
     <script src="client.js" defer></script>
 
+    <!-- 
+        MODAL DE FIN DE JUEGO
+    -->
     <div id="modalFinJuego" class="modal-overlay">
         <div class="modal-contenido">
             <h2>¡BINGO!</h2>
