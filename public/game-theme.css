@@ -1,0 +1,354 @@
+/* --- VARIABLES DE COLORES (TEMA) --- */
+:root {
+    /* 1. COLOR VERDE PRINCIPAL */
+    --tema-principal: #2ecc71; 
+    
+    /* 2. CORRECCIÓN AQUÍ: */
+    /* Antes estaba en gris (#dcdde1). Ahora lo ponemos en el MISMO VERDE.
+       Así el borde del avatar nacerá verde automáticamente. */
+    --tema-oscuro: #2ecc71;    
+    
+    /* Resto de variables (sin cambios) */
+    --celda-fondo: #fdfdfd;
+    --celda-sombra: #dcdde1; /* Esta sombra gris sí la dejamos para las celdas blancas */
+    --texto-oscuro: #2d3436;
+    
+    /* Colores Bolillas */
+    --color-b: #ff7675; 
+    --color-i: #fab1a0; 
+    --color-n: #ffeaa7; 
+    --color-g: #55efc4; 
+    --color-o: #74b9ff; 
+}
+
+/* 2. EL FONDO GENERAL (Login, Lobby y Fondo de Cartilla) */
+/* Al poner esto aquí, la pantalla de "Ingresa tu Nombre" también será verde */
+.fondo-juego {
+    background-color: #2ecc71; /* Mismo verde que --tema-principal */
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--texto-oscuro);
+    
+    /* Esto asegura que en móviles el color cubra hasta el rebote del scroll */
+    overflow-x: hidden; 
+}
+
+/* 3. PANTALLA JUEGO JUGADOR */
+#pantalla-juego-jugador {
+    /* Usamos la variable. Al inicio será #2ecc71, así que será
+       IDÉNTICO al fondo general. No se notará ningún corte abajo. */
+    background-color: var(--tema-principal);
+    
+    min-height: 100vh; 
+    transition: background-color 0.3s ease;
+    flex-direction: column;
+    margin: 0; 
+}
+
+/* Aseguramos que se active el flex cuando tenga la clase activa */
+#pantalla-juego-jugador.activa {
+    display: flex !important;
+}
+
+/* --- CABECERA DEL JUGADOR --- */
+.header-jugador {
+    display: flex;
+    justify-content: space-between; /* Separa Izquierda de Derecha al máximo */
+    align-items: center;
+    padding: 15px;
+    background-color: rgba(255,255,255, 0.2); 
+    border-bottom: 1px solid rgba(255,255,255,0.3);
+}
+
+/* Esta es la clase NUEVA para el grupo de la derecha */
+.header-derecha {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Espacio entre el reloj y la tuerca */
+}
+
+.perfil-usuario {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255, 0.9); /* Casi blanco */
+    padding: 5px 15px 5px 5px;
+    border-radius: 30px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+}
+
+.avatar-img {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background-color: #dfe6e9;
+    border: 2px solid var(--tema-oscuro);
+}
+
+.datos-usuario {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.nombre-usuario {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.puntos-usuario {
+    font-size: 11px;
+    color: #636e72;
+}
+
+.timer-container {
+    background-color: rgba(0, 0, 0, 0.2);
+    color: white;
+    padding: 5px 12px; /* Un poco menos de padding */
+    border-radius: 20px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px; /* Letra un poco más fina */
+    border: 1px solid rgba(255,255,255,0.3);
+    white-space: nowrap; /* Evita que se rompa en dos líneas */
+}
+
+.btn-ajustes {
+    background: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+/* --- MENÚ DE AJUSTES --- */
+.ajustes-menu {
+    position: absolute;
+    top: 50px;
+    right: 10px;
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    display: none; 
+    flex-direction: column;
+    gap: 10px;
+    z-index: 100;
+    width: 200px;
+    color: #333; /* Asegurar texto legible */
+}
+
+.ajustes-menu.visible {
+    display: flex;
+}
+
+.ajuste-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* --- BOLILLAS (HISTORIAL) --- */
+.historial-bolillas {
+    display: flex;
+    flex-direction: row; 
+    align-items: center;
+    gap: 10px;
+    padding: 15px 10px;
+    overflow-x: auto; 
+    scrollbar-width: none;
+    -ms-overflow-style: none; 
+}
+
+.historial-bolillas::-webkit-scrollbar {
+    display: none;
+}
+
+.bolilla {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 900;
+    font-size: 20px;
+    background: white;
+    border: 4px solid #ccc; 
+    box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+    flex-shrink: 0; 
+}
+
+.bolilla.ultima {
+    transform: scale(1.2);
+    margin: 0 10px;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 0 4px 0 rgba(0,0,0,0.2);
+    border-width: 5px;
+}
+
+/* Colores de bolillas */
+.b-color { border-color: var(--color-b); color: var(--texto-oscuro); }
+.i-color { border-color: var(--color-i); color: var(--texto-oscuro); }
+.n-color { border-color: var(--color-n); color: var(--texto-oscuro); }
+.g-color { border-color: var(--color-g); color: var(--texto-oscuro); }
+.o-color { border-color: var(--color-o); color: var(--texto-oscuro); }
+
+
+/* 3. CONTENEDOR CARTILLA (Efecto "Mismo color pero más opaco/claro") */
+.contenedor-cartilla-3d {
+    /* Usamos blanco con transparencia. 
+       Al estar sobre el fondo de color, se verá como un tono más claro del mismo color */
+    background-color: rgba(255, 255, 255, 0.25); 
+    
+    padding: 15px;
+    border-radius: 20px;
+    margin: 10px;
+    
+    /* Sombra suave para separar del fondo */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    backdrop-filter: blur(5px); /* Opcional: efecto vidrio moderno */
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.cartilla-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px; 
+}
+
+/* Encabezados de letras */
+.header-letra {
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-weight: 900;
+    border-radius: 8px 8px 0 0;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.2);
+    box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+    margin-bottom: 5px;
+}
+
+.bg-b { background-color: var(--color-b); }
+.bg-i { background-color: var(--color-i); }
+.bg-n { background-color: var(--color-n); }
+.bg-g { background-color: var(--color-g); }
+.bg-o { background-color: var(--color-o); }
+
+/* Celdas de números */
+.celda-3d {
+    background-color: var(--celda-fondo);
+    height: 55px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 22px;
+    font-weight: bold;
+    border-radius: 10px;
+    color: var(--texto-oscuro);
+    cursor: pointer;
+    box-shadow: 0 4px 0 var(--celda-sombra);
+    transition: all 0.1s;
+    position: relative;
+}
+
+.celda-3d:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 var(--celda-sombra);
+}
+
+/* 4. ESTADO MARCADO (AQUÍ APLICAMOS EL COLOR SELECCIONADO) */
+.celda-3d.marcada {
+    /* Usamos la variable del tema principal */
+    background-color: var(--tema-principal) !important; 
+    
+    color: white; /* Texto blanco para contraste */
+    
+    /* Borde blanco para que resalte y efecto hundido */
+    border: 2px solid rgba(255,255,255,0.5);
+    box-shadow: inset 0 3px 5px rgba(0,0,0,0.2); 
+    
+    transform: translateY(2px);
+}
+
+/* Estrella para el centro */
+.icono-estrella {
+    width: 30px;
+    height: 30px;
+    fill: #f1c40f; 
+    filter: drop-shadow(0 2px 0 rgba(0,0,0,0.2));
+}
+
+/* --- BOTÓN BINGO --- */
+/* Lo hacemos blanco o de un color neutro para que destaque sobre el fondo de color */
+.btn-bingo-3d {
+    background: white;
+    color: var(--tema-principal); /* Texto del color del tema */
+    font-weight: 900;
+    font-size: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 50px;
+    padding: 15px;
+    margin: 20px;
+    width: calc(100% - 40px);
+    box-shadow: 0 6px 0 rgba(0,0,0,0.1);
+    border: none;
+    transition: transform 0.1s;
+}
+
+.btn-bingo-3d:active {
+    transform: translateY(6px);
+    box-shadow: 0 0 0 rgba(0,0,0,0.1);
+}
+
+
+
+
+
+/* --- 2. NUEVO: ANIMACIÓN DE "AVISO" EN LA FICHA --- */
+
+/* Esta clase se agregará con JS momentáneamente cuando salga la ficha */
+.celda-3d.llamada {
+    animation: parpadeoAviso 2s ease-in-out infinite;
+    z-index: 10; /* Que resalte sobre las otras */
+}
+
+@keyframes parpadeoAviso {
+    0% { 
+        background-color: var(--celda-fondo); 
+        transform: scale(1);
+    }
+    50% { 
+        background-color: #ffeaa7; /* Un amarillo suave de aviso */
+        transform: scale(1.1);      /* Crece un poquito */
+        box-shadow: 0 0 15px rgba(255, 255, 0, 0.6); /* Resplandor */
+        border-color: #fdcb6e;
+    }
+    100% { 
+        background-color: var(--celda-fondo); 
+        transform: scale(1);
+    }
+}
+
+/* Si la celda YA estaba marcada y sale de nuevo (error raro) o quieres que 
+   la marcada también avise, puedes agregar esto: */
+.celda-3d.marcada.llamada {
+    animation: parpadeoMarcada 1s ease-in-out;
+}
+@keyframes parpadeoMarcada {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); } /* Solo hace un 'pop' si ya estaba marcada */
+}

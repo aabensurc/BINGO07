@@ -229,7 +229,7 @@ io.on('connection', (socket) => {
         console.log(`Jugador ${nombre} (${socket.id}) se unió a la partida ${clave}`);
     });
 
-    // --- ¡NUEVO EVENTO: Reconexión! ---
+// --- ¡NUEVO EVENTO: Reconexión! ---
     socket.on('quieroReconectar', (datos) => {
         const { playerId } = datos;
         if (!playerId) return;
@@ -256,7 +256,7 @@ io.on('connection', (socket) => {
             // ¡Lo encontramos!
             console.log(`Jugador ${jugadorEncontrado.nombre} reconectado.`);
             
-            // 1. Actualizamos su ID de socket (el viejo ya no sirve)
+            // 1. Actualizamos su ID de socket
             jugadorEncontrado.id = socket.id;
             
             // 2. Lo volvemos a meter en la sala
@@ -265,12 +265,12 @@ io.on('connection', (socket) => {
             // 3. Le enviamos el "paquete de reconexión"
             const datosReconexion = {
                 esAnfitrion: jugadorEncontrado.esAnfitrion,
+                nombre: jugadorEncontrado.nombre, // <--- ¡AQUÍ ESTÁ LA CORRECCIÓN! Enviamos el nombre guardado
                 patronTexto: NOMBRES_PATRONES[partidaEncontrada.patronJuego],
-                fichasHistorial: partidaEncontrada.fichasHistorial // ¡El historial completo!
+                fichasHistorial: partidaEncontrada.fichasHistorial
             };
 
             if (jugadorEncontrado.esAnfitrion) {
-                // Si es anfitrión, le mandamos la última ficha
                 if (partidaEncontrada.fichasHistorial.length > 0) {
                     datosReconexion.ultimaFicha = partidaEncontrada.fichasHistorial[partidaEncontrada.fichasHistorial.length - 1];
                     if (partidaEncontrada.fichasHistorial.length > 1) {
@@ -278,20 +278,15 @@ io.on('connection', (socket) => {
                     }
                 }
             } else {
-                // Si es jugador, le mandamos su cartilla
                 datosReconexion.cartilla = jugadorEncontrado.cartilla;
             }
             
-            // Enviamos el evento de reconexión SÓLO a él
             socket.emit('reconexionExitosa', datosReconexion);
-            
-            // Avisamos al lobby (opcional, pero bueno)
             actualizarLobby(claveEncontrada);
 
         } else {
-            // No encontramos a nadie con ese playerId, es un "Pase VIP" inválido
             console.log(`PlayerId ${playerId} no encontrado. Forzando limpieza.`);
-            socket.emit('forzarLimpieza'); // Le decimos al cliente que borre ese ID
+            socket.emit('forzarLimpieza'); 
         }
     });
 
