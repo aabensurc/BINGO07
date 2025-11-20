@@ -4,11 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bingo Sockets</title>
-    <!-- Estilos base -->
     <link rel="stylesheet" href="style.css">
-    <!-- Tema Principal (Variables y estilos comunes) -->
+    <link rel="stylesheet" href="login-theme.css">
     <link rel="stylesheet" href="game-theme.css">
-    <!-- Tema Específico del Anfitrión (NUEVO) -->
     <link rel="stylesheet" href="host-theme.css">
 </head>
 <body class="fondo-juego">
@@ -16,16 +14,51 @@
     <div class="app-container">
 
         <!-- PANTALLA 1: BIENVENIDA -->
-        <section id="pantalla-bienvenida" class="pantalla activa">
-            <h1>Bingo Familiar</h1>
+        <section id="pantalla-bienvenida" class="pantalla activa pantalla-login-moderna">
+            
+            <div class="logo-container">
+                <!-- CORRECCIÓN: Añadidos width y height explícitos para evitar colapso -->
+                <svg class="logo-img" width="300" height="130" viewBox="0 0 300 130" xmlns="http://www.w3.org/2000/svg">
+                    <filter id="sombraTexto" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="2" dy="3" stdDeviation="2" flood-color="rgba(0,0,0,0.2)"/>
+                    </filter>
+                    <!-- Corona -->
+                    <path d="M150 15 L165 45 L185 25 L175 65 L125 65 L115 25 L135 45 Z" 
+                          fill="#f1c40f" stroke="white" stroke-width="2" 
+                          style="filter: url(#sombraTexto);"/>
+                    <!-- Texto BINGO -->
+                    <text x="50%" y="80" text-anchor="middle" 
+                          font-family="Arial, sans-serif" font-weight="900" font-size="65" 
+                          fill="white" style="filter: url(#sombraTexto); letter-spacing: 2px;">
+                        BINGO
+                    </text>
+                    <!-- Texto FAMILIAR -->
+                    <text x="50%" y="115" text-anchor="middle" 
+                          font-family="Arial, sans-serif" font-weight="bold" font-size="22" 
+                          fill="white" style="opacity: 0.9; letter-spacing: 6px;">
+                        FAMILIAR
+                    </text>
+                </svg>
+            </div>
+
             <div class="form-unirse">
-                <input type="text" id="inputNombre" placeholder="Ingresa tu Nombre" maxlength="15">
-                <hr>
-                <button id="btnCrearPartida">Crear Nueva Partida</button>
-                <hr>
-                <input type="text" id="inputClave" placeholder="Ingresa la Clave" maxlength="5">
-                <button id="btnUnirsePartida">Unirse a la Partida</button>
-                <p id="mensajeError"></p>
+                <div class="input-group">
+                    <input type="text" id="inputNombre" placeholder="Ingresa tu Nombre" maxlength="15" autocomplete="off">
+                </div>
+                
+                <div class="separador-sutil"></div>
+
+                <button id="btnCrearPartida" class="btn-inicio btn-blanco">Crear Nueva Partida</button>
+                
+                <div class="divider-text">O</div>
+                
+                <div class="input-group">
+                    <input type="text" id="inputClave" placeholder="Código de Sala" maxlength="5" autocomplete="off" style="text-transform:uppercase;">
+                </div>
+                
+                <button id="btnUnirsePartida" class="btn-inicio btn-borde">Unirse a la Partida</button>
+                
+                <p id="mensajeError" class="error-flotante"></p>
             </div>
         </section>
 
@@ -55,73 +88,52 @@
             <ul id="lobbyListaJugadores"></ul>
         </section>
 
-        <!-- PANTALLA 3: ANFITRIÓN (REDISEÑADA) -->
+        <!-- PANTALLA 3: ANFITRIÓN -->
         <section id="pantalla-juego-anfitrion" class="pantalla" style="padding:0;">
-            
-            <!-- 1. CABECERA ANFITRIÓN (REORGANIZADA) -->
             <div class="header-jugador header-anfitrion-estilo">
-                
-                <!-- IZQUIERDA: Perfil (Movido aquí y sin el logo de texto) -->
                 <div class="perfil-usuario">
                     <div class="avatar-img anfitrion-avatar"></div> 
                     <div class="datos-usuario">
                         <span class="nombre-usuario" id="nombreAnfitrionDisplay">Anfitrión</span>
-                        <span class="puntos-usuario">Anfitrión</span>
+                        <span class="puntos-usuario">Rol: Anfitrión</span>
                     </div>
                 </div>
-
-                <!-- DERECHA: Solo Ajustes -->
                 <div class="header-derecha">
                     <button id="btnAjustesAnfitrion" class="btn-ajustes">⚙️
                         <div id="menuAjustesAnfitrion" class="ajustes-menu">
                             <div class="ajuste-item">
-                                Color Mesa
-                                <input type="color" id="inputColorTemaAnfitrion" value="#2ecc71">
+                                Color Mesa <input type="color" id="inputColorTemaAnfitrion" value="#2ecc71">
                             </div>
                             <div class="ajuste-item">
-                                Sonido
-                                <div id="toggleSonidoAnfitrion" style="cursor:pointer">🔊 / 🔇</div>
+                                Sonido <div id="toggleSonidoAnfitrion" style="cursor:pointer">🔊 / 🔇</div>
                             </div>
                         </div>
                     </button>
                 </div>
             </div>
 
-            <!-- 2. ÁREA DE SORTEO -->
             <div class="area-sorteo-anfitrion">
-                
-                <!-- Bolillas Visuales -->
                 <div class="contenedor-bolas-grandes">
                     <div class="bola-wrapper">
                         <span class="label-bola">ANTERIOR</span>
                         <div id="fichaAnterior" class="bolilla-mediana">--</div>
                     </div>
-                    
                     <div class="bola-wrapper">
                         <span class="label-bola">ACTUAL</span>
                         <div id="fichaActual" class="bolilla-gigante">--</div>
                     </div>
                 </div>
-
-                <!-- Botón Principal -->
                 <button id="btnSortearFicha" class="btn-sortear">SACAR BOLILLA</button>
-
-                <!-- Controles Automáticos -->
                 <div class="controles-top-anfitrion">
                     <label class="switch-label">
-                        <input type="checkbox" id="checkAutomatico">
-                        <span class="slider"></span>
+                        <input type="checkbox" id="checkAutomatico"> <span class="slider"></span>
                     </label>
                     <span style="color:white; font-weight:bold; font-size:14px;">Auto</span>
-                    <input type="number" id="inputIntervalo" class="input-mini" min="3" max="30" value="7"> 
-                    <span style="color:white; font-size:12px;">seg</span>
+                    <input type="number" id="inputIntervalo" class="input-mini" min="3" max="30" value="7"> <span style="color:white; font-size:12px;">seg</span>
                 </div>
-
             </div>
 
-            <!-- 3. TABLERO DE CONTROL 1-75 -->
             <div class="contenedor-tablero-control">
-                <!-- Headers B I N G O -->
                 <div class="header-tablero-control">
                     <div class="col-header bg-b">B</div>
                     <div class="col-header bg-i">I</div>
@@ -129,19 +141,12 @@
                     <div class="col-header bg-g">G</div>
                     <div class="col-header bg-o">O</div>
                 </div>
-                
-                <!-- Grid de números -->
-                <div id="grid75" class="grid-75">
-                    <!-- Se genera con JS -->
-                </div>
+                <div id="grid75" class="grid-75"></div>
             </div>
-
         </section>
-
 
         <!-- PANTALLA 4: JUGADOR -->
         <section id="pantalla-juego-jugador" class="pantalla" style="padding:0;">
-            
             <div class="header-jugador">
                 <div class="perfil-usuario">
                     <div class="avatar-img"></div> 
@@ -150,47 +155,34 @@
                         <span class="puntos-usuario">Jugador</span>
                     </div>
                 </div>
-                
                 <div class="header-derecha">
-                    <div class="timer-container">
-                        <span>⏱</span> <span id="tiempoJuego">00:00</span>
-                    </div>
-
+                    <div class="timer-container"><span>⏱</span> <span id="tiempoJuego">00:00</span></div>
                     <button id="btnAjustes" class="btn-ajustes">⚙️
                         <div id="menuAjustes" class="ajustes-menu">
                             <div class="ajuste-item">
-                                Color Mesa
-                                <input type="color" id="inputColorTema" value="#2ecc71">
+                                Color Mesa <input type="color" id="inputColorTema" value="#2ecc71">
                             </div>
                             <div class="ajuste-item">
-                                Sonido
-                                <div id="toggleSonidoMenu" style="cursor:pointer">🔊 / 🔇</div>
+                                Sonido <div id="toggleSonidoMenu" style="cursor:pointer">🔊 / 🔇</div>
                             </div>
                         </div>
                     </button>
                 </div>
             </div>
-
-            <div id="historialContenedor" class="historial-bolillas">
-                <span>Esperando...</span>
-            </div>
-
+            <div id="historialContenedor" class="historial-bolillas"><span>Esperando...</span></div>
             <div style="text-align:center; color:white; font-weight:bold; margin-bottom:5px;">
                 Jugando por: <span id="jugadorPatron">---</span>
             </div>
-
             <div id="cartillaJugador"></div>
-
             <button id="btnCantarBingo" class="btn-bingo-3d">¡CANTAR BINGO!</button>    
-            
         </section>
 
     </div>
 
     <!-- SCRIPTS -->
     <script src="/socket.io/socket.io.js"></script>
-    <script src="game-ui.js"></script> <!-- UI Jugador -->
-    <script src="host-ui.js"></script> <!-- UI Anfitrión (NUEVO) -->
+    <script src="game-ui.js"></script>
+    <script src="host-ui.js"></script>
     <script src="client.js" defer></script>
 
     <!-- MODAL FIN -->

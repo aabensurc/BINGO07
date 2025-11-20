@@ -1,0 +1,173 @@
+/* --- ESTILOS EXCLUSIVOS PARA LA PANTALLA DE LOGIN/BIENVENIDA --- */
+
+/* Contenedor principal del Login */
+.pantalla-login-moderna {
+    /* Forzamos el fondo verde usando la variable global */
+    background-color: var(--tema-principal);
+    
+    /* Posicionamiento absoluto para cubrir cualquier hueco blanco */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    
+    /* Oculto por defecto */
+    display: none; 
+    
+    flex-direction: column;
+    justify-content: center; /* Centrado vertical perfecto */
+    align-items: center;
+    padding: 30px;
+    
+    /* Texto blanco por defecto para contraste */
+    color: white;
+    z-index: 10; /* Asegura que esté por encima si hay solapamiento */
+}
+
+/* SOLO se muestra cuando el JS le pone la clase 'activa' */
+.pantalla-login-moderna.activa {
+    display: flex;
+}
+
+/* --- LOGO ANIMADO --- */
+.logo-container {
+    margin-bottom: 40px;
+    text-align: center;
+    animation: flotarLogo 3s ease-in-out infinite;
+}
+
+.logo-img {
+    max-width: 240px; /* Tamaño generoso para el logo */
+    height: auto;
+    /* Sombra suave para despegarlo del fondo */
+    filter: drop-shadow(0 8px 20px rgba(0,0,0,0.2)); 
+    display: block; /* Evita espaciados extraños */
+}
+
+@keyframes flotarLogo {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* --- INPUTS MODERNOS (EFECTO CRISTAL / GLASSMORPHISM) --- */
+.input-group {
+    width: 100%;
+    /* CORRECCIÓN: Reducimos el margen para pegar el input al botón */
+    margin-bottom: 8px; 
+}
+
+/* Estilo específico para los inputs dentro del login */
+.pantalla-login-moderna input[type="text"] {
+    width: 100%;
+    /* Fondo verde oscuro muy transparente */
+    background: rgba(0, 0, 0, 0.1); 
+    /* Borde semitransparente blanco */
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 15px;
+    font-size: 18px; /* Letra un poco más grande */
+    outline: none;
+    transition: all 0.3s ease;
+    text-align: center;
+    font-weight: 500;
+}
+
+.pantalla-login-moderna input[type="text"]::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.pantalla-login-moderna input[type="text"]:focus {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.9);
+    transform: scale(1.02); /* Pequeño zoom al escribir */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* --- BOTONES --- */
+.btn-inicio {
+    width: 100%;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 900;
+    border-radius: 50px; /* Completamente redondos */
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.2s, background 0.2s;
+    /* Margen inferior para separar los bloques (Crear vs Unirse) */
+    margin-bottom: 15px;
+    border: none;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-inicio:active {
+    transform: scale(0.96);
+}
+
+/* Botón Primario (Blanco con texto verde) */
+.btn-blanco {
+    background: white;
+    color: var(--tema-principal);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+.btn-blanco:hover {
+    background: #f8f9fa;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+
+/* Botón Secundario (Transparente con borde) */
+.btn-borde {
+    background: transparent;
+    color: white;
+    border: 2px solid rgba(255,255,255,0.6);
+}
+.btn-borde:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: white;
+}
+
+/* --- ELEMENTOS DECORATIVOS --- */
+.divider-text {
+    /* Ajustamos márgenes para equilibrar el espacio entre bloques */
+    margin: 15px 0 25px 0;
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+    font-weight: bold;
+    text-align: center; /* Centrado */
+    width: 100%;
+    position: relative;
+}
+
+.separador-sutil {
+    /* CORRECCIÓN: Quitamos la altura extra para juntarlos más */
+    height: 0px; 
+    display: none;
+}
+
+/* MENSAJE DE ERROR (Oculto por defecto) */
+.error-flotante {
+    display: none; /* Oculto si no hay texto */
+    color: #ff6b6b; /* Rojo suave pastel */
+    font-weight: bold;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+    min-height: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    font-size: 14px;
+    text-align: center;
+}
+
+/* Solo se muestra si tiene contenido (cuando JS le pone texto) */
+.error-flotante:not(:empty) {
+    display: block;
+    animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
