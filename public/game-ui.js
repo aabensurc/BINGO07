@@ -60,7 +60,9 @@ function dibujarCartillaModerna(cartilla, contenedor) {
 function agregarBolillaHistorial(ficha, contenedor) {
     // Limpiar texto "esperando..."
     const placeholder = contenedor.querySelector('span');
-    if (placeholder) placeholder.remove();
+    if (placeholder && !placeholder.classList.contains('letra-historial')) {
+        placeholder.remove();
+    }
 
     // Crear bolilla
     const div = document.createElement('div');
@@ -70,19 +72,20 @@ function agregarBolillaHistorial(ficha, contenedor) {
     const letraLower = ficha.letra.toLowerCase();
     div.classList.add(`${letraLower}-color`); // ej: b-color, g-color
     
-    div.textContent = ficha.numero;
+    // --- CAMBIO AQUÍ: HTML para Letra y Número apilados ---
+    div.innerHTML = `
+        <span class="letra-historial">${ficha.letra}</span>
+        <span class="numero-historial">${ficha.numero}</span>
+    `;
 
     // Quitar clase 'ultima' a las anteriores
     const anteriores = contenedor.querySelectorAll('.bolilla.ultima');
     anteriores.forEach(b => b.classList.remove('ultima'));
 
     // Añadir al principio (izquierda) para que se vea lo nuevo primero
-    // Esto hace que las viejas se vayan moviendo a la derecha
     contenedor.prepend(div);
 
-    // --- CORRECCIÓN IMPORTANTE ---
     // Forzamos el scroll del contenedor a 0 (izquierda)
-    // Esto asegura que, aunque la lista crezca, siempre veas la ficha nueva.
     contenedor.scrollLeft = 0;
 }
 
@@ -140,8 +143,6 @@ function configurarBotonesAjustes() {
             const color = e.target.value;
             
             // Cambiamos la variable CSS global.
-            // GRACIAS A TU NUEVO CSS, esto ahora solo pintará la cartilla (.contenedor-cartilla-3d)
-            // El fondo (.fondo-juego) se quedará amarillo fijo.
             document.documentElement.style.setProperty('--tema-principal', color);
             
             // También actualizamos el color oscuro para bordes y sombras de la cartilla
