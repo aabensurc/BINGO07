@@ -21,7 +21,7 @@ const btnSortearFicha = document.getElementById('btnSortearFicha');
 const fichaActual = document.getElementById('fichaActual');
 const fichaAnterior = document.getElementById('fichaAnterior');
 
-// CORRECCIÓN 1: Ahora apuntamos al nuevo ID del grid (grid75)
+// Apuntamos al nuevo ID del grid
 const tableroControlAnfitrion = document.getElementById('grid75'); 
 
 const jugadorPatron = document.getElementById('jugadorPatron');
@@ -33,7 +33,6 @@ const modalGanadorTexto = document.getElementById('modalGanadorTexto');
 const btnVolverAlLobby = document.getElementById('btnVolverAlLobby');
 const checkAutomatico = document.getElementById('checkAutomatico');
 const inputIntervalo = document.getElementById('inputIntervalo');
-// Elemento para mostrar el nombre en la cabecera
 const nombreJugadorDisplay = document.getElementById('nombreJugadorDisplay');
 const nombreAnfitrionDisplay = document.getElementById('nombreAnfitrionDisplay');
 
@@ -58,12 +57,10 @@ function cambiarPantalla(idSiguientePantalla) {
     document.getElementById(idSiguientePantalla).classList.add('activa');
 }
 
-// --- CONFIGURACIÓN INICIAL ---
 if (typeof configurarBotonesAjustes === 'function') {
     configurarBotonesAjustes();
 }
 
-// Evento para el botón de Sonido en el menú de ajustes
 const toggleSonido = document.getElementById('toggleSonidoMenu');
 if(toggleSonido) {
     toggleSonido.addEventListener('click', () => {
@@ -73,7 +70,6 @@ if(toggleSonido) {
         synth.cancel();
     });
 }
-// Toggle sonido anfitrion
 const toggleSonidoAnf = document.getElementById('toggleSonidoAnfitrion');
 if(toggleSonidoAnf) {
     toggleSonidoAnf.addEventListener('click', () => {
@@ -84,8 +80,6 @@ if(toggleSonidoAnf) {
     });
 }
 
-
-// --- FUNCIONES DE VOZ ---
 function cargarVoz() {
     const voces = synth.getVoices();
     vozSeleccionada = voces.find(v => v.lang === 'es-ES' && v.localService);
@@ -133,19 +127,15 @@ btnEmpezarPartida.addEventListener('click', () => {
     socket.emit('empezarPartida', { patron: patronSeleccionado });
 });
 
-// --- LOGICA SORTEO MANUAL Y AUTOMATICO ---
-
-// Sorteo Manual
+// --- LOGICA SORTEO ---
 btnSortearFicha.addEventListener('click', () => {
     if (checkAutomatico.checked) return; 
     btnSortearFicha.disabled = true;
     socket.emit('sortearFicha');
 });
 
-// Sorteo Automático
 checkAutomatico.addEventListener('change', () => {
     if (checkAutomatico.checked) {
-        // 1. Leemos el intervalo
         let intervalo = parseInt(inputIntervalo.value, 10);
         if (isNaN(intervalo) || intervalo < 3) intervalo = 5; 
         inputIntervalo.value = intervalo;
@@ -153,23 +143,15 @@ checkAutomatico.addEventListener('change', () => {
         
         const milisegundos = intervalo * 1000;
 
-        // 2. Definimos la función de loop
         const cicloAutomatico = () => {
-            // Solo enviamos petición si el botón está habilitado
             if (!btnSortearFicha.disabled) {
                 btnSortearFicha.disabled = true;
                 socket.emit('sortearFicha');
             }
         };
-
-        // 3. Iniciamos el intervalo
         temporizadorSorteo = setInterval(cicloAutomatico, milisegundos);
-        
-        // 4. Intentamos tirar la primera inmediatamente
         cicloAutomatico();
-
     } else {
-        // Apagar Automático
         if (temporizadorSorteo) { 
             clearInterval(temporizadorSorteo); 
             temporizadorSorteo = null; 
@@ -179,7 +161,6 @@ checkAutomatico.addEventListener('change', () => {
     }
 });
 
-// Clic en Cartilla
 cartillaJugador.addEventListener('click', (e) => {
     const celda = e.target.closest('.celda-3d');
     if (celda && celda.dataset.numero) {
@@ -210,15 +191,11 @@ btnVolverAlLobby.addEventListener('click', () => {
     cambiarPantalla('pantalla-lobby');
 });
 
-// Modificación: Añadimos el parámetro 'borrarMemoria'
 function limpiarJuegoLocal(borrarMemoria = true) {
     cartillaJugador.innerHTML = '';
-    
-    // CORRECCIÓN 2: Verificamos si existe el tablero antes de limpiarlo
     if (tableroControlAnfitrion) {
         tableroControlAnfitrion.innerHTML = '';
     }
-    
     if (historialContenedor) historialContenedor.innerHTML = '<span>Esperando...</span>';
     
     if(fichaActual) fichaActual.textContent = '--';
@@ -231,7 +208,6 @@ function limpiarJuegoLocal(borrarMemoria = true) {
     }
     
     if (typeof detenerCronometro === 'function') detenerCronometro();
-
     if (temporizadorSorteo) { clearInterval(temporizadorSorteo); temporizadorSorteo = null; }
     if (checkAutomatico) checkAutomatico.checked = false;
     if (inputIntervalo) inputIntervalo.disabled = false;
@@ -240,12 +216,10 @@ function limpiarJuegoLocal(borrarMemoria = true) {
     btnCantarBingo.textContent = '¡CANTAR BINGO!';
     btnSortearFicha.disabled = false;
     
-    // Reset UI Host si existe
     if (typeof HostUI !== 'undefined' && HostUI.resetearInterfaz) {
         HostUI.resetearInterfaz();
     }
 }
-
 
 // --- SOCKETS ---
 
@@ -261,7 +235,8 @@ socket.on('partidaCreada', (datos) => {
     soyAnfitrion = true;
     localStorage.setItem(PLAYER_ID_KEY, datos.playerId);
     lobbyClave.textContent = datos.clave;
-    lobbyVistaAnfitrion.style.display = 'block';
+    lobbyVistaAnfitrion.style.display = 'flex'; // Flex para centrar contenido
+    lobbyVistaAnfitrion.style.flexDirection = 'column';
     lobbyVistaJugador.style.display = 'none';
     if(nombreAnfitrionDisplay) nombreAnfitrionDisplay.textContent = miNombre || "Anfitrión";
     cambiarPantalla('pantalla-lobby');
@@ -278,11 +253,21 @@ socket.on('unionExitosa', (datos) => {
 
 socket.on('errorUnion', (msg) => mensajeError.textContent = msg);
 
+// --- ACTUALIZACIÓN DEL LOBBY CON ICONOS (NUEVO) ---
 socket.on('actualizarLobby', (datos) => {
     lobbyListaJugadores.innerHTML = '';
     datos.jugadores.forEach(j => {
         const li = document.createElement('li');
-        li.textContent = j.nombre;
+        
+        // Elegir icono según rol (se definen en lobby-theme.css)
+        const iconClass = j.esAnfitrion ? 'icono-corona' : 'icono-usuario';
+        
+        // Construir HTML con icono y nombre
+        li.innerHTML = `
+            <div class="icono-jugador-lista ${iconClass}"></div>
+            <span>${j.nombre}</span>
+        `;
+        
         if (j.esAnfitrion) li.style.fontWeight = 'bold';
         lobbyListaJugadores.appendChild(li);
     });
@@ -293,7 +278,6 @@ socket.on('partidaIniciada', (datos) => {
     if (typeof iniciarCronometro === 'function') iniciarCronometro();
     
     if (soyAnfitrion) {
-        // CORRECCIÓN 3: Usamos HostUI para renderizar el tablero moderno
         if (typeof HostUI !== 'undefined') {
             HostUI.renderizarTableroVacio();
         }
@@ -312,49 +296,31 @@ socket.on('partidaIniciada', (datos) => {
     }
 });
 
-// --- EVENTO FICHA ANUNCIADA (ACTUALIZADO) ---
 socket.on('fichaAnunciada', (datos) => {
     const { ficha } = datos;
-    
-    // 1. Historial (Común)
     if (typeof agregarBolillaHistorial === 'function') {
         agregarBolillaHistorial(ficha, historialContenedor);
     }
 
     if (soyAnfitrion) {
-        // CORRECCIÓN 4: Usamos HostUI para actualizar visuales (Bolillas 3D y Tablero)
         const fichaActualTexto = fichaActual.textContent;
         let fichaPreviaObj = null;
         
-        // Reconstruimos objeto ficha previa si no es '--'
         if(fichaActualTexto !== '--') {
-            // Extraemos letra y número del texto actual para pasarlo al UI
-            // Aunque HostUI lo guarda, lo pasamos explícito para asegurar
-            // Nota: para simplificar, pasamos null si es la primera, 
-            // o creamos un objeto dummy si ya hay algo.
-            // Mejor estrategia: La logica visual la maneja HostUI.marcarFicha
-            // Pero necesitamos los datos de la anterior. 
-            // Para no complicar, el servidor o el cliente debería tener estado.
-            // Truco: Usamos el contenido del DOM actual antes de cambiarlo.
-            const numPrevio = parseInt(fichaActual.textContent);
-            const letraPrevia = getLetraDeNumero(numPrevio); 
+            // Intentar leer del DOM si es posible
+            const numPrevio = parseInt(fichaActual.querySelector('.numero-grande')?.textContent || fichaActual.textContent);
             if (!isNaN(numPrevio)) {
-                 fichaPreviaObj = { numero: numPrevio, letra: letraPrevia };
+                 fichaPreviaObj = { numero: numPrevio, letra: getLetraDeNumero(numPrevio) };
             }
         }
 
         if (typeof HostUI !== 'undefined') {
             HostUI.marcarFicha(ficha, fichaPreviaObj);
         }
-        
-        // Habilitar botón para la siguiente
         btnSortearFicha.disabled = false;
-
     } else {
-        // --- LÓGICA JUGADOR ---
         const letra = ficha.letra.split('').join(' '); 
         hablar(`${letra} ${ficha.numero}`);
-
         const miCelda = document.querySelector(`.celda-3d[data-numero="${String(ficha.numero)}"]`);
         if (miCelda) {
             miCelda.classList.add('llamada'); 
@@ -366,7 +332,6 @@ socket.on('fichaAnunciada', (datos) => {
     }
 });
 
-// Helper simple para saber la letra dado un numero (para reconstruir ficha previa)
 function getLetraDeNumero(num) {
     if(num <= 15) return 'B';
     if(num <= 30) return 'I';
@@ -415,11 +380,8 @@ socket.on('reconexionExitosa', (datos) => {
         if(nombreJugadorDisplay) nombreJugadorDisplay.textContent = datos.nombre; 
         if(nombreAnfitrionDisplay) nombreAnfitrionDisplay.textContent = datos.nombre;
     }
-
     soyAnfitrion = datos.esAnfitrion;
-    
     limpiarJuegoLocal(false); 
-    
     if (typeof iniciarCronometro === 'function') iniciarCronometro();
 
     datos.fichasHistorial.forEach(ficha => {
@@ -429,16 +391,11 @@ socket.on('reconexionExitosa', (datos) => {
     });
 
     if (soyAnfitrion) {
-        // CORRECCIÓN 5: Reconstrucción del estado Anfitrión usando HostUI
         if (typeof HostUI !== 'undefined') {
             HostUI.renderizarTableroVacio();
-            
-            // Marcar todas las que ya salieron
             datos.fichasHistorial.forEach(ficha => {
-                HostUI.marcarFicha(ficha); // Marca en el tablero pero animará la bola
+                HostUI.marcarFicha(ficha); 
             });
-            
-            // Restaurar visualmente las bolas grandes exactas sin animación loca
             if (datos.ultimaFicha) {
                  HostUI.actualizarBolaVisual(fichaActual, datos.ultimaFicha, false);
             }
@@ -446,21 +403,17 @@ socket.on('reconexionExitosa', (datos) => {
                  HostUI.actualizarBolaVisual(fichaAnterior, datos.anteriorFicha, false);
             }
         }
-        
         checkAutomatico.checked = false;
         cambiarPantalla('pantalla-juego-anfitrion');
     } else {
         jugadorPatron.textContent = datos.patronTexto;
         miCartilla = datos.cartilla;
-        
         if (typeof dibujarCartillaModerna === 'function') {
             dibujarCartillaModerna(datos.cartilla, cartillaJugador);
         }
-
         const playerId = localStorage.getItem(PLAYER_ID_KEY);
         const savedMarks = JSON.parse(localStorage.getItem(`bingoMarks-${playerId}`) || '[]');
         misMarcas = savedMarks; 
-
         if (savedMarks.length > 0) {
             const celdas = cartillaJugador.querySelectorAll('.celda-3d');
             celdas.forEach(celda => {
@@ -470,7 +423,6 @@ socket.on('reconexionExitosa', (datos) => {
                 }
             });
         }
-        
         cambiarPantalla('pantalla-juego-jugador');
         setTimeout(() => hablar(`Bienvenido de vuelta ${miNombre}`), 1000);
     }

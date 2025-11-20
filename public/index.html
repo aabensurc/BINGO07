@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bingo Sockets</title>
+    <!-- Estilos base -->
     <link rel="stylesheet" href="style.css">
+    <!-- Temas Modulares -->
     <link rel="stylesheet" href="login-theme.css">
+    <link rel="stylesheet" href="lobby-theme.css">
     <link rel="stylesheet" href="game-theme.css">
     <link rel="stylesheet" href="host-theme.css">
 </head>
@@ -17,7 +20,7 @@
         <section id="pantalla-bienvenida" class="pantalla activa pantalla-login-moderna">
             
             <div class="logo-container">
-                <!-- CORRECCIÓN: Añadidos width y height explícitos para evitar colapso -->
+                <!-- LOGO SVG DIRECTO -->
                 <svg class="logo-img" width="300" height="130" viewBox="0 0 300 130" xmlns="http://www.w3.org/2000/svg">
                     <filter id="sombraTexto" x="-20%" y="-20%" width="140%" height="140%">
                         <feDropShadow dx="2" dy="3" stdDeviation="2" flood-color="rgba(0,0,0,0.2)"/>
@@ -42,33 +45,44 @@
             </div>
 
             <div class="form-unirse">
+                <!-- Input Nombre -->
                 <div class="input-group">
                     <input type="text" id="inputNombre" placeholder="Ingresa tu Nombre" maxlength="15" autocomplete="off">
                 </div>
                 
                 <div class="separador-sutil"></div>
 
+                <!-- Botón Crear -->
                 <button id="btnCrearPartida" class="btn-inicio btn-blanco">Crear Nueva Partida</button>
                 
                 <div class="divider-text">O</div>
                 
+                <!-- Input Clave -->
                 <div class="input-group">
                     <input type="text" id="inputClave" placeholder="Código de Sala" maxlength="5" autocomplete="off" style="text-transform:uppercase;">
                 </div>
                 
+                <!-- Botón Unirse -->
                 <button id="btnUnirsePartida" class="btn-inicio btn-borde">Unirse a la Partida</button>
                 
+                <!-- Mensaje de Error -->
                 <p id="mensajeError" class="error-flotante"></p>
             </div>
         </section>
 
-        <!-- PANTALLA 2: LOBBY -->
-        <section id="pantalla-lobby" class="pantalla">
+<!-- PANTALLA 2: LOBBY (REDISEÑADO) -->
+        <section id="pantalla-lobby" class="pantalla pantalla-lobby-moderna">
             <h2>Sala de Espera</h2>
-            <p>Clave de la Partida: <strong id="lobbyClave">---</strong></p>
             
-            <div id="lobby-vista-anfitrion">
-                <h3>Selecciona el Patrón de Juego:</h3>
+            <!-- Caja de Clave destacada -->
+            <div class="caja-clave">
+                <p>CÓDIGO DE PARTIDA</p>
+                <strong id="lobbyClave" class="clave-gigante">---</strong>
+            </div>
+            
+            <!-- Vista Anfitrión -->
+            <div id="lobby-vista-anfitrion" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+                <p style="margin-bottom: 15px; font-weight: bold; opacity: 0.9;">Elige el Patrón de Juego:</p>
                 <div id="lobbyPatrones" class="selector-patrones">
                     <button class="patron seleccionado" data-patron="linea">Línea Simple</button>
                     <button class="patron" data-patron="letra_l">Letra L</button>
@@ -76,16 +90,21 @@
                     <button class="patron" data-patron="cruz">Cruz</button>
                     <button class="patron" data-patron="carton_lleno">Cartón Lleno</button>
                 </div>
-                <button id="btnEmpezarPartida">¡COMENZAR PARTIDA!</button>
+                <button id="btnEmpezarPartida">¡COMENZAR JUEGO!</button>
             </div>
             
-            <div id="lobby-vista-jugador">
-                <p>Esperando que el anfitrión inicie el juego...</p>
+            <!-- Vista Jugador -->
+            <div id="lobby-vista-jugador" style="width: 100%;">
+                <p>Esperando al anfitrión... <br> ¡Prepara tus cartones!</p>
             </div>
 
-            <hr>
-            <h3>Jugadores Conectados:</h3>
-            <ul id="lobbyListaJugadores"></ul>
+            <!-- Lista de Jugadores (Ahora con estilo cápsulas) -->
+            <div class="lista-jugadores-container">
+                <h3>JUGADORES CONECTADOS</h3>
+                <ul id="lobbyListaJugadores">
+                    <!-- Se llenará con JS: <li>👤 Nombre</li> -->
+                </ul>
+            </div>
         </section>
 
         <!-- PANTALLA 3: ANFITRIÓN -->
@@ -101,12 +120,8 @@
                 <div class="header-derecha">
                     <button id="btnAjustesAnfitrion" class="btn-ajustes">⚙️
                         <div id="menuAjustesAnfitrion" class="ajustes-menu">
-                            <div class="ajuste-item">
-                                Color Mesa <input type="color" id="inputColorTemaAnfitrion" value="#2ecc71">
-                            </div>
-                            <div class="ajuste-item">
-                                Sonido <div id="toggleSonidoAnfitrion" style="cursor:pointer">🔊 / 🔇</div>
-                            </div>
+                            <div class="ajuste-item">Color Mesa <input type="color" id="inputColorTemaAnfitrion" value="#2ecc71"></div>
+                            <div class="ajuste-item">Sonido <div id="toggleSonidoAnfitrion" style="cursor:pointer">🔊 / 🔇</div></div>
                         </div>
                     </button>
                 </div>
@@ -114,20 +129,12 @@
 
             <div class="area-sorteo-anfitrion">
                 <div class="contenedor-bolas-grandes">
-                    <div class="bola-wrapper">
-                        <span class="label-bola">ANTERIOR</span>
-                        <div id="fichaAnterior" class="bolilla-mediana">--</div>
-                    </div>
-                    <div class="bola-wrapper">
-                        <span class="label-bola">ACTUAL</span>
-                        <div id="fichaActual" class="bolilla-gigante">--</div>
-                    </div>
+                    <div class="bola-wrapper"><span class="label-bola">ANTERIOR</span><div id="fichaAnterior" class="bolilla-mediana">--</div></div>
+                    <div class="bola-wrapper"><span class="label-bola">ACTUAL</span><div id="fichaActual" class="bolilla-gigante">--</div></div>
                 </div>
                 <button id="btnSortearFicha" class="btn-sortear">SACAR BOLILLA</button>
                 <div class="controles-top-anfitrion">
-                    <label class="switch-label">
-                        <input type="checkbox" id="checkAutomatico"> <span class="slider"></span>
-                    </label>
+                    <label class="switch-label"><input type="checkbox" id="checkAutomatico"> <span class="slider"></span></label>
                     <span style="color:white; font-weight:bold; font-size:14px;">Auto</span>
                     <input type="number" id="inputIntervalo" class="input-mini" min="3" max="30" value="7"> <span style="color:white; font-size:12px;">seg</span>
                 </div>
@@ -135,11 +142,7 @@
 
             <div class="contenedor-tablero-control">
                 <div class="header-tablero-control">
-                    <div class="col-header bg-b">B</div>
-                    <div class="col-header bg-i">I</div>
-                    <div class="col-header bg-n">N</div>
-                    <div class="col-header bg-g">G</div>
-                    <div class="col-header bg-o">O</div>
+                    <div class="col-header bg-b">B</div><div class="col-header bg-i">I</div><div class="col-header bg-n">N</div><div class="col-header bg-g">G</div><div class="col-header bg-o">O</div>
                 </div>
                 <div id="grid75" class="grid-75"></div>
             </div>
@@ -159,12 +162,8 @@
                     <div class="timer-container"><span>⏱</span> <span id="tiempoJuego">00:00</span></div>
                     <button id="btnAjustes" class="btn-ajustes">⚙️
                         <div id="menuAjustes" class="ajustes-menu">
-                            <div class="ajuste-item">
-                                Color Mesa <input type="color" id="inputColorTema" value="#2ecc71">
-                            </div>
-                            <div class="ajuste-item">
-                                Sonido <div id="toggleSonidoMenu" style="cursor:pointer">🔊 / 🔇</div>
-                            </div>
+                            <div class="ajuste-item">Color Mesa <input type="color" id="inputColorTema" value="#2ecc71"></div>
+                            <div class="ajuste-item">Sonido <div id="toggleSonidoMenu" style="cursor:pointer">🔊 / 🔇</div></div>
                         </div>
                     </button>
                 </div>

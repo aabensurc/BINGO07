@@ -1,0 +1,151 @@
+/* --- ESTILOS EXCLUSIVOS PARA LA SALA DE ESPERA (LOBBY) --- */
+
+/* Contenedor Principal */
+.pantalla-lobby-moderna {
+    background-color: var(--tema-principal);
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    display: none; 
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    overflow-y: auto; 
+    color: white;
+    z-index: 10;
+}
+
+.pantalla-lobby-moderna.activa { display: flex; }
+
+.pantalla-lobby-moderna h2 {
+    font-size: 28px; font-weight: 900; margin-bottom: 10px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1); color: white;
+}
+
+/* --- CÓDIGO DE SALA --- */
+.caja-clave {
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px dashed rgba(255, 255, 255, 0.5);
+    padding: 10px 30px;
+    border-radius: 15px;
+    margin-bottom: 25px;
+    text-align: center;
+    backdrop-filter: blur(5px);
+}
+.caja-clave p {
+    margin: 0; font-size: 14px; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;
+}
+.clave-gigante {
+    font-size: 42px; font-weight: 900; letter-spacing: 5px; color: #fff;
+    text-shadow: 0 4px 10px rgba(0,0,0,0.1); display: block; margin-top: 5px;
+}
+
+/* --- SELECTOR DE PATRONES (CORREGIDO) --- */
+.selector-patrones {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 20px;
+}
+
+/* Botón de Patrón (Estilo Glass / Transparente) */
+/* Usamos .selector-patrones .patron para ganar especificidad sobre style.css */
+.selector-patrones .patron {
+    padding: 12px;
+    border-radius: 12px;
+    
+    /* CORRECCIÓN: Fondo semitransparente (Glass) en vez de gris */
+    background-color: rgba(255, 255, 255, 0.15) !important; 
+    border: 2px solid rgba(255, 255, 255, 0.4) !important;
+    backdrop-filter: blur(5px);
+    
+    color: white !important;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: none;
+}
+
+.selector-patrones .patron:hover {
+    background-color: rgba(255, 255, 255, 0.25) !important;
+    border-color: white !important;
+}
+
+/* Botón Patrón SELECCIONADO (Blanco Sólido) */
+.selector-patrones .patron.seleccionado {
+    background-color: white !important;
+    color: var(--tema-principal) !important; /* Texto verde */
+    border-color: white !important;
+    font-weight: 900;
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+/* Botón Comenzar */
+#btnEmpezarPartida {
+    width: 100%; max-width: 400px; padding: 18px;
+    background: white; color: var(--tema-principal);
+    font-size: 18px; font-weight: 900; border: none; border-radius: 50px;
+    cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    transition: transform 0.1s; margin-top: 10px;
+    text-transform: uppercase; letter-spacing: 1px;
+}
+#btnEmpezarPartida:active { transform: scale(0.98); }
+
+/* --- LISTA DE JUGADORES --- */
+.lista-jugadores-container {
+    width: 100%; max-width: 400px; margin-top: 30px;
+    border-top: 1px solid rgba(255,255,255,0.2); padding-top: 20px;
+}
+.lista-jugadores-container h3 {
+    font-size: 14px; opacity: 0.8; text-align: center; margin-bottom: 15px; color: white; letter-spacing: 1px;
+}
+
+#lobbyListaJugadores {
+    list-style: none; padding: 0; margin: 0;
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+}
+
+#lobbyListaJugadores li {
+    background: rgba(0, 0, 0, 0.15);
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.icono-jugador-lista {
+    width: 20px; height: 20px;
+    background-size: contain; background-repeat: no-repeat; background-position: center;
+}
+
+.icono-corona {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" fill="%23f1c40f"><path d="M576 136c0 22.09-17.91 40-40 40c-.248 0-.4551-.1266-.7031-.1305l-50.52 277.9C482 468.9 468.8 480 453.3 480H122.7c-15.46 0-28.72-11.06-31.48-26.27L40.71 175.9C40.46 175.9 40.25 176 40 176c-22.09 0-40-17.91-40-40S17.91 96 40 96s40 17.91 40 40c0 8.998-3.521 16.89-8.537 23.57l89.63 71.7c15.91 12.73 39.5 7.544 48.61-10.68l57.6-115.2C255.1 98.34 247.1 86.34 247.1 72C247.1 49.91 265.9 32 288 32s39.1 17.91 39.1 40c0 14.34-7.963 26.34-19.3 33.4l57.6 115.2c9.111 18.22 32.71 23.4 48.61 10.68l89.63-71.7C499.5 152.9 496 144.1 496 136C496 113.9 513.9 96 536 96S576 113.9 576 136z"/></svg>');
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+}
+
+.icono-usuario {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="white"><path d="M224 256c70.7 0 128-57.3 128-128S294.7 0 224 0S96 57.3 96 128s57.3 128 128 128zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512H418.3c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304H178.3z"/></svg>');
+    opacity: 0.9;
+}
+
+@keyframes popIn {
+    from { opacity: 0; transform: scale(0.5); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+#lobby-vista-jugador p {
+    font-size: 18px; text-align: center; background: rgba(255,255,255,0.1);
+    padding: 20px; border-radius: 15px; animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; }
+}
