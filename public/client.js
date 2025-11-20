@@ -353,7 +353,7 @@ socket.on('bingoFalso', () => {
 
 socket.on('juegoTerminado', (datos) => {
     hablar(`¡BINGO! Ganador ${datos.nombreGanador}`);
-    modalGanadorTexto.textContent = `El ganador es: ${datos.nombreGanador}`;
+    modalGanadorTexto.textContent = `${datos.nombreGanador}`;
     modalFinJuego.classList.add('visible');
     
     if (typeof detenerCronometro === 'function') detenerCronometro();

@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="lobby-theme.css">
     <link rel="stylesheet" href="game-theme.css">
     <link rel="stylesheet" href="host-theme.css">
+    <link rel="stylesheet" href="modal-theme.css"> 
 </head>
 <body class="fondo-juego">
 
@@ -184,12 +185,15 @@
     <script src="host-ui.js"></script>
     <script src="client.js" defer></script>
 
-    <!-- MODAL FIN -->
+<!-- MODAL FIN (REDISEÑADO CON ESTILO CELEBRACIÓN) -->
     <div id="modalFinJuego" class="modal-overlay">
-        <div class="modal-contenido">
-            <h2>¡BINGO!</h2>
-            <p id="modalGanadorTexto">El ganador es: ---</p>
-            <button id="btnVolverAlLobby">Volver al Lobby</button>
+        <!-- Usamos 'modal-card' en lugar de 'modal-contenido' para activar el nuevo diseño -->
+        <div class="modal-card">
+            <div class="icono-trofeo">🏆</div>
+            <h2 class="modal-titulo">¡BINGO!</h2>
+            <p class="modal-subtitulo">El ganador es:</p>
+            <p id="modalGanadorTexto" class="modal-ganador-nombre">---</p>
+            <button id="btnVolverAlLobby" class="btn-modal">Volver al Lobby</button>
         </div>
     </div>
 
