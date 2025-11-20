@@ -1,0 +1,263 @@
+/* --- ESTILOS EXCLUSIVOS PARA EL ANFITRION --- */
+
+/* 1. REGLA PRINCIPAL: FONDO DE COLOR */
+#pantalla-juego-anfitrion {
+    background-color: var(--tema-principal);
+    min-height: 100%;
+    flex-direction: column;
+    color: white;
+    transition: background-color 0.3s ease;
+}
+
+#pantalla-juego-anfitrion.activa {
+    display: flex;
+}
+
+/* 2. CABECERA */
+.header-anfitrion-estilo {
+    background-color: rgba(0,0,0,0.1); 
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+.logo-anfitrion {
+    font-weight: 900;
+    color: white;
+    font-size: 18px;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 0 rgba(0,0,0,0.1);
+    padding-left: 10px;
+}
+
+.anfitrion-avatar {
+    border-color: #f1c40f !important; 
+    background-color: #f1c40f;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" fill="white"><path d="M576 136c0 22.09-17.91 40-40 40c-.248 0-.4551-.1266-.7031-.1305l-50.52 277.9C482 468.9 468.8 480 453.3 480H122.7c-15.46 0-28.72-11.06-31.48-26.27L40.71 175.9C40.46 175.9 40.25 176 40 176c-22.09 0-40-17.91-40-40S17.91 96 40 96s40 17.91 40 40c0 8.998-3.521 16.89-8.537 23.57l89.63 71.7c15.91 12.73 39.5 7.544 48.61-10.68l57.6-115.2C255.1 98.34 247.1 86.34 247.1 72C247.1 49.91 265.9 32 288 32s39.1 17.91 39.1 40c0 14.34-7.963 26.34-19.3 33.4l57.6 115.2c9.111 18.22 32.71 23.4 48.61 10.68l89.63-71.7C499.5 152.9 496 144.1 496 136C496 113.9 513.9 96 536 96S576 113.9 576 136z"/></svg>');
+    background-size: 60%;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* 3. ÁREA DE SORTEO */
+.area-sorteo-anfitrion {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px 20px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 100%);
+    margin-bottom: 10px;
+}
+
+.contenedor-bolas-grandes {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 30px;
+    margin-bottom: 20px;
+}
+
+.bola-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.label-bola {
+    font-size: 11px;
+    color: white;
+    font-weight: 800;
+    opacity: 0.9;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* --- BOLILLAS VISUALES (CORREGIDO) --- */
+
+.bolilla-gigante {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    flex-direction: column; 
+    justify-content: center;
+    align-items: center;
+    line-height: 1;
+    
+    /* CORRECCIÓN: Aplicamos fuente base aquí para fallback */
+    color: #2d3436; 
+    font-size: 56px; /* ¡AQUÍ ESTÁ EL TAMAÑO! */
+    font-weight: 900;
+    
+    box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+    border: 8px solid #ccc; 
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Si el JS funciona y pone la letra, ajustamos tamaños específicos */
+.bolilla-gigante .letra-mini {
+    font-size: 16px;
+    font-weight: 800;
+    color: #636e72;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+}
+.bolilla-gigante .numero-grande {
+    font-size: 56px; 
+    font-weight: 900;
+    letter-spacing: -2px;
+}
+
+
+.bolilla-mediana {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.9);
+    display: flex;
+    flex-direction: column; 
+    justify-content: center;
+    align-items: center;
+    line-height: 1;
+
+    /* CORRECCIÓN: Fuente base para fallback */
+    font-size: 26px;
+    font-weight: 800;
+
+    border: 4px solid #ccc;
+    opacity: 0.8;
+    color: #555;
+}
+
+.bolilla-mediana .letra-mini {
+    font-size: 10px;
+    font-weight: 700;
+    opacity: 0.7;
+}
+.bolilla-mediana .numero-grande {
+    font-size: 24px;
+    font-weight: 800;
+}
+
+
+.btn-sortear {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 0 15px 0;
+    font-size: 18px;
+    padding: 15px;
+    background: white;
+    color: var(--tema-principal);
+    border: none;
+    border-radius: 40px;
+    font-weight: 900;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.1);
+    transition: transform 0.1s, background 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+.btn-sortear:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0,0,0,0.1); }
+.btn-sortear:disabled { background: #dfe6e9; color: #b2bec3; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.controles-top-anfitrion {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0,0,0,0.15);
+    padding: 8px 20px;
+    border-radius: 30px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.input-mini {
+    width: 45px;
+    border: none;
+    border-radius: 5px;
+    padding: 5px;
+    text-align: center;
+    font-weight: bold;
+    color: var(--texto-oscuro);
+    background: rgba(255,255,255,0.9);
+    font-size: 15px;
+}
+
+/* 4. TABLERO DE CONTROL */
+.contenedor-tablero-control {
+    flex-grow: 1;
+    background-color: rgba(255, 255, 255, 0.2); 
+    backdrop-filter: blur(5px);
+    margin: 0 15px 15px 15px; 
+    border-radius: 15px;
+    border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; 
+    height: calc(100vh - 380px); 
+    min-height: 200px;
+}
+
+.header-tablero-control {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr); 
+    background: rgba(0,0,0,0.1);
+}
+
+.col-header {
+    padding: 10px;
+    text-align: center;
+    color: white;
+    font-weight: 900;
+    font-size: 15px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.grid-75 {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr); 
+    overflow-y: auto; 
+    padding: 5px;
+    gap: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.5) transparent;
+}
+
+.celda-control {
+    aspect-ratio: 1.8 / 1; 
+    background: rgba(255,255,255,0.85);
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--texto-oscuro);
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.celda-control.marcada {
+    color: white;
+    border: 1px solid rgba(255,255,255,0.5);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    transform: scale(0.95);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4); 
+}
+
+.celda-control.bg-b { background-color: var(--color-b) !important; }
+.celda-control.bg-i { background-color: var(--color-i) !important; }
+.celda-control.bg-n { background-color: var(--color-n) !important; }
+.celda-control.bg-g { background-color: var(--color-g) !important; }
+.celda-control.bg-o { background-color: var(--color-o) !important; }
+
+.switch-label input:checked + .slider {
+    background-color: var(--tema-principal) !important;
+}
+
+/* COLORES DE BORDE BOLAS */
+.b-color { border-color: var(--color-b) !important; }
+.i-color { border-color: var(--color-i) !important; }
+.n-color { border-color: var(--color-n) !important; }
+.g-color { border-color: var(--color-g) !important; }
+.o-color { border-color: var(--color-o) !important; }

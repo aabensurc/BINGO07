@@ -20,7 +20,10 @@ const btnEmpezarPartida = document.getElementById('btnEmpezarPartida');
 const btnSortearFicha = document.getElementById('btnSortearFicha');
 const fichaActual = document.getElementById('fichaActual');
 const fichaAnterior = document.getElementById('fichaAnterior');
-const tableroControlAnfitrion = document.getElementById('tableroControlAnfitrion');
+
+// CORRECCIÓN 1: Ahora apuntamos al nuevo ID del grid (grid75)
+const tableroControlAnfitrion = document.getElementById('grid75'); 
+
 const jugadorPatron = document.getElementById('jugadorPatron');
 const cartillaJugador = document.getElementById('cartillaJugador');
 const btnCantarBingo = document.getElementById('btnCantarBingo');
@@ -32,6 +35,7 @@ const checkAutomatico = document.getElementById('checkAutomatico');
 const inputIntervalo = document.getElementById('inputIntervalo');
 // Elemento para mostrar el nombre en la cabecera
 const nombreJugadorDisplay = document.getElementById('nombreJugadorDisplay');
+const nombreAnfitrionDisplay = document.getElementById('nombreAnfitrionDisplay');
 
 // --- ESTADO ---
 let patronSeleccionado = 'linea';
@@ -69,6 +73,17 @@ if(toggleSonido) {
         synth.cancel();
     });
 }
+// Toggle sonido anfitrion
+const toggleSonidoAnf = document.getElementById('toggleSonidoAnfitrion');
+if(toggleSonidoAnf) {
+    toggleSonidoAnf.addEventListener('click', () => {
+        estaMuteado = !estaMuteado;
+        const texto = estaMuteado ? "Sonido: Desactivado 🔇" : "Sonido: Activado 🔊";
+        toggleSonidoAnf.textContent = texto;
+        synth.cancel();
+    });
+}
+
 
 // --- FUNCIONES DE VOZ ---
 function cargarVoz() {
@@ -127,12 +142,12 @@ btnSortearFicha.addEventListener('click', () => {
     socket.emit('sortearFicha');
 });
 
-// Sorteo Automático (CORREGIDO)
+// Sorteo Automático
 checkAutomatico.addEventListener('change', () => {
     if (checkAutomatico.checked) {
         // 1. Leemos el intervalo
         let intervalo = parseInt(inputIntervalo.value, 10);
-        if (isNaN(intervalo) || intervalo < 3) intervalo = 5; // Mínimo 3 segundos por seguridad
+        if (isNaN(intervalo) || intervalo < 3) intervalo = 5; 
         inputIntervalo.value = intervalo;
         inputIntervalo.disabled = true;
         
@@ -140,7 +155,7 @@ checkAutomatico.addEventListener('change', () => {
 
         // 2. Definimos la función de loop
         const cicloAutomatico = () => {
-            // Solo enviamos petición si el botón está habilitado (significa que el servidor ya respondió la anterior)
+            // Solo enviamos petición si el botón está habilitado
             if (!btnSortearFicha.disabled) {
                 btnSortearFicha.disabled = true;
                 socket.emit('sortearFicha');
@@ -160,7 +175,6 @@ checkAutomatico.addEventListener('change', () => {
             temporizadorSorteo = null; 
         }
         inputIntervalo.disabled = false;
-        // Importante: Reactivar el botón por si se quedó pasmado
         btnSortearFicha.disabled = false;
     }
 });
@@ -196,17 +210,20 @@ btnVolverAlLobby.addEventListener('click', () => {
     cambiarPantalla('pantalla-lobby');
 });
 
-// Modificación: Añadimos el parámetro 'borrarMemoria' (por defecto es true)
+// Modificación: Añadimos el parámetro 'borrarMemoria'
 function limpiarJuegoLocal(borrarMemoria = true) {
     cartillaJugador.innerHTML = '';
-    tableroControlAnfitrion.innerHTML = '';
+    
+    // CORRECCIÓN 2: Verificamos si existe el tablero antes de limpiarlo
+    if (tableroControlAnfitrion) {
+        tableroControlAnfitrion.innerHTML = '';
+    }
     
     if (historialContenedor) historialContenedor.innerHTML = '<span>Esperando...</span>';
     
     if(fichaActual) fichaActual.textContent = '--';
     if(fichaAnterior) fichaAnterior.textContent = '--';
     
-    // SOLO borramos la memoria si el parámetro es true
     if (borrarMemoria) {
         const playerId = localStorage.getItem(PLAYER_ID_KEY);
         if (playerId) localStorage.removeItem(`bingoMarks-${playerId}`);
@@ -216,12 +233,17 @@ function limpiarJuegoLocal(borrarMemoria = true) {
     if (typeof detenerCronometro === 'function') detenerCronometro();
 
     if (temporizadorSorteo) { clearInterval(temporizadorSorteo); temporizadorSorteo = null; }
-    checkAutomatico.checked = false;
-    inputIntervalo.disabled = false;
+    if (checkAutomatico) checkAutomatico.checked = false;
+    if (inputIntervalo) inputIntervalo.disabled = false;
     
     btnCantarBingo.disabled = false;
     btnCantarBingo.textContent = '¡CANTAR BINGO!';
     btnSortearFicha.disabled = false;
+    
+    // Reset UI Host si existe
+    if (typeof HostUI !== 'undefined' && HostUI.resetearInterfaz) {
+        HostUI.resetearInterfaz();
+    }
 }
 
 
@@ -241,6 +263,7 @@ socket.on('partidaCreada', (datos) => {
     lobbyClave.textContent = datos.clave;
     lobbyVistaAnfitrion.style.display = 'block';
     lobbyVistaJugador.style.display = 'none';
+    if(nombreAnfitrionDisplay) nombreAnfitrionDisplay.textContent = miNombre || "Anfitrión";
     cambiarPantalla('pantalla-lobby');
 });
 
@@ -270,7 +293,10 @@ socket.on('partidaIniciada', (datos) => {
     if (typeof iniciarCronometro === 'function') iniciarCronometro();
     
     if (soyAnfitrion) {
-        generarTableroAnfitrion();
+        // CORRECCIÓN 3: Usamos HostUI para renderizar el tablero moderno
+        if (typeof HostUI !== 'undefined') {
+            HostUI.renderizarTableroVacio();
+        }
         cambiarPantalla('pantalla-juego-anfitrion');
     } else {
         jugadorPatron.textContent = datos.patronTexto;
@@ -286,30 +312,42 @@ socket.on('partidaIniciada', (datos) => {
     }
 });
 
-// --- EVENTO FICHA ANUNCIADA (AQUÍ ESTÁ LA CLAVE) ---
+// --- EVENTO FICHA ANUNCIADA (ACTUALIZADO) ---
 socket.on('fichaAnunciada', (datos) => {
     const { ficha } = datos;
     
-    // 1. Historial (Común para todos)
+    // 1. Historial (Común)
     if (typeof agregarBolillaHistorial === 'function') {
         agregarBolillaHistorial(ficha, historialContenedor);
-    } else {
-        // Fallback por si acaso
-        const span = document.createElement('span');
-        span.textContent = `${ficha.letra}${ficha.numero} `;
-        historialContenedor.appendChild(span);
     }
 
     if (soyAnfitrion) {
-        // --- LÓGICA ANFITRIÓN ---
-        if(fichaAnterior) fichaAnterior.textContent = fichaActual.textContent;
-        if(fichaActual) fichaActual.textContent = ficha.ficha;
+        // CORRECCIÓN 4: Usamos HostUI para actualizar visuales (Bolillas 3D y Tablero)
+        const fichaActualTexto = fichaActual.textContent;
+        let fichaPreviaObj = null;
         
-        // Marcar en tablero de control
-        const celda = document.querySelector(`.celda-anfitrion[data-ficha="${ficha.ficha}"]`);
-        if (celda) celda.classList.add('marcada');
+        // Reconstruimos objeto ficha previa si no es '--'
+        if(fichaActualTexto !== '--') {
+            // Extraemos letra y número del texto actual para pasarlo al UI
+            // Aunque HostUI lo guarda, lo pasamos explícito para asegurar
+            // Nota: para simplificar, pasamos null si es la primera, 
+            // o creamos un objeto dummy si ya hay algo.
+            // Mejor estrategia: La logica visual la maneja HostUI.marcarFicha
+            // Pero necesitamos los datos de la anterior. 
+            // Para no complicar, el servidor o el cliente debería tener estado.
+            // Truco: Usamos el contenido del DOM actual antes de cambiarlo.
+            const numPrevio = parseInt(fichaActual.textContent);
+            const letraPrevia = getLetraDeNumero(numPrevio); 
+            if (!isNaN(numPrevio)) {
+                 fichaPreviaObj = { numero: numPrevio, letra: letraPrevia };
+            }
+        }
+
+        if (typeof HostUI !== 'undefined') {
+            HostUI.marcarFicha(ficha, fichaPreviaObj);
+        }
         
-        // ¡IMPORTANTE! Habilitar botón para la siguiente (manual o automática)
+        // Habilitar botón para la siguiente
         btnSortearFicha.disabled = false;
 
     } else {
@@ -317,10 +355,9 @@ socket.on('fichaAnunciada', (datos) => {
         const letra = ficha.letra.split('').join(' '); 
         hablar(`${letra} ${ficha.numero}`);
 
-        // AVISO VISUAL (ANIMACIÓN)
         const miCelda = document.querySelector(`.celda-3d[data-numero="${String(ficha.numero)}"]`);
         if (miCelda) {
-            miCelda.classList.add('llamada'); // Activa CSS animation
+            miCelda.classList.add('llamada'); 
             if (navigator.vibrate) navigator.vibrate(200);
             setTimeout(() => {
                 miCelda.classList.remove('llamada');
@@ -328,6 +365,15 @@ socket.on('fichaAnunciada', (datos) => {
         }
     }
 });
+
+// Helper simple para saber la letra dado un numero (para reconstruir ficha previa)
+function getLetraDeNumero(num) {
+    if(num <= 15) return 'B';
+    if(num <= 30) return 'I';
+    if(num <= 45) return 'N';
+    if(num <= 60) return 'G';
+    return 'O';
+}
 
 socket.on('bingoFalso', () => {
     hablar('Bingo Falso');
@@ -364,20 +410,18 @@ socket.on('forzarLimpieza', () => {
 });
 
 socket.on('reconexionExitosa', (datos) => {
-    // 1. Recuperar nombre
     if (datos.nombre) {
         miNombre = datos.nombre; 
         if(nombreJugadorDisplay) nombreJugadorDisplay.textContent = datos.nombre; 
+        if(nombreAnfitrionDisplay) nombreAnfitrionDisplay.textContent = datos.nombre;
     }
 
     soyAnfitrion = datos.esAnfitrion;
     
-    // CORRECCIÓN CLAVE: Pasamos 'false' para que NO borre las marcas de la memoria
     limpiarJuegoLocal(false); 
     
     if (typeof iniciarCronometro === 'function') iniciarCronometro();
 
-    // 2. Restaurar Historial de Bolillas
     datos.fichasHistorial.forEach(ficha => {
         if (typeof agregarBolillaHistorial === 'function') {
             agregarBolillaHistorial(ficha, historialContenedor);
@@ -385,36 +429,42 @@ socket.on('reconexionExitosa', (datos) => {
     });
 
     if (soyAnfitrion) {
-        generarTableroAnfitrion();
-        datos.fichasHistorial.forEach(ficha => {
-            const celda = document.querySelector(`.celda-anfitrion[data-ficha="${ficha.ficha}"]`);
-            if (celda) celda.classList.add('marcada');
-        });
-        if (datos.ultimaFicha) fichaActual.textContent = datos.ultimaFicha.ficha;
-        if (datos.anteriorFicha) fichaAnterior.textContent = datos.anteriorFicha.ficha;
+        // CORRECCIÓN 5: Reconstrucción del estado Anfitrión usando HostUI
+        if (typeof HostUI !== 'undefined') {
+            HostUI.renderizarTableroVacio();
+            
+            // Marcar todas las que ya salieron
+            datos.fichasHistorial.forEach(ficha => {
+                HostUI.marcarFicha(ficha); // Marca en el tablero pero animará la bola
+            });
+            
+            // Restaurar visualmente las bolas grandes exactas sin animación loca
+            if (datos.ultimaFicha) {
+                 HostUI.actualizarBolaVisual(fichaActual, datos.ultimaFicha, false);
+            }
+            if (datos.anteriorFicha) {
+                 HostUI.actualizarBolaVisual(fichaAnterior, datos.anteriorFicha, false);
+            }
+        }
+        
         checkAutomatico.checked = false;
         cambiarPantalla('pantalla-juego-anfitrion');
     } else {
         jugadorPatron.textContent = datos.patronTexto;
         miCartilla = datos.cartilla;
         
-        // 3. DIBUJAR CARTILLA
         if (typeof dibujarCartillaModerna === 'function') {
             dibujarCartillaModerna(datos.cartilla, cartillaJugador);
         }
 
-        // 4. RESTAURAR MARCAS
         const playerId = localStorage.getItem(PLAYER_ID_KEY);
-        // Intentamos leer. Si no hay nada, devuelve array vacío.
         const savedMarks = JSON.parse(localStorage.getItem(`bingoMarks-${playerId}`) || '[]');
-        misMarcas = savedMarks; // Sincronizamos la variable local
+        misMarcas = savedMarks; 
 
-        // Aplicamos las marcas visualmente
         if (savedMarks.length > 0) {
             const celdas = cartillaJugador.querySelectorAll('.celda-3d');
             celdas.forEach(celda => {
                 const numeroCelda = parseInt(celda.dataset.numero);
-                // Verificamos si el número está en la lista guardada
                 if (savedMarks.includes(numeroCelda)) {
                     celda.classList.add('marcada');
                 }
@@ -425,27 +475,3 @@ socket.on('reconexionExitosa', (datos) => {
         setTimeout(() => hablar(`Bienvenido de vuelta ${miNombre}`), 1000);
     }
 });
-
-// --- Generación Tablero Anfitrión (Solo visual) ---
-function generarTableroAnfitrion() {
-    tableroControlAnfitrion.innerHTML = '';
-    const letras = ['B', 'I', 'N', 'G', 'O'];
-    const rangos = [{ min: 1, max: 15 }, { min: 16, max: 30 }, { min: 31, max: 45 }, { min: 46, max: 60 }, { min: 61, max: 75 }];
-    letras.forEach((letra, index) => {
-        const { min, max } = rangos[index];
-        const columna = document.createElement('div');
-        columna.classList.add('columna-anfitrion');
-        const header = document.createElement('div');
-        header.classList.add('celda-anfitrion', 'celda-header');
-        header.textContent = letra;
-        columna.appendChild(header);
-        for (let i = min; i <= max; i++) {
-            const celda = document.createElement('div');
-            celda.classList.add('celda-anfitrion');
-            celda.textContent = i;
-            celda.dataset.ficha = `${letra}${i}`;
-            columna.appendChild(celda);
-        }
-        tableroControlAnfitrion.appendChild(columna);
-    });
-}

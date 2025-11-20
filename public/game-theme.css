@@ -77,12 +77,25 @@
     box-shadow: 0 4px 0 rgba(0,0,0,0.1);
 }
 
+/* --- ACTUALIZACIÓN: AVATAR DE JUGADOR CON ICONO --- */
 .avatar-img {
     width: 35px;
     height: 35px;
     border-radius: 50%;
-    background-color: #dfe6e9;
-    border: 2px solid var(--tema-oscuro);
+    
+    /* 1. Usamos el color del tema (verde por defecto) para el fondo */
+    background-color: var(--tema-principal);
+    
+    /* 2. Borde blanco para que resalte */
+    border: 2px solid #fff;
+    
+    /* 3. Icono de USUARIO (SVG Blanco incrustado) */
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="white"><path d="M224 256c70.7 0 128-57.3 128-128S294.7 0 224 0S96 57.3 96 128s57.3 128 128 128zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512H418.3c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304H178.3z"/></svg>');
+    background-size: 50%; /* Tamaño del icono */
+    background-repeat: no-repeat;
+    background-position: center;
+    
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .datos-usuario {
@@ -94,6 +107,7 @@
 .nombre-usuario {
     font-weight: bold;
     font-size: 14px;
+    color: black;
 }
 
 .puntos-usuario {
