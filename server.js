@@ -196,6 +196,30 @@ function verificarBingo(cartilla, patron, fichasSet) {
 // --- Fin de funciones de verificación ---
 
 
+function terminarJuego(clave) {
+    const partida = partidas[clave];
+    if (!partida || !partida.ganadoresTemp) return;
+
+    // Convertimos el Set de fichas a Array para enviarlo
+    const numerosSorteados = Array.from(partida.fichasSorteadasSet);
+
+    // Emitimos el evento final con la LISTA de ganadores
+    io.to(clave).emit('juegoTerminado', {
+        listaGanadores: partida.ganadoresTemp, // Array de ganadores
+        numerosSorteados: numerosSorteados
+    });
+
+    // Limpieza de partida
+    partida.juegoIniciado = false;
+    partida.cierreEnCurso = false;
+    partida.ganadoresTemp = null;
+    partida.bombo = [];
+    partida.fichasSorteadasSet.clear();
+    partida.fichasHistorial = [];
+    console.log(`Partida ${clave} finalizada con ${partida.ganadoresTemp?.length || 0} ganadores.`);
+}
+
+
 // --- Lógica de Conexión ---
 io.on('connection', (socket) => {
     console.log(`Nuevo cliente conectado: ${socket.id}`);
@@ -375,7 +399,7 @@ io.on('connection', (socket) => {
 
     // -- Evento: Cantar Bingo (Con corrección de seguridad) --
 socket.on('cantarBingo', () => {
-    // 1. Buscar la partida según el socket ID
+    // 1. Buscar partida y jugador (Igual que antes)
     let clave = null;
     for (const k in partidas) {
         if (partidas[k].jugadores.find(j => j.id === socket.id)) {
@@ -384,43 +408,57 @@ socket.on('cantarBingo', () => {
         }
     }
 
-    if (!clave) {
-        console.log(`Error: El socket ${socket.id} cantó bingo pero no está en ninguna partida.`);
-        return socket.emit('bingoFalso');
-    }
-    
+    if (!clave) return socket.emit('bingoFalso');
     const partida = partidas[clave];
     const jugador = partida.jugadores.find(j => j.id === socket.id);
 
-    // 2. Validaciones de seguridad (Juego iniciado, jugador válido)
-    if (!jugador || !partida || !partida.juegoIniciado) {
-        console.log(`Error: Canto de bingo inválido del jugador ${jugador?.nombre}.`);
-        return socket.emit('bingoFalso');
+    // 2. Validaciones básicas
+    if (!jugador || !partida.juegoIniciado) return socket.emit('bingoFalso');
+
+    // Evitar que el mismo jugador cante dos veces
+    if (partida.ganadoresTemp && partida.ganadoresTemp.find(g => g.id === jugador.id)) {
+        return; // Ya estás en la lista, tranquilo.
     }
-    
-    console.log(`Jugador ${jugador.nombre} está cantando BINGO... verificando...`);
-    
-    // 3. Verificación (Ahora devuelve un Array de coordenadas o null)
+
+    console.log(`Jugador ${jugador.nombre} canta BINGO. Verificando...`);
+
+    // 3. Verificar Cartón
     const celdasGanadoras = verificarBingo(jugador.cartilla, partida.patronJuego, partida.fichasSorteadasSet);
 
     if (celdasGanadoras) {
         console.log(`¡BINGO VÁLIDO para ${jugador.nombre}!`);
+
+        // --- LÓGICA DE VENTANA DE 10 SEGUNDOS ---
         
-        // 4. Emitir evento de fin con el TRAZO (celdasGanadoras)
-        io.to(clave).emit('juegoTerminado', { 
-            nombreGanador: jugador.nombre,
-            cartillaGanadora: jugador.cartilla,
-            numerosSorteados: Array.from(partida.fichasSorteadasSet), // Convertimos Set a Array
-            celdasGanadoras: celdasGanadoras // <--- ESTO ES LO QUE PINTARÁ ROJO
+        // Si es el PRIMER ganador detectado
+        if (!partida.cierreEnCurso) {
+            partida.cierreEnCurso = true; // Activamos modo "Cierre"
+            partida.ganadoresTemp = [];   // Iniciamos lista vacía
+            
+            // Avisamos a todos que empezó la cuenta regresiva
+            io.to(clave).emit('avisoCierreBingo', { 
+                primerGanador: jugador.nombre,
+                segundos: 10 
+            });
+
+            // Iniciamos el Temporizador del Servidor (10 seg)
+            setTimeout(() => {
+                terminarJuego(clave); // Función que definiremos abajo
+            }, 10000);
+        }
+
+        // Agregamos a ESTE ganador a la lista temporal
+        partida.ganadoresTemp.push({
+            nombre: jugador.nombre,
+            id: jugador.id, // Guardamos ID para evitar duplicados
+            cartilla: jugador.cartilla,
+            celdasGanadoras: celdasGanadoras // Sus coordenadas ganadoras
         });
-        
-        // 5. Limpiar estado del juego
-        partida.juegoIniciado = false; 
-        partida.bombo = [];
-        partida.fichasSorteadasSet.clear();
+
+        // Le avisamos solo a él que su Bingo fue registrado
+        socket.emit('bingoRegistrado');
 
     } else {
-        console.log(`Bingo Falso para ${jugador.nombre}`);
         socket.emit('bingoFalso');
     }
 });
@@ -466,6 +504,8 @@ socket.on('cantarBingo', () => {
         }
     });
 });
+
+
 
 // Iniciar el servidor
 server.listen(PORT, () => {

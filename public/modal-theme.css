@@ -234,3 +234,98 @@
     fill: white !important; /* Estrella blanca sobre fondo rojo */
 }
 
+
+
+
+
+/* --- ESTILOS LISTA DE GANADORES (MULTIJUGADOR) --- */
+
+.lista-ganadores-scroll {
+    max-height: 150px; /* Si hay muchos, hace scroll */
+    overflow-y: auto;
+    margin-bottom: 20px;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    background: #f9f9f9;
+}
+
+/* Cada fila de ganador */
+.fila-ganador {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    border-bottom: 1px solid #eee;
+    transition: background 0.2s;
+}
+
+.fila-ganador:last-child {
+    border-bottom: none;
+}
+
+.fila-ganador:hover {
+    background: #fff;
+}
+
+.nombre-ganador-lista {
+    font-size: 18px;
+    font-weight: 800;
+    color: #2d3436;
+    text-align: left;
+}
+
+/* Medalla para el 1º, 2º, etc */
+.medalla {
+    margin-right: 8px;
+    font-size: 20px;
+}
+
+/* Botón ojo pequeño para la lista */
+.btn-ojo-mini {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid #ccc;
+    background: white;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 18px;
+    transition: all 0.2s;
+}
+.btn-ojo-mini:hover {
+    background: var(--tema-principal);
+    color: white;
+    border-color: var(--tema-principal);
+    transform: scale(1.1);
+}
+/* Clase activa cuando estás viendo ese cartón */
+.btn-ojo-mini.activo {
+    background: var(--tema-principal);
+    color: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+/* Aviso flotante de Cuenta Regresiva */
+#avisoCuentaRegresiva {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #e74c3c; /* Rojo Alerta */
+    color: white;
+    padding: 15px 30px;
+    border-radius: 50px;
+    font-weight: 900;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    z-index: 3000;
+    display: none; /* Oculto por defecto */
+    animation: pulsarAviso 1s infinite;
+}
+@keyframes pulsarAviso {
+    0% { transform: translateX(-50%) scale(1); }
+    50% { transform: translateX(-50%) scale(1.05); }
+    100% { transform: translateX(-50%) scale(1); }
+}
+
