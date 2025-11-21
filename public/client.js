@@ -21,7 +21,7 @@ const lobbyClave = document.getElementById('lobbyClave');
 const lobbyListaJugadores = document.getElementById('lobbyListaJugadores');
 const lobbyVistaAnfitrion = document.getElementById('lobby-vista-anfitrion');
 const lobbyVistaJugador = document.getElementById('lobby-vista-jugador');
-const lobbyPatrones = document.getElementById('lobbyPatrones');
+// const lobbyPatrones = document.getElementById('lobbyPatrones');  <-- BORRAR ESTO
 const btnEmpezarPartida = document.getElementById('btnEmpezarPartida');
 const btnSortearFicha = document.getElementById('btnSortearFicha');
 const fichaActual = document.getElementById('fichaActual');
@@ -130,12 +130,56 @@ btnUnirsePartida.addEventListener('click', () => {
     socket.emit('unirsePartida', { nombre: nombre, clave: clave });
 });
 
-lobbyPatrones.addEventListener('click', (e) => {
-    if (!e.target.classList.contains('patron')) return;
-    lobbyPatrones.querySelectorAll('.patron').forEach(btn => btn.classList.remove('seleccionado'));
-    e.target.classList.add('seleccionado');
-    patronSeleccionado = e.target.dataset.patron;
+
+// =========================================================
+// AQUÍ PEGAS EL CÓDIGO NUEVO DEL DROPDOWN (Paso C)
+// =========================================================
+
+// 1. Referencias a los elementos del nuevo menú
+const dropdown = document.getElementById('dropdownPatrones');
+const trigger = dropdown.querySelector('.select-trigger');
+const textoTrigger = document.getElementById('textoPatronSeleccionado');
+const opciones = dropdown.querySelectorAll('.option');
+
+// 2. Abrir / Cerrar al hacer clic
+if (trigger) { // Verificamos que exista por si acaso
+    trigger.addEventListener('click', (e) => {
+        e.stopPropagation(); 
+        dropdown.classList.toggle('open');
+    });
+}
+
+// 3. Seleccionar una opción de la lista
+opciones.forEach(opcion => {
+    opcion.addEventListener('click', () => {
+        // Quitar clase 'selected' a las otras
+        opciones.forEach(op => op.classList.remove('selected'));
+        // Marcar la actual
+        opcion.classList.add('selected');
+        
+        // Actualizar la variable global 'patronSeleccionado'
+        patronSeleccionado = opcion.dataset.value;
+        
+        // Actualizar el texto del botón principal
+        if(textoTrigger) textoTrigger.textContent = opcion.textContent;
+        
+        // Cerrar el menú
+        dropdown.classList.remove('open');
+    });
 });
+
+// 4. Cerrar el menú si haces click fuera
+document.addEventListener('click', (e) => {
+    if (dropdown && !dropdown.contains(e.target)) {
+        dropdown.classList.remove('open');
+    }
+});
+
+// =========================================================
+// FIN DEL CÓDIGO NUEVO
+// =========================================================
+
+
 
 btnEmpezarPartida.addEventListener('click', () => {
     socket.emit('empezarPartida', { patron: patronSeleccionado });

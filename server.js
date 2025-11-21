@@ -17,10 +17,18 @@ const partidas = {};
 
 const NOMBRES_PATRONES = {
     linea: "Línea Simple",
+    carton_lleno: "Cartón Lleno",
+    cuadrado: "Cuadrado (Marco)",
     letra_l: "Letra L",
-    bordes: "Bordes (O)",
-    cruz: "Cruz",
-    carton_lleno: "Cartón Lleno"
+    l_invertida: "L Invertida",
+    cruz: "Letra X",
+    diagonal_backslash: "Diagonal (\\)",
+    diagonal_slash: "Diagonal (/)",
+    columna_b: "Columna B",
+    columna_i: "Columna I",
+    columna_n: "Columna N",
+    columna_g: "Columna G",
+    columna_o: "Columna O"
 };
 
 // --- Funciones de Partida ---
@@ -116,78 +124,97 @@ function checkCelda(numeroDeCartilla, fichasSet) {
     return fichasSet.has(numeroDeCartilla);
 }
 
-// --- VERIFICACIÓN DE BINGO QUE DEVUELVE COORDENADAS ---
+// --- VERIFICACIÓN DE BINGO MEJORADA (TODOS LOS PATRONES) ---
 function verificarBingo(cartilla, patron, fichasSet) {
     
-    // Helper para obtener coordenadas de una fila completa
+    // Helpers
     const getFilaCoords = (f) => Array.from({length:5}, (_, c) => ({r:f, c:c}));
-    // Helper para obtener coordenadas de una columna completa
     const getColCoords = (c) => Array.from({length:5}, (_, r) => ({r:r, c:c}));
-
-    // Helper para verificar un conjunto de coordenadas
     const checkCoords = (coords) => {
-        // Verifica si todas las coordenadas de la lista están marcadas
         const completo = coords.every(pos => {
             const val = cartilla[pos.r][pos.c];
             return val === 'GRATIS' || fichasSet.has(val);
         });
-        return completo ? coords : null; // Si ganó, devuelve las coordenadas. Si no, null.
+        return completo ? coords : null;
     };
 
     switch (patron) {
-        case 'linea':
-            // 1. Chequear Filas
+        // --- A. CLÁSICOS ---
+        case 'linea': 
+            // Opción "Cualquier Línea": Gana con Horizontal, Vertical o Diagonal
+            
+            // 1. Chequear Filas (Horizontal)
             for (let f = 0; f < 5; f++) {
                 const win = checkCoords(getFilaCoords(f));
                 if (win) return win;
             }
-            // 2. Chequear Columnas
+            // 2. Chequear Columnas (Vertical)
             for (let c = 0; c < 5; c++) {
                 const win = checkCoords(getColCoords(c));
                 if (win) return win;
             }
-            // 3. Chequear Diagonal 1 (Top-Left a Bottom-Right)
-            const d1 = Array.from({length:5}, (_, i) => ({r:i, c:i}));
+            // 3. Chequear Diagonales
+            const d1 = Array.from({length:5}, (_, i) => ({r:i, c:i})); // \
             const winD1 = checkCoords(d1);
             if (winD1) return winD1;
 
-            // 4. Chequear Diagonal 2 (Top-Right a Bottom-Left)
-            const d2 = Array.from({length:5}, (_, i) => ({r:i, c:4-i}));
+            const d2 = Array.from({length:5}, (_, i) => ({r:i, c:4-i})); // /
             const winD2 = checkCoords(d2);
             if (winD2) return winD2;
 
             return null;
 
-        case 'letra_l':
-            const col0 = getColCoords(0);
-            const fila4 = getFilaCoords(4);
-            // Unir coordenadas y quitar duplicados (la esquina 4,0)
-            const coordsL = [...col0, ...fila4.slice(1)]; 
-            return checkCoords(coordsL);
-
-        case 'bordes':
-            const coordsBordes = [];
-            // Fila 0 y 4
-            coordsBordes.push(...getFilaCoords(0));
-            coordsBordes.push(...getFilaCoords(4));
-            // Col 0 y 4 (sin repetir esquinas ya agregadas)
-            for(let i=1; i<4; i++) {
-                coordsBordes.push({r:i, c:0});
-                coordsBordes.push({r:i, c:4});
-            }
-            return checkCoords(coordsBordes);
-
-        case 'cruz':
-            const col2 = getColCoords(2);
-            const fila2 = getFilaCoords(2);
-            // Unir cruz sin repetir el centro (2,2)
-            const coordsCruz = [...col2, ...fila2.filter(pos => pos.c !== 2)];
-            return checkCoords(coordsCruz);
-
         case 'carton_lleno':
             const todas = [];
             for(let r=0; r<5; r++) for(let c=0; c<5; c++) todas.push({r, c});
             return checkCoords(todas);
+
+        case 'cuadrado': // Borde exterior
+            const coordsBordes = [];
+            coordsBordes.push(...getFilaCoords(0)); // Fila arriba
+            coordsBordes.push(...getFilaCoords(4)); // Fila abajo
+            for(let i=1; i<4; i++) {
+                coordsBordes.push({r:i, c:0}); // Lado izq
+                coordsBordes.push({r:i, c:4}); // Lado der
+            }
+            return checkCoords(coordsBordes);
+
+        // --- B. LETRAS ---
+        case 'letra_l': // Columna 0 + Fila 4 (|_ )
+            const l_col0 = getColCoords(0);
+            const l_fila4 = getFilaCoords(4);
+            const coordsL = [...l_col0, ...l_fila4.slice(1)];
+            return checkCoords(coordsL);
+
+        case 'l_invertida': // Columna 4 + Fila 4 ( _| ) - La opuesta visual
+            const li_col4 = getColCoords(4);
+            const li_fila4 = getFilaCoords(4);
+            // Unimos y evitamos duplicar la esquina (4,4)
+            const coordsLInv = [...li_col4, ...li_fila4.filter(p => p.c !== 4)]; 
+            return checkCoords(coordsLInv);
+
+        case 'cruz': // Letra X
+            const d1_x = Array.from({length:5}, (_, i) => ({r:i, c:i}));
+            const d2_x = Array.from({length:5}, (_, i) => ({r:i, c:4-i}));
+            // Unimos sin duplicar centro
+            const coordsCruz = [...d1_x, ...d2_x.filter(p => p.r !== 2)];
+            return checkCoords(coordsCruz);
+
+        // --- C. DIAGONALES ---
+        case 'diagonal_backslash': // De Arriba-Izq a Abajo-Der (\)
+            const dBack = Array.from({length:5}, (_, i) => ({r:i, c:i}));
+            return checkCoords(dBack);
+
+        case 'diagonal_slash': // De Abajo-Izq a Arriba-Der (/)
+            const dSlash = Array.from({length:5}, (_, i) => ({r:i, c:4-i}));
+            return checkCoords(dSlash);
+
+        // --- D. VERTICALES ---
+        case 'columna_b': return checkCoords(getColCoords(0));
+        case 'columna_i': return checkCoords(getColCoords(1));
+        case 'columna_n': return checkCoords(getColCoords(2));
+        case 'columna_g': return checkCoords(getColCoords(3));
+        case 'columna_o': return checkCoords(getColCoords(4));
 
         default:
             return null;

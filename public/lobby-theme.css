@@ -149,3 +149,131 @@
 @keyframes pulse {
     0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; }
 }
+
+
+
+
+/* --- ESTILOS DEL SELECTOR DE PATRONES (DROPDOWN) --- */
+
+.patron-selector-container {
+    width: 100%;
+    max-width: 300px;
+    margin-bottom: 25px;
+    position: relative;
+    z-index: 50; /* Para que la lista flote por encima de otros elementos */
+}
+
+.label-selector {
+    display: block;
+    color: rgba(255,255,255,0.8);
+    font-size: 14px;
+    margin-bottom: 8px;
+    font-weight: bold;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+.custom-select-wrapper {
+    position: relative;
+    user-select: none;
+}
+
+.custom-select {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+/* TRIGGER (EL BOTÓN QUE SE VE) */
+.select-trigger {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+    backdrop-filter: blur(5px);
+}
+
+.select-trigger:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: white;
+}
+
+.arrow {
+    font-size: 12px;
+    transition: transform 0.3s;
+}
+
+/* ESTADO ABIERTO */
+.custom-select.open .select-trigger {
+    border-radius: 15px 15px 0 0;
+    background: rgba(255, 255, 255, 0.25);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.custom-select.open .arrow {
+    transform: rotate(180deg);
+}
+
+/* LA LISTA DE OPCIONES */
+.custom-options {
+    position: absolute;
+    display: block;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: rgba(40, 50, 60, 0.95); /* Fondo oscuro para legibilidad */
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-top: none;
+    border-radius: 0 0 15px 15px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    
+    max-height: 0; /* Oculto por defecto */
+    overflow: hidden;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+}
+
+.custom-select.open .custom-options {
+    max-height: 250px; /* Altura máxima con scroll */
+    overflow-y: auto;
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* OPCIONES INDIVIDUALES */
+.option {
+    display: block;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: white;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    transition: background 0.2s;
+}
+
+.option:last-child {
+    border-bottom: none;
+}
+
+.option:hover {
+    background: var(--tema-principal);
+    color: white;
+    font-weight: bold;
+}
+
+.option.selected {
+    background: rgba(255,255,255,0.1);
+    color: var(--tema-principal);
+    font-weight: bold;
+}
