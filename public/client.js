@@ -50,6 +50,9 @@ const avisoCuentaRegresiva = document.getElementById('avisoCuentaRegresiva');
 const segundosRestantes = document.getElementById('segundosRestantes');
 const contenedorListaGanadores = document.getElementById('contenedorListaGanadores');
 
+const btnCambiarCarton = document.getElementById('btnCambiarCarton');
+const mensajeCambioCarton = document.getElementById('mensajeCambioCarton');
+
 // --- ESTADO ---
 let patronSeleccionado = 'linea';
 let miCartilla = null;
@@ -280,6 +283,40 @@ function limpiarJuegoLocal(borrarMemoria = true) {
         HostUI.resetearInterfaz();
     }
 }
+
+
+// --- LÓGICA CAMBIAR CARTÓN (REROLL) ---
+if(btnCambiarCarton) {
+    btnCambiarCarton.addEventListener('click', () => {
+        // Efecto visual de carga
+        btnCambiarCarton.disabled = true;
+        btnCambiarCarton.textContent = "🔄 Generando...";
+        
+        // Pedir al servidor
+        socket.emit('pedirNuevoCarton');
+    });
+}
+
+// Confirmación del servidor
+socket.on('cartonCambiado', () => {
+    // Restaurar botón
+    setTimeout(() => {
+        btnCambiarCarton.disabled = false;
+        btnCambiarCarton.textContent = "🔄 Cambiar mi Cartón";
+    }, 1000); // Pequeño delay para evitar spam
+
+    // Feedback visual
+    mensajeCambioCarton.textContent = "¡Nuevo cartón listo!";
+    mensajeCambioCarton.style.opacity = 1;
+    
+    // Desvanecer mensaje
+    setTimeout(() => {
+        mensajeCambioCarton.style.opacity = 0;
+    }, 3000);
+
+    // Feedback de voz (opcional, pero útil)
+    hablar("Cartón cambiado.");
+});
 
 // --- SOCKETS ---
 

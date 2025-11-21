@@ -313,6 +313,39 @@ io.on('connection', (socket) => {
         console.log(`Jugador ${nombre} (${socket.id}) se unió a la partida ${clave}`);
     });
 
+
+    // -- Evento: Jugador pide cambiar su cartilla (Reroll) --
+    socket.on('pedirNuevoCarton', () => {
+        // 1. Buscar al jugador
+        let clavePartida = null;
+        let jugador = null;
+
+        for (const k in partidas) {
+            const j = partidas[k].jugadores.find(p => p.id === socket.id);
+            if (j) {
+                clavePartida = k;
+                jugador = j;
+                break;
+            }
+        }
+
+        // 2. Validar
+        if (!jugador || !partidas[clavePartida]) return;
+        
+        // IMPORTANTE: No permitir cambiar si el juego ya empezó
+        if (partidas[clavePartida].juegoIniciado) {
+            socket.emit('errorJuego', 'No puedes cambiar cartón con la partida iniciada.');
+            return;
+        }
+
+        // 3. Generar nueva cartilla y asignarla
+        jugador.cartilla = generarCartilla();
+        console.log(`Jugador ${jugador.nombre} ha cambiado su cartón.`);
+
+        // 4. Confirmar al cliente
+        socket.emit('cartonCambiado');
+    });
+
 // --- ¡NUEVO EVENTO: Reconexión! ---
     socket.on('quieroReconectar', (datos) => {
         const { playerId } = datos;
