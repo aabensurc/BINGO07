@@ -1,6 +1,9 @@
 // 1. Inicia la conexión con el servidor
 const socket = io();
 
+// Variables nuevas para almacenar datos del ganador temporalmente
+let datosGanadorTemp = null;
+
 // --- ELEMENTOS DOM ---
 const pantallaBienvenida = document.getElementById('pantalla-bienvenida');
 const pantallaLobby = document.getElementById('pantalla-lobby');
@@ -35,6 +38,10 @@ const checkAutomatico = document.getElementById('checkAutomatico');
 const inputIntervalo = document.getElementById('inputIntervalo');
 const nombreJugadorDisplay = document.getElementById('nombreJugadorDisplay');
 const nombreAnfitrionDisplay = document.getElementById('nombreAnfitrionDisplay');
+
+// Elementos del DOM nuevos
+const btnVerCartonGanador = document.getElementById('btnVerCartonGanador');
+const contenedorCartillaGanadora = document.getElementById('contenedorCartillaGanadora');
 
 // --- ESTADO ---
 let patronSeleccionado = 'linea';
@@ -185,8 +192,10 @@ btnCantarBingo.addEventListener('click', () => {
     btnCantarBingo.textContent = 'VERIFICANDO...';
 });
 
+// Al volver al lobby, limpiamos la variable temporal
 btnVolverAlLobby.addEventListener('click', () => {
     modalFinJuego.classList.remove('visible');
+    datosGanadorTemp = null; // Limpieza
     limpiarJuegoLocal();
     cambiarPantalla('pantalla-lobby');
 });
@@ -352,15 +361,60 @@ socket.on('bingoFalso', () => {
 });
 
 socket.on('juegoTerminado', (datos) => {
+    // 1. Guardamos los datos completos (nombre, cartilla, números y COORDENADAS ganadoras)
+    datosGanadorTemp = datos; 
+
+    // 2. Voz y texto
     hablar(`¡BINGO! Ganador ${datos.nombreGanador}`);
     modalGanadorTexto.textContent = `${datos.nombreGanador}`;
+    
+    // 3. Reseteamos la visualización del botón "Ojo" y el contenedor oculto
+    // (Para que aparezca cerrado y limpio la próxima vez)
+    if (typeof btnVerCartonGanador !== 'undefined') {
+        btnVerCartonGanador.classList.remove('activo');
+    }
+    if (typeof contenedorCartillaGanadora !== 'undefined') {
+        contenedorCartillaGanadora.classList.add('oculto');
+        contenedorCartillaGanadora.innerHTML = ''; // Limpiamos el dibujo anterior
+    }
+
+    // 4. Mostrar el Modal
     modalFinJuego.classList.add('visible');
     
+    // 5. Detener el juego localmente
     if (typeof detenerCronometro === 'function') detenerCronometro();
     if (temporizadorSorteo) clearInterval(temporizadorSorteo);
     
+    // 6. Bloquear botones
     btnCantarBingo.disabled = true;
     btnSortearFicha.disabled = true;
+});
+
+
+// --- Evento Click del Botón "Ojo" ---
+btnVerCartonGanador.addEventListener('click', () => {
+    // Toggle (Mostrar/Ocultar)
+    const estaOculto = contenedorCartillaGanadora.classList.contains('oculto');
+    
+    if (estaOculto) {
+        // MOSTRAR
+        contenedorCartillaGanadora.classList.remove('oculto');
+        btnVerCartonGanador.classList.add('activo');
+        
+        // Si tenemos datos, dibujamos la cartilla
+        if (datosGanadorTemp) {
+            dibujarCartillaGanadora(
+                datosGanadorTemp.cartillaGanadora, 
+                datosGanadorTemp.numerosSorteados, 
+                datosGanadorTemp.celdasGanadoras, // <--- ¡ESTO FALTABA ENVIAR!
+                contenedorCartillaGanadora
+            );
+        }
+    } else {
+        // OCULTAR
+        contenedorCartillaGanadora.classList.add('oculto');
+        btnVerCartonGanador.classList.remove('activo');
+    }
 });
 
 socket.on('errorJuego', (msg) => {

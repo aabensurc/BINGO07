@@ -116,48 +116,81 @@ function checkCelda(numeroDeCartilla, fichasSet) {
     return fichasSet.has(numeroDeCartilla);
 }
 
+// --- VERIFICACIÓN DE BINGO QUE DEVUELVE COORDENADAS ---
 function verificarBingo(cartilla, patron, fichasSet) {
-    const checkFila = (fila) => {
-        for (let col = 0; col < 5; col++) {
-            if (!checkCelda(cartilla[fila][col], fichasSet)) return false;
-        }
-        return true;
+    
+    // Helper para obtener coordenadas de una fila completa
+    const getFilaCoords = (f) => Array.from({length:5}, (_, c) => ({r:f, c:c}));
+    // Helper para obtener coordenadas de una columna completa
+    const getColCoords = (c) => Array.from({length:5}, (_, r) => ({r:r, c:c}));
+
+    // Helper para verificar un conjunto de coordenadas
+    const checkCoords = (coords) => {
+        // Verifica si todas las coordenadas de la lista están marcadas
+        const completo = coords.every(pos => {
+            const val = cartilla[pos.r][pos.c];
+            return val === 'GRATIS' || fichasSet.has(val);
+        });
+        return completo ? coords : null; // Si ganó, devuelve las coordenadas. Si no, null.
     };
-    const checkColumna = (col) => {
-        for (let fila = 0; fila < 5; fila++) {
-            if (!checkCelda(cartilla[fila][col], fichasSet)) return false;
-        }
-        return true;
-    };
+
     switch (patron) {
         case 'linea':
-            for (let f = 0; f < 5; f++) if (checkFila(f)) return true;
-            for (let c = 0; c < 5; c++) if (checkColumna(c)) return true;
-            let diag1 = true;
-            for (let i = 0; i < 5; i++) if (!checkCelda(cartilla[i][i], fichasSet)) diag1 = false;
-            if (diag1) return true;
-            let diag2 = true;
-            for (let i = 0; i < 5; i++) if (!checkCelda(cartilla[i][4 - i], fichasSet)) diag2 = false;
-            if (diag2) return true;
-            return false;
-        case 'letra_l':
-            return checkColumna(0) && checkFila(4);
-        case 'bordes':
-            const fila1 = checkFila(0);
-            const fila5 = checkFila(4);
-            let col1 = true, col5 = true;
-            for (let f = 1; f < 4; f++) {
-                if (!checkCelda(cartilla[f][0], fichasSet)) col1 = false;
-                if (!checkCelda(cartilla[f][4], fichasSet)) col5 = false;
+            // 1. Chequear Filas
+            for (let f = 0; f < 5; f++) {
+                const win = checkCoords(getFilaCoords(f));
+                if (win) return win;
             }
-            return fila1 && fila5 && col1 && col5;
+            // 2. Chequear Columnas
+            for (let c = 0; c < 5; c++) {
+                const win = checkCoords(getColCoords(c));
+                if (win) return win;
+            }
+            // 3. Chequear Diagonal 1 (Top-Left a Bottom-Right)
+            const d1 = Array.from({length:5}, (_, i) => ({r:i, c:i}));
+            const winD1 = checkCoords(d1);
+            if (winD1) return winD1;
+
+            // 4. Chequear Diagonal 2 (Top-Right a Bottom-Left)
+            const d2 = Array.from({length:5}, (_, i) => ({r:i, c:4-i}));
+            const winD2 = checkCoords(d2);
+            if (winD2) return winD2;
+
+            return null;
+
+        case 'letra_l':
+            const col0 = getColCoords(0);
+            const fila4 = getFilaCoords(4);
+            // Unir coordenadas y quitar duplicados (la esquina 4,0)
+            const coordsL = [...col0, ...fila4.slice(1)]; 
+            return checkCoords(coordsL);
+
+        case 'bordes':
+            const coordsBordes = [];
+            // Fila 0 y 4
+            coordsBordes.push(...getFilaCoords(0));
+            coordsBordes.push(...getFilaCoords(4));
+            // Col 0 y 4 (sin repetir esquinas ya agregadas)
+            for(let i=1; i<4; i++) {
+                coordsBordes.push({r:i, c:0});
+                coordsBordes.push({r:i, c:4});
+            }
+            return checkCoords(coordsBordes);
+
         case 'cruz':
-            return checkColumna(2) && checkFila(2);
+            const col2 = getColCoords(2);
+            const fila2 = getFilaCoords(2);
+            // Unir cruz sin repetir el centro (2,2)
+            const coordsCruz = [...col2, ...fila2.filter(pos => pos.c !== 2)];
+            return checkCoords(coordsCruz);
+
         case 'carton_lleno':
-            for (let f = 0; f < 5; f++) if (!checkFila(f)) return false;
-            return true;
+            const todas = [];
+            for(let r=0; r<5; r++) for(let c=0; c<5; c++) todas.push({r, c});
+            return checkCoords(todas);
+
         default:
-            return false;
+            return null;
     }
 }
 // --- Fin de funciones de verificación ---
@@ -341,46 +374,56 @@ io.on('connection', (socket) => {
     });
 
     // -- Evento: Cantar Bingo (Con corrección de seguridad) --
-    socket.on('cantarBingo', () => {
-        let clave = null;
-        for (const k in partidas) {
-            if (partidas[k].jugadores.find(j => j.id === socket.id)) {
-                clave = k;
-                break;
-            }
+socket.on('cantarBingo', () => {
+    // 1. Buscar la partida según el socket ID
+    let clave = null;
+    for (const k in partidas) {
+        if (partidas[k].jugadores.find(j => j.id === socket.id)) {
+            clave = k;
+            break;
         }
+    }
 
-        if (!clave) {
-            console.log(`Error: El socket ${socket.id} cantó bingo pero no está en ninguna partida.`);
-            return socket.emit('bingoFalso');
-        }
+    if (!clave) {
+        console.log(`Error: El socket ${socket.id} cantó bingo pero no está en ninguna partida.`);
+        return socket.emit('bingoFalso');
+    }
+    
+    const partida = partidas[clave];
+    const jugador = partida.jugadores.find(j => j.id === socket.id);
+
+    // 2. Validaciones de seguridad (Juego iniciado, jugador válido)
+    if (!jugador || !partida || !partida.juegoIniciado) {
+        console.log(`Error: Canto de bingo inválido del jugador ${jugador?.nombre}.`);
+        return socket.emit('bingoFalso');
+    }
+    
+    console.log(`Jugador ${jugador.nombre} está cantando BINGO... verificando...`);
+    
+    // 3. Verificación (Ahora devuelve un Array de coordenadas o null)
+    const celdasGanadoras = verificarBingo(jugador.cartilla, partida.patronJuego, partida.fichasSorteadasSet);
+
+    if (celdasGanadoras) {
+        console.log(`¡BINGO VÁLIDO para ${jugador.nombre}!`);
         
-        const partida = partidas[clave];
-        const jugador = partida.jugadores.find(j => j.id === socket.id);
-
-        if (!jugador || !partida || !partida.juegoIniciado) {
-            console.log(`Error: Canto de bingo inválido del jugador ${jugador?.nombre}.`);
-            return socket.emit('bingoFalso');
-        }
+        // 4. Emitir evento de fin con el TRAZO (celdasGanadoras)
+        io.to(clave).emit('juegoTerminado', { 
+            nombreGanador: jugador.nombre,
+            cartillaGanadora: jugador.cartilla,
+            numerosSorteados: Array.from(partida.fichasSorteadasSet), // Convertimos Set a Array
+            celdasGanadoras: celdasGanadoras // <--- ESTO ES LO QUE PINTARÁ ROJO
+        });
         
-        console.log(`Jugador ${jugador.nombre} está cantando BINGO... verificando...`);
-        const esValido = verificarBingo(jugador.cartilla, partida.patronJuego, partida.fichasSorteadasSet);
+        // 5. Limpiar estado del juego
+        partida.juegoIniciado = false; 
+        partida.bombo = [];
+        partida.fichasSorteadasSet.clear();
 
-        if (esValido) {
-            console.log(`¡BINGO VÁLIDO para ${jugador.nombre}!`);
-            io.to(clave).emit('juegoTerminado', { nombreGanador: jugador.nombre });
-            
-            partida.juegoIniciado = false; 
-            partida.bombo = [];
-            partida.fichasSorteadasSet.clear();
-            // OJO: No limpiamos el historial, puede ser útil verlo en el lobby
-            // partida.fichasHistorial = [];
-
-        } else {
-            console.log(`Bingo Falso para ${jugador.nombre}`);
-            socket.emit('bingoFalso');
-        }
-    });
+    } else {
+        console.log(`Bingo Falso para ${jugador.nombre}`);
+        socket.emit('bingoFalso');
+    }
+});
 
     // -- Evento: Desconexión --
     socket.on('disconnect', () => {

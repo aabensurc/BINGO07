@@ -150,3 +150,66 @@ function configurarBotonesAjustes() {
         });
     }
 }
+
+
+
+
+/**
+ * Dibuja la cartilla del ganador en el modal y resalta los aciertos.
+ * @param {Array} cartilla - Matriz 5x5
+ * @param {Array} numerosSorteados - Array de números [1, 5, 34...]
+ * @param {HTMLElement} contenedor - Donde se dibuja
+ */
+// ¡AQUÍ FALTABA celdasGanadoras!
+function dibujarCartillaGanadora(cartilla, numerosSorteados, celdasGanadoras, contenedor) {
+    contenedor.innerHTML = '';
+    
+    // Reutilizamos estructura de grid
+    const grid = document.createElement('div');
+    grid.className = 'cartilla-grid'; // Usa el mismo grid CSS
+
+    // Headers (B I N G O) - Más pequeños por CSS
+    const letras = ['B', 'I', 'N', 'G', 'O'];
+    const colores = ['bg-b', 'bg-i', 'bg-n', 'bg-g', 'bg-o'];
+    
+    letras.forEach((letra, index) => {
+        const div = document.createElement('div');
+        div.className = `header-letra ${colores[index]}`;
+        div.textContent = letra;
+        grid.appendChild(div);
+    });
+
+// Dibujar Celdas
+    for (let fila = 0; fila < 5; fila++) {
+        for (let col = 0; col < 5; col++) {
+            const numero = cartilla[fila][col];
+            const div = document.createElement('div');
+            div.className = 'celda-3d'; 
+
+            // Texto o Estrella
+            if (numero === 'GRATIS') {
+                div.innerHTML = '★';
+                // La gratis siempre suele ser parte de la victoria si pasa por el centro
+            } else {
+                div.textContent = numero;
+            }
+
+            // 1. VERIFICAR SI SALIÓ (Marcado normal - Amarillo)
+            const salio = (numero === 'GRATIS' || numerosSorteados.includes(numero));
+            if (salio) {
+                div.classList.add('celda-ganadora'); // Amarillo (base)
+            }
+
+            // 2. VERIFICAR SI ES PARTE DEL TRAZO GANADOR (Rojo)
+            // Buscamos si esta coordenada (fila, col) está en el array celdasGanadoras
+            const esParteDelTrazo = celdasGanadoras.some(coord => coord.r === fila && coord.c === col);
+            
+            if (esParteDelTrazo) {
+                div.classList.add('celda-trazo-win'); // ¡Clase Nueva!
+            }
+
+            grid.appendChild(div);
+        }
+    }
+    contenedor.appendChild(grid);
+}

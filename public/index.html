@@ -186,16 +186,25 @@
     <script src="client.js" defer></script>
 
 <!-- MODAL FIN (REDISEÑADO CON ESTILO CELEBRACIÓN) -->
-    <div id="modalFinJuego" class="modal-overlay">
-        <!-- Usamos 'modal-card' en lugar de 'modal-contenido' para activar el nuevo diseño -->
-        <div class="modal-card">
-            <div class="icono-trofeo">🏆</div>
-            <h2 class="modal-titulo">¡BINGO!</h2>
-            <p class="modal-subtitulo">El ganador es:</p>
+<div id="modalFinJuego" class="modal-overlay">
+    <div class="modal-card">
+        <div class="icono-trofeo">🏆</div>
+        <h2 class="modal-titulo">¡BINGO!</h2>
+        <p class="modal-subtitulo">El ganador es:</p>
+        
+        <div class="ganador-wrapper">
             <p id="modalGanadorTexto" class="modal-ganador-nombre">---</p>
-            <button id="btnVolverAlLobby" class="btn-modal">Volver al Lobby</button>
+            <button id="btnVerCartonGanador" class="btn-ver-carton" title="Ver Cartilla Ganadora">
+                👁️
+            </button>
         </div>
+
+        <div id="contenedorCartillaGanadora" class="cartilla-ganadora-container oculto">
+            </div>
+
+        <button id="btnVolverAlLobby" class="btn-modal">Volver al Lobby</button>
     </div>
+</div>
 
 </body>
 </html>
