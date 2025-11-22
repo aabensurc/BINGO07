@@ -270,10 +270,10 @@ io.on('connection', (socket) => {
 
         const anfitrion = {
             id: socket.id,
-            playerId: playerId, // ¡NUEVO!
+            playerId: playerId,
             nombre: nombreAnfitrion,
             esAnfitrion: true,
-            cartilla: null
+            cartilla: generarCartilla() // <--- CAMBIO: ¡El anfitrión ya tiene cartón!
         };
         partidas[clave].jugadores.push(anfitrion);
 
@@ -465,11 +465,10 @@ io.on('connection', (socket) => {
             if (!socketJugador) return;
 
             let datosPartida = {
-                patronTexto: NOMBRES_PATRONES[patron] || "Línea Simple"
+                patronTexto: NOMBRES_PATRONES[patron] || "Línea Simple",
+                cartilla: jugador.cartilla // <--- CAMBIO: Se la enviamos a TODOS (incluido host)
             };
-            if (!jugador.esAnfitrion) {
-                datosPartida.cartilla = jugador.cartilla;
-            }
+            
             socketJugador.emit('partidaIniciada', datosPartida);
         });
     });

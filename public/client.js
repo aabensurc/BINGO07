@@ -1,88 +1,84 @@
 // 1. Inicia la conexión con el servidor
 const socket = io();
 
-// Variables nuevas para almacenar datos del ganador temporalmente
+// Variables de estado
 let datosGanadorTemp = null;
-
 let intervaloCuenta = null;
-let listaGanadoresFinal = []; // Aquí guardaremos el array que llega del server
-
-// --- ELEMENTOS DOM ---
-const pantallaBienvenida = document.getElementById('pantalla-bienvenida');
-const pantallaLobby = document.getElementById('pantalla-lobby');
-const pantallaJuegoAnfitrion = document.getElementById('pantalla-juego-anfitrion');
-const pantallaJuegoJugador = document.getElementById('pantalla-juego-jugador');
-const inputNombre = document.getElementById('inputNombre');
-const btnCrearPartida = document.getElementById('btnCrearPartida');
-const inputClave = document.getElementById('inputClave');
-const btnUnirsePartida = document.getElementById('btnUnirsePartida');
-const mensajeError = document.getElementById('mensajeError');
-const lobbyClave = document.getElementById('lobbyClave');
-const lobbyListaJugadores = document.getElementById('lobbyListaJugadores');
-const lobbyVistaAnfitrion = document.getElementById('lobby-vista-anfitrion');
-const lobbyVistaJugador = document.getElementById('lobby-vista-jugador');
-// const lobbyPatrones = document.getElementById('lobbyPatrones');  <-- BORRAR ESTO
-const btnEmpezarPartida = document.getElementById('btnEmpezarPartida');
-const btnSortearFicha = document.getElementById('btnSortearFicha');
-const fichaActual = document.getElementById('fichaActual');
-const fichaAnterior = document.getElementById('fichaAnterior');
-
-// Apuntamos al nuevo ID del grid
-const tableroControlAnfitrion = document.getElementById('grid75'); 
-
-const jugadorPatron = document.getElementById('jugadorPatron');
-const cartillaJugador = document.getElementById('cartillaJugador');
-const btnCantarBingo = document.getElementById('btnCantarBingo');
-const historialContenedor = document.getElementById('historialContenedor');
-const modalFinJuego = document.getElementById('modalFinJuego');
-
-const btnVolverAlLobby = document.getElementById('btnVolverAlLobby');
-const checkAutomatico = document.getElementById('checkAutomatico');
-const inputIntervalo = document.getElementById('inputIntervalo');
-const nombreJugadorDisplay = document.getElementById('nombreJugadorDisplay');
-const nombreAnfitrionDisplay = document.getElementById('nombreAnfitrionDisplay');
-
-// Elementos del DOM nuevos
-const modalGanadorTexto = document.getElementById('modalGanadorTexto');
-const contenedorCartillaGanadora = document.getElementById('contenedorCartillaGanadora');
-
-const avisoCuentaRegresiva = document.getElementById('avisoCuentaRegresiva');
-const segundosRestantes = document.getElementById('segundosRestantes');
-const contenedorListaGanadores = document.getElementById('contenedorListaGanadores');
-
-const btnCambiarCarton = document.getElementById('btnCambiarCarton');
-const mensajeCambioCarton = document.getElementById('mensajeCambioCarton');
-
-const checkGuardarFavorito = document.getElementById('checkGuardarFavorito');
-
-// --- ESTADO ---
+let listaGanadoresFinal = [];
 let patronSeleccionado = 'linea';
 let miCartilla = null;
-let esperandoCargaFavorito = false; // Variable nueva para controlar el mensaje
+let esperandoCargaFavorito = false;
 let soyAnfitrion = false;
-const PLAYER_ID_KEY = 'bingoPlayerId';
 let misMarcas = [];
 let temporizadorSorteo = null;
-let miNombre = ""; 
+let miNombre = "";
+const PLAYER_ID_KEY = 'bingoPlayerId';
 
 // --- VOZ ---
 let estaMuteado = false;
 let vozSeleccionada = null;
 const synth = window.speechSynthesis;
 
-// --- FUNCIÓN NUEVA: Sincronizar el Toggle Visualmente ---
-// Compara la cartilla actual con la guardada en localStorage
+// --- ELEMENTOS DOM ---
+const pantallaBienvenida = document.getElementById('pantalla-bienvenida');
+const pantallaLobby = document.getElementById('pantalla-lobby');
+const pantallaJuegoAnfitrion = document.getElementById('pantalla-juego-anfitrion');
+const pantallaJuegoJugador = document.getElementById('pantalla-juego-jugador');
+
+const inputNombre = document.getElementById('inputNombre');
+const btnCrearPartida = document.getElementById('btnCrearPartida');
+const inputClave = document.getElementById('inputClave');
+const btnUnirsePartida = document.getElementById('btnUnirsePartida');
+const mensajeError = document.getElementById('mensajeError');
+
+const lobbyClave = document.getElementById('lobbyClave');
+const lobbyListaJugadores = document.getElementById('lobbyListaJugadores');
+const lobbyVistaAnfitrion = document.getElementById('lobby-vista-anfitrion');
+const lobbyVistaJugador = document.getElementById('lobby-vista-jugador');
+const btnEmpezarPartida = document.getElementById('btnEmpezarPartida');
+
+// Elementos Anfitrión
+const btnSortearFicha = document.getElementById('btnSortearFicha');
+const fichaActual = document.getElementById('fichaActual');
+const fichaAnterior = document.getElementById('fichaAnterior');
+const tableroControlAnfitrion = document.getElementById('grid75'); 
+const nombreAnfitrionDisplay = document.getElementById('nombreAnfitrionDisplay');
+const displayClaveAnfitrion = document.getElementById('displayClaveAnfitrion'); // ¡NUEVO!
+const checkAutomatico = document.getElementById('checkAutomatico');
+const inputIntervalo = document.getElementById('inputIntervalo');
+
+// Elementos Híbridos (Panel Desplegable Host)
+const btnToggleCartillaHost = document.getElementById('btnToggleCartillaHost');
+const panelCartillaHost = document.getElementById('panelCartillaHost');
+const cartillaHostContainer = document.getElementById('cartillaHostContainer');
+const btnCantarBingoHost = document.getElementById('btnCantarBingoHost');
+const hostPatronTexto = document.getElementById('hostPatronTexto');
+
+// Elementos Jugador
+const nombreJugadorDisplay = document.getElementById('nombreJugadorDisplay');
+const jugadorPatron = document.getElementById('jugadorPatron');
+const cartillaJugador = document.getElementById('cartillaJugador');
+const btnCantarBingo = document.getElementById('btnCantarBingo');
+const historialContenedor = document.getElementById('historialContenedor');
+const btnCambiarCarton = document.getElementById('btnCambiarCarton');
+const mensajeCambioCarton = document.getElementById('mensajeCambioCarton');
+const checkGuardarFavorito = document.getElementById('checkGuardarFavorito');
+
+// Modales
+const modalFinJuego = document.getElementById('modalFinJuego');
+const btnVolverAlLobby = document.getElementById('btnVolverAlLobby');
+const contenedorCartillaGanadora = document.getElementById('contenedorCartillaGanadora');
+const contenedorListaGanadores = document.getElementById('contenedorListaGanadores');
+const avisoCuentaRegresiva = document.getElementById('avisoCuentaRegresiva');
+const segundosRestantes = document.getElementById('segundosRestantes');
+
+// --- FUNCIONES AUXILIARES ---
+
 function sincronizarToggleFavorito() {
     if (!checkGuardarFavorito || !miCartilla) return;
-    
     const favoritoStr = localStorage.getItem('bingoCartonFavorito');
-    if (favoritoStr) {
-        // Comparamos si la cartilla actual es idéntica a la guardada
-        if (JSON.stringify(miCartilla) === favoritoStr) {
-            checkGuardarFavorito.checked = true;
-        } else {
-            checkGuardarFavorito.checked = false;
-        }
+    if (favoritoStr && JSON.stringify(miCartilla) === favoritoStr) {
+        checkGuardarFavorito.checked = true;
     } else {
         checkGuardarFavorito.checked = false;
     }
@@ -95,35 +91,11 @@ function cambiarPantalla(idSiguientePantalla) {
     document.getElementById(idSiguientePantalla).classList.add('activa');
 }
 
-if (typeof configurarBotonesAjustes === 'function') {
-    configurarBotonesAjustes();
-}
-
-const toggleSonido = document.getElementById('toggleSonidoMenu');
-if(toggleSonido) {
-    toggleSonido.addEventListener('click', () => {
-        estaMuteado = !estaMuteado;
-        const texto = estaMuteado ? "Sonido: Desactivado 🔇" : "Sonido: Activado 🔊";
-        toggleSonido.textContent = texto;
-        synth.cancel();
-    });
-}
-const toggleSonidoAnf = document.getElementById('toggleSonidoAnfitrion');
-if(toggleSonidoAnf) {
-    toggleSonidoAnf.addEventListener('click', () => {
-        estaMuteado = !estaMuteado;
-        const texto = estaMuteado ? "Sonido: Desactivado 🔇" : "Sonido: Activado 🔊";
-        toggleSonidoAnf.textContent = texto;
-        synth.cancel();
-    });
-}
-
 function cargarVoz() {
     const voces = synth.getVoices();
-    vozSeleccionada = voces.find(v => v.lang === 'es-ES' && v.localService);
-    if (!vozSeleccionada) vozSeleccionada = voces.find(v => v.lang === 'es-US' && v.localService);
-    if (!vozSeleccionada) vozSeleccionada = voces.find(v => v.lang.startsWith('es-'));
-    if (!vozSeleccionada && voces.length > 0) vozSeleccionada = voces[0];
+    vozSeleccionada = voces.find(v => v.lang === 'es-ES' && v.localService) || 
+                      voces.find(v => v.lang.startsWith('es-')) || 
+                      voces[0];
 }
 cargarVoz();
 if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = cargarVoz;
@@ -138,7 +110,25 @@ function hablar(texto) {
     synth.speak(anuncio);
 }
 
-// --- EVENTOS DE BOTONES ---
+// Configuración de Ajustes (Color, Sonido)
+if (typeof configurarBotonesAjustes === 'function') configurarBotonesAjustes();
+
+const toggleSonido = document.getElementById('toggleSonidoMenu');
+const toggleSonidoAnf = document.getElementById('toggleSonidoAnfitrion');
+
+function toggleMute() {
+    estaMuteado = !estaMuteado;
+    const texto = estaMuteado ? "Sonido: Desactivado 🔇" : "Sonido: Activado 🔊";
+    if(toggleSonido) toggleSonido.textContent = texto;
+    if(toggleSonidoAnf) toggleSonidoAnf.textContent = texto;
+    synth.cancel();
+}
+if(toggleSonido) toggleSonido.addEventListener('click', toggleMute);
+if(toggleSonidoAnf) toggleSonidoAnf.addEventListener('click', toggleMute);
+
+
+// --- EVENTOS DOM: INICIO Y LOBBY ---
+
 btnCrearPartida.addEventListener('click', () => {
     const nombre = inputNombre.value.trim();
     if (!nombre) { mensajeError.textContent = 'Nombre requerido'; return; }
@@ -154,85 +144,52 @@ btnUnirsePartida.addEventListener('click', () => {
     socket.emit('unirsePartida', { nombre: nombre, clave: clave });
 });
 
-
-// =========================================================
-// AQUÍ PEGAS EL CÓDIGO NUEVO DEL DROPDOWN (Paso C)
-// =========================================================
-
-// 1. Referencias a los elementos del nuevo menú
+// Lógica Selector Patrones (Dropdown)
 const dropdown = document.getElementById('dropdownPatrones');
-const trigger = dropdown.querySelector('.select-trigger');
-const textoTrigger = document.getElementById('textoPatronSeleccionado');
-const opciones = dropdown.querySelectorAll('.option');
+if (dropdown) {
+    const trigger = dropdown.querySelector('.select-trigger');
+    const textoTrigger = document.getElementById('textoPatronSeleccionado');
+    const opciones = dropdown.querySelectorAll('.option');
 
-// 2. Abrir / Cerrar al hacer clic
-if (trigger) { // Verificamos que exista por si acaso
-    trigger.addEventListener('click', (e) => {
-        e.stopPropagation(); 
-        dropdown.classList.toggle('open');
+    trigger.addEventListener('click', (e) => { e.stopPropagation(); dropdown.classList.toggle('open'); });
+    opciones.forEach(opcion => {
+        opcion.addEventListener('click', () => {
+            opciones.forEach(op => op.classList.remove('selected'));
+            opcion.classList.add('selected');
+            patronSeleccionado = opcion.dataset.value;
+            if(textoTrigger) textoTrigger.textContent = opcion.textContent;
+            dropdown.classList.remove('open');
+        });
+    });
+    document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target)) dropdown.classList.remove('open');
     });
 }
-
-// 3. Seleccionar una opción de la lista
-opciones.forEach(opcion => {
-    opcion.addEventListener('click', () => {
-        // Quitar clase 'selected' a las otras
-        opciones.forEach(op => op.classList.remove('selected'));
-        // Marcar la actual
-        opcion.classList.add('selected');
-        
-        // Actualizar la variable global 'patronSeleccionado'
-        patronSeleccionado = opcion.dataset.value;
-        
-        // Actualizar el texto del botón principal
-        if(textoTrigger) textoTrigger.textContent = opcion.textContent;
-        
-        // Cerrar el menú
-        dropdown.classList.remove('open');
-    });
-});
-
-// 4. Cerrar el menú si haces click fuera
-document.addEventListener('click', (e) => {
-    if (dropdown && !dropdown.contains(e.target)) {
-        dropdown.classList.remove('open');
-    }
-});
-
-// =========================================================
-// FIN DEL CÓDIGO NUEVO
-// =========================================================
-
-
 
 btnEmpezarPartida.addEventListener('click', () => {
     socket.emit('empezarPartida', { patron: patronSeleccionado });
 });
 
 
-// --- LÓGICA TOGGLE FAVORITO ---
-if (checkGuardarFavorito) {
-    checkGuardarFavorito.addEventListener('change', () => {
-        if (checkGuardarFavorito.checked) {
-            // USUARIO LO PRENDIÓ -> GUARDAR
-            if (miCartilla) {
-                localStorage.setItem('bingoCartonFavorito', JSON.stringify(miCartilla));
-                // Pequeño feedback visual (opcional)
-                hablar("Cartón guardado");
-            } else {
-                // Si aún no hay cartilla (raro), lo apagamos
-                checkGuardarFavorito.checked = false;
-            }
-        } else {
-            // USUARIO LO APAGÓ -> BORRAR
-            localStorage.removeItem('bingoCartonFavorito');
-            hablar("Favorito eliminado");
-        }
+// --- EVENTOS DOM: ANFITRIÓN / HÍBRIDO ---
+
+// Panel Desplegable (Acordeón)
+if (btnToggleCartillaHost && panelCartillaHost) {
+    btnToggleCartillaHost.addEventListener('click', () => {
+        panelCartillaHost.classList.toggle('abierto');
     });
 }
 
+// Botón Cantar Bingo del Host
+if (btnCantarBingoHost) {
+    btnCantarBingoHost.addEventListener('click', () => {
+        socket.emit('cantarBingo');
+        btnCantarBingoHost.disabled = true;
+        btnCantarBingoHost.textContent = 'VERIFICANDO...';
+    });
+}
 
-// --- LOGICA SORTEO ---
+// Sorteo
 btnSortearFicha.addEventListener('click', () => {
     if (checkAutomatico.checked) return; 
     btnSortearFicha.disabled = true;
@@ -246,27 +203,26 @@ checkAutomatico.addEventListener('change', () => {
         inputIntervalo.value = intervalo;
         inputIntervalo.disabled = true;
         
-        const milisegundos = intervalo * 1000;
-
         const cicloAutomatico = () => {
             if (!btnSortearFicha.disabled) {
                 btnSortearFicha.disabled = true;
                 socket.emit('sortearFicha');
             }
         };
-        temporizadorSorteo = setInterval(cicloAutomatico, milisegundos);
+        temporizadorSorteo = setInterval(cicloAutomatico, intervalo * 1000);
         cicloAutomatico();
     } else {
-        if (temporizadorSorteo) { 
-            clearInterval(temporizadorSorteo); 
-            temporizadorSorteo = null; 
-        }
+        if (temporizadorSorteo) { clearInterval(temporizadorSorteo); temporizadorSorteo = null; }
         inputIntervalo.disabled = false;
         btnSortearFicha.disabled = false;
     }
 });
 
-cartillaJugador.addEventListener('click', (e) => {
+
+// --- EVENTOS DOM: JUGADOR (Comunes) ---
+
+// Marcar Cartilla (Función genérica para usar en ambos contenedores)
+function manejarClickCartilla(e) {
     const celda = e.target.closest('.celda-3d');
     if (celda && celda.dataset.numero) {
         if (celda.dataset.numero === 'GRATIS') return;
@@ -282,46 +238,83 @@ cartillaJugador.addEventListener('click', (e) => {
         const playerId = localStorage.getItem(PLAYER_ID_KEY);
         if (playerId) localStorage.setItem(`bingoMarks-${playerId}`, JSON.stringify(misMarcas));
     }
-});
+}
 
-btnCantarBingo.addEventListener('click', () => {
-    socket.emit('cantarBingo');
-    btnCantarBingo.disabled = true;
-    btnCantarBingo.textContent = 'VERIFICANDO...';
-});
+// Asignar listener a ambos contenedores si existen
+if (cartillaJugador) cartillaJugador.addEventListener('click', manejarClickCartilla);
+if (cartillaHostContainer) cartillaHostContainer.addEventListener('click', manejarClickCartilla);
 
-// Al volver al lobby, limpiamos la variable temporal
+if (btnCantarBingo) {
+    btnCantarBingo.addEventListener('click', () => {
+        socket.emit('cantarBingo');
+        btnCantarBingo.disabled = true;
+        btnCantarBingo.textContent = 'VERIFICANDO...';
+    });
+}
+
+// Botón Cambiar Cartón (Lobby)
+if(btnCambiarCarton) {
+    btnCambiarCarton.addEventListener('click', () => {
+        localStorage.removeItem('bingoCartonFavorito');
+        if(checkGuardarFavorito) checkGuardarFavorito.checked = false;
+        btnCambiarCarton.disabled = true;
+        btnCambiarCarton.textContent = "🔄 Generando...";
+        socket.emit('pedirNuevoCarton');
+    });
+}
+
+// Toggle Guardar Favorito
+if (checkGuardarFavorito) {
+    checkGuardarFavorito.addEventListener('change', () => {
+        if (checkGuardarFavorito.checked) {
+            if (miCartilla) {
+                localStorage.setItem('bingoCartonFavorito', JSON.stringify(miCartilla));
+                hablar("Cartón guardado");
+            }
+        } else {
+            localStorage.removeItem('bingoCartonFavorito');
+            hablar("Favorito eliminado");
+        }
+    });
+}
+
+
+// --- LIMPIEZA Y RESET ---
 btnVolverAlLobby.addEventListener('click', () => {
     modalFinJuego.classList.remove('visible');
-    datosGanadorTemp = null; // Limpieza
+    datosGanadorTemp = null;
     limpiarJuegoLocal();
     cambiarPantalla('pantalla-lobby');
 });
 
 function limpiarJuegoLocal(borrarMemoria = true) {
-    cartillaJugador.innerHTML = '';
-    if (tableroControlAnfitrion) {
-        tableroControlAnfitrion.innerHTML = '';
-    }
-    if (historialContenedor) historialContenedor.innerHTML = '<span>Esperando...</span>';
+    // Limpiar visuales
+    if(cartillaJugador) cartillaJugador.innerHTML = '';
+    if(cartillaHostContainer) cartillaHostContainer.innerHTML = '';
+    if(tableroControlAnfitrion) tableroControlAnfitrion.innerHTML = '';
+    if(historialContenedor) historialContenedor.innerHTML = '<span>Esperando...</span>';
     
     if(fichaActual) fichaActual.textContent = '--';
     if(fichaAnterior) fichaAnterior.textContent = '--';
     
+    // Memorias y Timers
     if (borrarMemoria) {
         const playerId = localStorage.getItem(PLAYER_ID_KEY);
         if (playerId) localStorage.removeItem(`bingoMarks-${playerId}`);
         misMarcas = [];
     }
-    
     if (typeof detenerCronometro === 'function') detenerCronometro();
     if (temporizadorSorteo) { clearInterval(temporizadorSorteo); temporizadorSorteo = null; }
     if (checkAutomatico) checkAutomatico.checked = false;
     if (inputIntervalo) inputIntervalo.disabled = false;
     
-    btnCantarBingo.disabled = false;
-    btnCantarBingo.textContent = '¡CANTAR BINGO!';
-    btnSortearFicha.disabled = false;
+    // Restaurar botones
+    if(btnCantarBingo) { btnCantarBingo.disabled = false; btnCantarBingo.textContent = '¡CANTAR BINGO!'; }
+    if(btnCantarBingoHost) { btnCantarBingoHost.disabled = false; btnCantarBingoHost.textContent = '¡CANTAR BINGO!'; }
+    if(btnSortearFicha) btnSortearFicha.disabled = false;
+    
+    // Resetear Panel Host
+    if (panelCartillaHost) panelCartillaHost.classList.remove('abierto');
     
     if (typeof HostUI !== 'undefined' && HostUI.resetearInterfaz) {
         HostUI.resetearInterfaz();
@@ -329,66 +322,9 @@ function limpiarJuegoLocal(borrarMemoria = true) {
 }
 
 
-// --- LÓGICA CAMBIAR CARTÓN (REROLL) ---
-if(btnCambiarCarton) {
-    btnCambiarCarton.addEventListener('click', () => {
-        // 1. SI PIDE CAMBIO, BORRAMOS EL FAVORITO Y APAGAMOS TOGGLE
-        localStorage.removeItem('bingoCartonFavorito');
-        if(checkGuardarFavorito) checkGuardarFavorito.checked = false;
-
-        // 2. Efecto visual de carga
-        btnCambiarCarton.disabled = true;
-        btnCambiarCarton.textContent = "🔄 Generando...";
-        
-        // 3. Pedir al servidor
-        socket.emit('pedirNuevoCarton');
-    });
-}
-
-// Confirmación del servidor cuando se cambia el cartón
-socket.on('cartonCambiado', (nuevaCartilla) => {
-    // 1. Actualizar memoria local con el nuevo cartón
-    if (nuevaCartilla) {
-        miCartilla = nuevaCartilla;
-    }
-
-    // 2. Restaurar botón visualmente
-    setTimeout(() => {
-        if(btnCambiarCarton) {
-            btnCambiarCarton.disabled = false;
-            btnCambiarCarton.textContent = "🔄 Cambiar mi Cartón";
-        }
-    }, 1000);
-
-    // 3. LOGICA DE MENSAJE Y TOGGLE DIFERENCIADA
-    if (esperandoCargaFavorito) {
-        // CASO A: Se cargó un favorito
-        if(mensajeCambioCarton) {
-            mensajeCambioCarton.textContent = "¡Favorito cargado!";
-            mensajeCambioCarton.style.opacity = 1;
-            mensajeCambioCarton.style.color = "#2ecc71"; // Verde éxito
-        }
-        hablar("Cartón cargado.");
-        esperandoCargaFavorito = false; // Apagamos bandera
-
-    } else {
-        // CASO B: Se generó uno nuevo (Reroll)
-        if(mensajeCambioCarton) {
-            mensajeCambioCarton.textContent = "¡Nuevo cartón listo!";
-            mensajeCambioCarton.style.opacity = 1;
-            mensajeCambioCarton.style.color = "#f1c40f"; // Amarillo
-        }
-        hablar("Cartón cambiado.");
-    }
-    
-    // Desvanecer mensaje
-    if(mensajeCambioCarton) setTimeout(() => mensajeCambioCarton.style.opacity = 0, 3000);
-
-    // 4. IMPORTANTE: Verificar si debemos encender el toggle
-    sincronizarToggleFavorito();
-});
-
-// --- SOCKETS ---
+// =========================================================
+//                 SOCKET.IO EVENTS
+// =========================================================
 
 socket.on('connect', () => {
     const playerId = localStorage.getItem(PLAYER_ID_KEY);
@@ -398,13 +334,19 @@ socket.on('connect', () => {
     }
 });
 
+// --- CREACIÓN Y UNIÓN ---
 socket.on('partidaCreada', (datos) => {
     soyAnfitrion = true;
     localStorage.setItem(PLAYER_ID_KEY, datos.playerId);
     lobbyClave.textContent = datos.clave;
-    lobbyVistaAnfitrion.style.display = 'flex'; // Flex para centrar contenido
+    
+    // Actualizar código en la nueva cabecera Host
+    if(displayClaveAnfitrion) displayClaveAnfitrion.textContent = datos.clave;
+
+    lobbyVistaAnfitrion.style.display = 'flex'; 
     lobbyVistaAnfitrion.style.flexDirection = 'column';
     lobbyVistaJugador.style.display = 'none';
+    
     if(nombreAnfitrionDisplay) nombreAnfitrionDisplay.textContent = miNombre || "Anfitrión";
     cambiarPantalla('pantalla-lobby');
 });
@@ -417,97 +359,139 @@ socket.on('unionExitosa', (datos) => {
     lobbyVistaJugador.style.display = 'block';
     cambiarPantalla('pantalla-lobby');
 
-    // --- NUEVO: AUTO-CARGAR FAVORITO ---
+    // Auto-Cargar Favorito
     const favoritoGuardado = localStorage.getItem('bingoCartonFavorito');
     if (favoritoGuardado) {
-        console.log("Cartón favorito detectado. Cargando...");
-        const cartilla = JSON.parse(favoritoGuardado);
-        
-        esperandoCargaFavorito = true; // <--- ¡IMPORTANTE! Activamos la bandera aquí
-        socket.emit('usarCartonFavorito', cartilla);
+        esperandoCargaFavorito = true;
+        socket.emit('usarCartonFavorito', JSON.parse(favoritoGuardado));
     } else {
-        // Aseguramos que esté apagado si no hay favorito
         if(checkGuardarFavorito) checkGuardarFavorito.checked = false;
     }
 });
 
 socket.on('errorUnion', (msg) => mensajeError.textContent = msg);
 
-// --- ACTUALIZACIÓN DEL LOBBY CON ICONOS (NUEVO) ---
 socket.on('actualizarLobby', (datos) => {
     lobbyListaJugadores.innerHTML = '';
     datos.jugadores.forEach(j => {
         const li = document.createElement('li');
-        
-        // Elegir icono según rol (se definen en lobby-theme.css)
         const iconClass = j.esAnfitrion ? 'icono-corona' : 'icono-usuario';
-        
-        // Construir HTML con icono y nombre
-        li.innerHTML = `
-            <div class="icono-jugador-lista ${iconClass}"></div>
-            <span>${j.nombre}</span>
-        `;
-        
+        li.innerHTML = `<div class="icono-jugador-lista ${iconClass}"></div><span>${j.nombre}</span>`;
         if (j.esAnfitrion) li.style.fontWeight = 'bold';
         lobbyListaJugadores.appendChild(li);
     });
 });
 
+// --- CAMBIO DE CARTÓN ---
+socket.on('cartonCambiado', (nuevaCartilla) => {
+    if (nuevaCartilla) miCartilla = nuevaCartilla;
+
+    setTimeout(() => {
+        if(btnCambiarCarton) { btnCambiarCarton.disabled = false; btnCambiarCarton.textContent = "🔄 Cambiar mi Cartón"; }
+    }, 1000);
+
+    if (esperandoCargaFavorito) {
+        if(mensajeCambioCarton) {
+            mensajeCambioCarton.textContent = "¡Favorito cargado!";
+            mensajeCambioCarton.style.opacity = 1;
+            mensajeCambioCarton.style.color = "#2ecc71";
+        }
+        hablar("Cartón cargado.");
+        esperandoCargaFavorito = false;
+    } else {
+        if(mensajeCambioCarton) {
+            mensajeCambioCarton.textContent = "¡Nuevo cartón listo!";
+            mensajeCambioCarton.style.opacity = 1;
+            mensajeCambioCarton.style.color = "#f1c40f";
+        }
+        hablar("Cartón cambiado.");
+    }
+    if(mensajeCambioCarton) setTimeout(() => mensajeCambioCarton.style.opacity = 0, 3000);
+    sincronizarToggleFavorito();
+});
+
+
+// --- INICIO DE JUEGO (HÍBRIDO) ---
 socket.on('partidaIniciada', (datos) => {
     limpiarJuegoLocal();
-    if (typeof iniciarCronometro === 'function') iniciarCronometro();
     
+    // 1. Guardar datos comunes
+    miCartilla = datos.cartilla; // Todos reciben cartilla ahora
+    
+    // 2. Configurar Pantalla
     if (soyAnfitrion) {
-        if (typeof HostUI !== 'undefined') {
-            HostUI.renderizarTableroVacio();
+        // Renderizar cosas de host
+        if (typeof HostUI !== 'undefined') HostUI.renderizarTableroVacio();
+        if(hostPatronTexto) hostPatronTexto.textContent = "Jugando por: " + datos.patronTexto;
+        
+        // Renderizar cartilla de jugador del host (en el acordeón)
+        if (miCartilla && typeof dibujarCartillaModerna === 'function') {
+            dibujarCartillaModerna(miCartilla, cartillaHostContainer);
         }
+        
         cambiarPantalla('pantalla-juego-anfitrion');
     } else {
+        // Renderizar pantalla normal de jugador
         jugadorPatron.textContent = datos.patronTexto;
-        miCartilla = datos.cartilla;
         if(nombreJugadorDisplay) nombreJugadorDisplay.textContent = miNombre || "Jugador";
         
         if (typeof dibujarCartillaModerna === 'function') {
-            dibujarCartillaModerna(datos.cartilla, cartillaJugador);
+            dibujarCartillaModerna(miCartilla, cartillaJugador);
         }
-        
         cambiarPantalla('pantalla-juego-jugador');
+    }
+
+    if(!datos.esUnionTardia) {
         setTimeout(() => hablar(`Iniciando juego. ${datos.patronTexto}`), 1000);
     }
 });
 
+
+// --- SORTEO DE FICHA (HÍBRIDO) ---
 socket.on('fichaAnunciada', (datos) => {
     const { ficha } = datos;
+    
+    // A. Común: Historial
     if (typeof agregarBolillaHistorial === 'function') {
         agregarBolillaHistorial(ficha, historialContenedor);
     }
 
+    // B. Rol Anfitrión (Tablero control)
     if (soyAnfitrion) {
         const fichaActualTexto = fichaActual.textContent;
         let fichaPreviaObj = null;
-        
         if(fichaActualTexto !== '--') {
-            // Intentar leer del DOM si es posible
             const numPrevio = parseInt(fichaActual.querySelector('.numero-grande')?.textContent || fichaActual.textContent);
             if (!isNaN(numPrevio)) {
                  fichaPreviaObj = { numero: numPrevio, letra: getLetraDeNumero(numPrevio) };
             }
         }
-
         if (typeof HostUI !== 'undefined') {
             HostUI.marcarFicha(ficha, fichaPreviaObj);
         }
         btnSortearFicha.disabled = false;
-    } else {
+        
+        // VOZ: El anfitrión habla
         const letra = ficha.letra.split('').join(' '); 
         hablar(`${letra} ${ficha.numero}`);
-        const miCelda = document.querySelector(`.celda-3d[data-numero="${String(ficha.numero)}"]`);
+
+        // MARCA VISUAL EN CARTILLA HOST (Si la tiene abierta)
+        const miCelda = cartillaHostContainer.querySelector(`.celda-3d[data-numero="${String(ficha.numero)}"]`);
+        if (miCelda) {
+            miCelda.classList.add('llamada');
+            setTimeout(() => miCelda.classList.remove('llamada'), 3000);
+        }
+
+    } else {
+        // C. Rol Jugador Normal
+        const letra = ficha.letra.split('').join(' '); 
+        hablar(`${letra} ${ficha.numero}`);
+        
+        const miCelda = cartillaJugador.querySelector(`.celda-3d[data-numero="${String(ficha.numero)}"]`);
         if (miCelda) {
             miCelda.classList.add('llamada'); 
             if (navigator.vibrate) navigator.vibrate(200);
-            setTimeout(() => {
-                miCelda.classList.remove('llamada');
-            }, 3000);
+            setTimeout(() => miCelda.classList.remove('llamada'), 3000);
         }
     }
 });
@@ -520,18 +504,25 @@ function getLetraDeNumero(num) {
     return 'O';
 }
 
+
+// --- ALERTAS Y ERRORES ---
 socket.on('bingoFalso', () => {
     hablar('Bingo Falso');
-    btnCantarBingo.classList.add('bingo-falso');
-    btnCantarBingo.textContent = '¡BINGO FALSO!';
-    setTimeout(() => {
-        btnCantarBingo.classList.remove('bingo-falso');
-        btnCantarBingo.disabled = false;
-        btnCantarBingo.textContent = '¡CANTAR BINGO!';
-    }, 1000);
+    
+    // Feedback en ambos botones por si acaso
+    const botones = [btnCantarBingo, btnCantarBingoHost];
+    botones.forEach(btn => {
+        if(btn) {
+            btn.classList.add('bingo-falso');
+            btn.textContent = '¡BINGO FALSO!';
+            setTimeout(() => {
+                btn.classList.remove('bingo-falso');
+                btn.disabled = false;
+                btn.textContent = '¡CANTAR BINGO!';
+            }, 1000);
+        }
+    });
 });
-
-
 
 socket.on('errorJuego', (msg) => {
     localStorage.removeItem(PLAYER_ID_KEY);
@@ -544,8 +535,10 @@ socket.on('forzarLimpieza', () => {
     pantallaBienvenida.querySelector('.form-unirse').style.display = 'block';
 });
 
+
+// --- RECONEXIÓN (HÍBRIDA) ---
 socket.on('reconexionExitosa', (datos) => {
-    // 1. Restaurar datos básicos (Nombre y Rol)
+    // 1. Datos Base
     if (datos.nombre) {
         miNombre = datos.nombre; 
         if(nombreJugadorDisplay) nombreJugadorDisplay.textContent = datos.nombre; 
@@ -553,109 +546,99 @@ socket.on('reconexionExitosa', (datos) => {
     }
     soyAnfitrion = datos.esAnfitrion;
     
-    // 2. Limpieza y Cronómetro
-    limpiarJuegoLocal(false); // false = no borrar memoria de marcas todavía
+    // 2. Limpieza
+    limpiarJuegoLocal(false);
     if (typeof iniciarCronometro === 'function') iniciarCronometro();
 
-    // 3. Restaurar Historial Visual (Bolillas arriba)
+    // 3. Historial
     datos.fichasHistorial.forEach(ficha => {
         if (typeof agregarBolillaHistorial === 'function') {
             agregarBolillaHistorial(ficha, historialContenedor);
         }
     });
 
-    // 4. Lógica Específica
+    // 4. Recuperar Marcas de Memoria
+    const playerId = localStorage.getItem(PLAYER_ID_KEY);
+    const savedMarks = JSON.parse(localStorage.getItem(`bingoMarks-${playerId}`) || '[]');
+    misMarcas = savedMarks;
+
+    // 5. Renderizado Híbrido
     if (soyAnfitrion) {
-        // --- LOGICA DE ANFITRIÓN ---
+        // A. UI HOST
         if (typeof HostUI !== 'undefined') {
             HostUI.renderizarTableroVacio();
-            // Marcar todas las fichas en el tablero de control
-            datos.fichasHistorial.forEach(ficha => {
-                HostUI.marcarFicha(ficha); 
-            });
-            // Restaurar bolas grandes
-            if (datos.ultimaFicha) {
-                 HostUI.actualizarBolaVisual(fichaActual, datos.ultimaFicha, false);
-            }
-            if (datos.anteriorFicha) {
-                 HostUI.actualizarBolaVisual(fichaAnterior, datos.anteriorFicha, false);
-            }
+            datos.fichasHistorial.forEach(ficha => HostUI.marcarFicha(ficha));
+            
+            if (datos.ultimaFicha) HostUI.actualizarBolaVisual(fichaActual, datos.ultimaFicha, false);
+            if (datos.anteriorFicha) HostUI.actualizarBolaVisual(fichaAnterior, datos.anteriorFicha, false);
         }
         if(checkAutomatico) checkAutomatico.checked = false;
+        if(displayClaveAnfitrion) displayClaveAnfitrion.textContent = lobbyClave.textContent;
+
+        // B. CARTILLA JUGADOR DEL HOST (Si la tiene)
+        if (datos.cartilla) {
+            miCartilla = datos.cartilla;
+            if (typeof dibujarCartillaModerna === 'function') {
+                dibujarCartillaModerna(miCartilla, cartillaHostContainer);
+            }
+            // Re-aplicar marcas en el contenedor del host
+            if (savedMarks.length > 0) {
+                const celdas = cartillaHostContainer.querySelectorAll('.celda-3d');
+                celdas.forEach(celda => {
+                    if (savedMarks.includes(parseInt(celda.dataset.numero))) celda.classList.add('marcada');
+                });
+            }
+        }
         cambiarPantalla('pantalla-juego-anfitrion');
 
     } else {
-        // --- LOGICA DE JUGADOR ---
+        // C. JUGADOR NORMAL
         jugadorPatron.textContent = datos.patronTexto;
-        miCartilla = datos.cartilla; // IMPORTANTE: Actualizamos la variable global
+        miCartilla = datos.cartilla;
 
-        // Dibujar cartilla
         if (typeof dibujarCartillaModerna === 'function') {
-            dibujarCartillaModerna(datos.cartilla, cartillaJugador);
+            dibujarCartillaModerna(miCartilla, cartillaJugador);
         }
-
-        // Restaurar marcas manuales desde LocalStorage
-        const playerId = localStorage.getItem(PLAYER_ID_KEY);
-        const savedMarks = JSON.parse(localStorage.getItem(`bingoMarks-${playerId}`) || '[]');
-        misMarcas = savedMarks; 
-        
         if (savedMarks.length > 0) {
             const celdas = cartillaJugador.querySelectorAll('.celda-3d');
             celdas.forEach(celda => {
-                const numeroCelda = parseInt(celda.dataset.numero);
-                if (savedMarks.includes(numeroCelda)) {
-                    celda.classList.add('marcada');
-                }
+                if (savedMarks.includes(parseInt(celda.dataset.numero))) celda.classList.add('marcada');
             });
         }
-
         cambiarPantalla('pantalla-juego-jugador');
-        setTimeout(() => hablar(`Bienvenido de vuelta ${miNombre}`), 1000);
-
-        // ¡NUEVO! Aquí es donde arreglamos el botón de la tuerca al refrescar
-        if (typeof sincronizarToggleFavorito === 'function') {
-            sincronizarToggleFavorito(); 
-        }
+        sincronizarToggleFavorito(); 
     }
+    
+    setTimeout(() => hablar(`Bienvenido de vuelta ${miNombre}`), 1000);
 });
 
 
+// --- FIN DE JUEGO Y GANADORES ---
 
-// A) AVISO DE CIERRE (Empiezan los 10 segundos)
+// A) AVISO DE CIERRE
 socket.on('avisoCierreBingo', (datos) => {
-    // Lógica de mensajes personalizada
     const soyElGanador = (miNombre === datos.primerGanador);
-    
     avisoCuentaRegresiva.style.display = 'block';
     
     if (soyElGanador) {
-        // MENSAJE PARA EL GANADOR
         hablar("Bingo registrado. Esperando a otros jugadores.");
-        avisoCuentaRegresiva.style.backgroundColor = "#f1c40f"; // Dorado/Amarillo
-        avisoCuentaRegresiva.style.color = "#2d3436"; // Texto oscuro
-        // Reconstruimos el HTML manteniendo el span del contador
+        avisoCuentaRegresiva.style.backgroundColor = "#f1c40f"; 
+        avisoCuentaRegresiva.style.color = "#2d3436"; 
         avisoCuentaRegresiva.innerHTML = `¡BINGO REGISTRADO! ESPERANDO... <span id="segundosRestantes">${datos.segundos}</span>s`;
     } else {
-        // MENSAJE PARA LOS DEMÁS
         hablar(`¡Atención! ${datos.primerGanador} cantó Bingo. Tienes 10 segundos.`);
-        avisoCuentaRegresiva.style.backgroundColor = "#e74c3c"; // Rojo Urgente
+        avisoCuentaRegresiva.style.backgroundColor = "#e74c3c"; 
         avisoCuentaRegresiva.style.color = "white";
         avisoCuentaRegresiva.innerHTML = `¡${datos.primerGanador} GANÓ! CIERRE EN: <span id="segundosRestantes">${datos.segundos}</span>s`;
     }
 
-    // IMPORTANTE: Como usamos innerHTML arriba, perdimos la referencia antigua al span.
-    // Tenemos que volver a buscarlo para que el contador funcione.
     const spanContador = document.getElementById('segundosRestantes');
-
     let quedan = datos.segundos;
 
-    // Cuenta regresiva visual local
     if (intervaloCuenta) clearInterval(intervaloCuenta);
-    
     intervaloCuenta = setInterval(() => {
         quedan--;
-        if(spanContador) spanContador.textContent = quedan; // Actualizamos el nuevo span
-        
+        if(spanContador) spanContador.textContent = quedan; 
         if (quedan <= 0) {
             clearInterval(intervaloCuenta);
             avisoCuentaRegresiva.style.display = 'none';
@@ -666,70 +649,56 @@ socket.on('avisoCierreBingo', (datos) => {
     btnSortearFicha.disabled = true;
 });
 
-// B) CONFIRMACIÓN INDIVIDUAL (Para saber que mi click funcionó)
+// B) CONFIRMACIÓN INDIVIDUAL
 socket.on('bingoRegistrado', () => {
-    btnCantarBingo.textContent = "¡REGISTRADO!";
-    btnCantarBingo.style.backgroundColor = "#f1c40f"; // Amarillo espera
-    btnCantarBingo.disabled = true; 
+    const botones = [btnCantarBingo, btnCantarBingoHost];
+    botones.forEach(btn => {
+        if(btn) {
+            btn.textContent = "¡REGISTRADO!";
+            btn.style.backgroundColor = "#f1c40f"; 
+            btn.disabled = true;
+        }
+    });
 });
 
-// C) JUEGO TERMINADO (Recibe LISTA de ganadores)
+// C) JUEGO TERMINADO
 socket.on('juegoTerminado', (datos) => {
-    // 1. Limpieza de timers
     if (intervaloCuenta) clearInterval(intervaloCuenta);
     avisoCuentaRegresiva.style.display = 'none';
     if (typeof detenerCronometro === 'function') detenerCronometro();
 
-    // 2. Guardamos datos
     listaGanadoresFinal = datos.listaGanadores;
     const numerosSorteados = datos.numerosSorteados;
 
-    // 3. Generar HTML de la lista
-    contenedorListaGanadores.innerHTML = ''; // Limpiar
+    contenedorListaGanadores.innerHTML = ''; 
     
-    // Cambiar título modal
     const titulo = listaGanadoresFinal.length > 1 ? '¡GANADORES!' : '¡GANADOR!';
     const subtitulo = document.querySelector('.modal-subtitulo');
     if (subtitulo) subtitulo.textContent = titulo;
 
-    // --- CORRECCIÓN: BORRAMOS LA LÍNEA QUE DABA ERROR ---
-    // Ya no intentamos ocultar 'modalGanadorTexto' porque ya no existe.
-
-    // Crear filas por cada ganador
     listaGanadoresFinal.forEach((ganador, index) => {
         const fila = document.createElement('div');
         fila.className = 'fila-ganador';
-        
-        // Medalla (Solo estético)
         const medalla = index === 0 ? '🥇' : (index === 1 ? '🥈' : '🏅');
-
         fila.innerHTML = `
-            <div class="nombre-ganador-lista">
-                <span class="medalla">${medalla}</span> ${ganador.nombre}
-            </div>
+            <div class="nombre-ganador-lista"><span class="medalla">${medalla}</span> ${ganador.nombre}</div>
             <button class="btn-ojo-mini" data-index="${index}">👁️</button>
         `;
         contenedorListaGanadores.appendChild(fila);
     });
 
-    // 4. Lógica de botones "OJO" (MEJORADA: ABRE Y CIERRA)
     contenedorListaGanadores.querySelectorAll('.btn-ojo-mini').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            const botonClickeado = e.currentTarget; // Usamos currentTarget para asegurar que es el botón
+            const botonClickeado = e.currentTarget;
             const estabaActivo = botonClickeado.classList.contains('activo');
 
-            // 1. PRIMERO: Cerramos y desactivamos TODO
             document.querySelectorAll('.btn-ojo-mini').forEach(b => b.classList.remove('activo'));
             contenedorCartillaGanadora.classList.add('oculto');
 
-            // 2. SEGUNDO: Si el que clickeé NO estaba activo, lo abro.
-            // (Si YA estaba activo, al no hacer nada aquí, se queda cerrado por el paso 1)
             if (!estabaActivo) {
                 botonClickeado.classList.add('activo');
                 const index = botonClickeado.dataset.index;
                 const datosEsteGanador = listaGanadoresFinal[index];
-
-                // Mostrar contenedor y dibujar
                 contenedorCartillaGanadora.classList.remove('oculto');
                 dibujarCartillaGanadora(
                     datosEsteGanador.cartilla,
@@ -741,17 +710,14 @@ socket.on('juegoTerminado', (datos) => {
         });
     });
 
-    // 5. Voz
     if (listaGanadoresFinal.length > 1) {
         hablar(`Juego terminado. Hubo ${listaGanadoresFinal.length} ganadores.`);
-    } else {
-        // Accedemos al primer elemento del array de forma segura
-        if(listaGanadoresFinal[0]) {
-            hablar(`¡Bingo! Ganador ${listaGanadoresFinal[0].nombre}`);
-        }
+    } else if(listaGanadoresFinal[0]) {
+        hablar(`¡Bingo! Ganador ${listaGanadoresFinal[0].nombre}`);
     }
 
-    // 6. Mostrar Modal
     modalFinJuego.classList.add('visible');
-    btnCantarBingo.disabled = true;
+    
+    if(btnCantarBingo) btnCantarBingo.disabled = true;
+    if(btnCantarBingoHost) btnCantarBingoHost.disabled = true;
 });

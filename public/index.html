@@ -145,19 +145,26 @@
 
         <!-- PANTALLA 3: ANFITRIÓN -->
         <section id="pantalla-juego-anfitrion" class="pantalla" style="padding:0;">
+            
             <div class="header-jugador header-anfitrion-estilo">
                 <div class="perfil-usuario">
                     <div class="avatar-img anfitrion-avatar"></div> 
                     <div class="datos-usuario">
                         <span class="nombre-usuario" id="nombreAnfitrionDisplay">Anfitrión</span>
-                        <span class="puntos-usuario">Anfitrión</span>
-                    </div>
+                        <span class="puntos-usuario">Anfitrión</span> </div>
                 </div>
+                
                 <div class="header-derecha">
+                    <div class="codigo-sala-badge" title="Código de Sala">
+                        🔑 <span id="displayClaveAnfitrion">---</span>
+                    </div>
+
                     <button id="btnAjustesAnfitrion" class="btn-ajustes">⚙️
                         <div id="menuAjustesAnfitrion" class="ajustes-menu">
                             <div class="ajuste-item">Color Mesa <input type="color" id="inputColorTemaAnfitrion" value="#2ecc71"></div>
                             <div class="ajuste-item">Sonido <div id="toggleSonidoAnfitrion" style="cursor:pointer">🔊 / 🔇</div></div>
+                            
+                            <div id="contenedorFavoritoHost"></div> 
                         </div>
                     </button>
                 </div>
@@ -169,10 +176,24 @@
                     <div class="bola-wrapper"><span class="label-bola">ACTUAL</span><div id="fichaActual" class="bolilla-gigante">--</div></div>
                 </div>
                 <button id="btnSortearFicha" class="btn-sortear">SACAR BOLILLA</button>
+                
                 <div class="controles-top-anfitrion">
                     <label class="switch-label"><input type="checkbox" id="checkAutomatico"> <span class="slider"></span></label>
                     <span style="color:white; font-weight:bold; font-size:14px;">Auto</span>
                     <input type="number" id="inputIntervalo" class="input-mini" min="3" max="30" value="7"> <span style="color:white; font-size:12px;">seg</span>
+                </div>
+            </div>
+
+            <div class="panel-cartilla-host" id="panelCartillaHost">
+                <div class="toggle-cartilla-host" id="btnToggleCartillaHost">
+                    👇 Jugar también (Mi Cartón) <span class="icono-toggle">▼</span>
+                </div>
+                <div class="contenido-cartilla-host">
+                    <div style="text-align:center; color:white; margin-bottom:10px; font-size:12px;">
+                        <span id="hostPatronTexto">---</span>
+                    </div>
+                    <div id="cartillaHostContainer"></div>
+                    <button id="btnCantarBingoHost" class="btn-bingo-3d" style="margin: 10px 0; font-size:16px; padding:10px;">¡CANTAR BINGO!</button>
                 </div>
             </div>
 

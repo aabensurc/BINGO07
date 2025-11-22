@@ -261,3 +261,77 @@
 .n-color { border-color: var(--color-n) !important; }
 .g-color { border-color: var(--color-g) !important; }
 .o-color { border-color: var(--color-o) !important; }
+
+
+/* --- NUEVO: CÓDIGO DE SALA EN CABECERA --- */
+.codigo-sala-badge {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    padding: 5px 12px;
+    border-radius: 20px;
+    color: white;
+    font-weight: 900;
+    font-size: 14px;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    cursor: pointer; /* Para indicar que se puede copiar si quisieras */
+}
+
+/* --- NUEVO: PANEL DESPLEGABLE (ACORDEÓN) PARA CARTILLA HOST --- */
+.panel-cartilla-host {
+    margin: 0 15px 15px 15px;
+    border-radius: 15px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(0, 0, 0, 0.1); 
+}
+
+/* La barra que se clickea para abrir/cerrar */
+.toggle-cartilla-host {
+    width: 100%;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: 1px;
+}
+.toggle-cartilla-host:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* El contenedor de la cartilla (Oculto por defecto) */
+.contenido-cartilla-host {
+    max-height: 0; /* Cerrado */
+    opacity: 0;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    background: rgba(255,255,255,0.05);
+}
+
+/* Clase para abrirlo */
+.panel-cartilla-host.abierto .contenido-cartilla-host {
+    max-height: 600px; /* Altura suficiente para la cartilla */
+    opacity: 1;
+    padding: 15px;
+}
+
+.panel-cartilla-host.abierto .toggle-cartilla-host {
+    background: white;
+    color: var(--tema-principal);
+}
+
+/* Flechita animada */
+.icono-toggle { transition: transform 0.3s; }
+.panel-cartilla-host.abierto .icono-toggle { transform: rotate(180deg); }
