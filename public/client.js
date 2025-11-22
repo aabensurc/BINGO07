@@ -53,9 +53,12 @@ const contenedorListaGanadores = document.getElementById('contenedorListaGanador
 const btnCambiarCarton = document.getElementById('btnCambiarCarton');
 const mensajeCambioCarton = document.getElementById('mensajeCambioCarton');
 
+const checkGuardarFavorito = document.getElementById('checkGuardarFavorito');
+
 // --- ESTADO ---
 let patronSeleccionado = 'linea';
 let miCartilla = null;
+let esperandoCargaFavorito = false; // Variable nueva para controlar el mensaje
 let soyAnfitrion = false;
 const PLAYER_ID_KEY = 'bingoPlayerId';
 let misMarcas = [];
@@ -66,6 +69,24 @@ let miNombre = "";
 let estaMuteado = false;
 let vozSeleccionada = null;
 const synth = window.speechSynthesis;
+
+// --- FUNCIÓN NUEVA: Sincronizar el Toggle Visualmente ---
+// Compara la cartilla actual con la guardada en localStorage
+function sincronizarToggleFavorito() {
+    if (!checkGuardarFavorito || !miCartilla) return;
+    
+    const favoritoStr = localStorage.getItem('bingoCartonFavorito');
+    if (favoritoStr) {
+        // Comparamos si la cartilla actual es idéntica a la guardada
+        if (JSON.stringify(miCartilla) === favoritoStr) {
+            checkGuardarFavorito.checked = true;
+        } else {
+            checkGuardarFavorito.checked = false;
+        }
+    } else {
+        checkGuardarFavorito.checked = false;
+    }
+}
 
 function cambiarPantalla(idSiguientePantalla) {
     document.querySelectorAll('.pantalla').forEach(p => {
@@ -188,6 +209,29 @@ btnEmpezarPartida.addEventListener('click', () => {
     socket.emit('empezarPartida', { patron: patronSeleccionado });
 });
 
+
+// --- LÓGICA TOGGLE FAVORITO ---
+if (checkGuardarFavorito) {
+    checkGuardarFavorito.addEventListener('change', () => {
+        if (checkGuardarFavorito.checked) {
+            // USUARIO LO PRENDIÓ -> GUARDAR
+            if (miCartilla) {
+                localStorage.setItem('bingoCartonFavorito', JSON.stringify(miCartilla));
+                // Pequeño feedback visual (opcional)
+                hablar("Cartón guardado");
+            } else {
+                // Si aún no hay cartilla (raro), lo apagamos
+                checkGuardarFavorito.checked = false;
+            }
+        } else {
+            // USUARIO LO APAGÓ -> BORRAR
+            localStorage.removeItem('bingoCartonFavorito');
+            hablar("Favorito eliminado");
+        }
+    });
+}
+
+
 // --- LOGICA SORTEO ---
 btnSortearFicha.addEventListener('click', () => {
     if (checkAutomatico.checked) return; 
@@ -288,34 +332,60 @@ function limpiarJuegoLocal(borrarMemoria = true) {
 // --- LÓGICA CAMBIAR CARTÓN (REROLL) ---
 if(btnCambiarCarton) {
     btnCambiarCarton.addEventListener('click', () => {
-        // Efecto visual de carga
+        // 1. SI PIDE CAMBIO, BORRAMOS EL FAVORITO Y APAGAMOS TOGGLE
+        localStorage.removeItem('bingoCartonFavorito');
+        if(checkGuardarFavorito) checkGuardarFavorito.checked = false;
+
+        // 2. Efecto visual de carga
         btnCambiarCarton.disabled = true;
         btnCambiarCarton.textContent = "🔄 Generando...";
         
-        // Pedir al servidor
+        // 3. Pedir al servidor
         socket.emit('pedirNuevoCarton');
     });
 }
 
-// Confirmación del servidor
-socket.on('cartonCambiado', () => {
-    // Restaurar botón
-    setTimeout(() => {
-        btnCambiarCarton.disabled = false;
-        btnCambiarCarton.textContent = "🔄 Cambiar mi Cartón";
-    }, 1000); // Pequeño delay para evitar spam
+// Confirmación del servidor cuando se cambia el cartón
+socket.on('cartonCambiado', (nuevaCartilla) => {
+    // 1. Actualizar memoria local con el nuevo cartón
+    if (nuevaCartilla) {
+        miCartilla = nuevaCartilla;
+    }
 
-    // Feedback visual
-    mensajeCambioCarton.textContent = "¡Nuevo cartón listo!";
-    mensajeCambioCarton.style.opacity = 1;
+    // 2. Restaurar botón visualmente
+    setTimeout(() => {
+        if(btnCambiarCarton) {
+            btnCambiarCarton.disabled = false;
+            btnCambiarCarton.textContent = "🔄 Cambiar mi Cartón";
+        }
+    }, 1000);
+
+    // 3. LOGICA DE MENSAJE Y TOGGLE DIFERENCIADA
+    if (esperandoCargaFavorito) {
+        // CASO A: Se cargó un favorito
+        if(mensajeCambioCarton) {
+            mensajeCambioCarton.textContent = "¡Favorito cargado!";
+            mensajeCambioCarton.style.opacity = 1;
+            mensajeCambioCarton.style.color = "#2ecc71"; // Verde éxito
+        }
+        hablar("Cartón cargado.");
+        esperandoCargaFavorito = false; // Apagamos bandera
+
+    } else {
+        // CASO B: Se generó uno nuevo (Reroll)
+        if(mensajeCambioCarton) {
+            mensajeCambioCarton.textContent = "¡Nuevo cartón listo!";
+            mensajeCambioCarton.style.opacity = 1;
+            mensajeCambioCarton.style.color = "#f1c40f"; // Amarillo
+        }
+        hablar("Cartón cambiado.");
+    }
     
     // Desvanecer mensaje
-    setTimeout(() => {
-        mensajeCambioCarton.style.opacity = 0;
-    }, 3000);
+    if(mensajeCambioCarton) setTimeout(() => mensajeCambioCarton.style.opacity = 0, 3000);
 
-    // Feedback de voz (opcional, pero útil)
-    hablar("Cartón cambiado.");
+    // 4. IMPORTANTE: Verificar si debemos encender el toggle
+    sincronizarToggleFavorito();
 });
 
 // --- SOCKETS ---
@@ -346,6 +416,19 @@ socket.on('unionExitosa', (datos) => {
     lobbyVistaAnfitrion.style.display = 'none';
     lobbyVistaJugador.style.display = 'block';
     cambiarPantalla('pantalla-lobby');
+
+    // --- NUEVO: AUTO-CARGAR FAVORITO ---
+    const favoritoGuardado = localStorage.getItem('bingoCartonFavorito');
+    if (favoritoGuardado) {
+        console.log("Cartón favorito detectado. Cargando...");
+        const cartilla = JSON.parse(favoritoGuardado);
+        
+        esperandoCargaFavorito = true; // <--- ¡IMPORTANTE! Activamos la bandera aquí
+        socket.emit('usarCartonFavorito', cartilla);
+    } else {
+        // Aseguramos que esté apagado si no hay favorito
+        if(checkGuardarFavorito) checkGuardarFavorito.checked = false;
+    }
 });
 
 socket.on('errorUnion', (msg) => mensajeError.textContent = msg);
@@ -462,27 +545,35 @@ socket.on('forzarLimpieza', () => {
 });
 
 socket.on('reconexionExitosa', (datos) => {
+    // 1. Restaurar datos básicos (Nombre y Rol)
     if (datos.nombre) {
         miNombre = datos.nombre; 
         if(nombreJugadorDisplay) nombreJugadorDisplay.textContent = datos.nombre; 
         if(nombreAnfitrionDisplay) nombreAnfitrionDisplay.textContent = datos.nombre;
     }
     soyAnfitrion = datos.esAnfitrion;
-    limpiarJuegoLocal(false); 
+    
+    // 2. Limpieza y Cronómetro
+    limpiarJuegoLocal(false); // false = no borrar memoria de marcas todavía
     if (typeof iniciarCronometro === 'function') iniciarCronometro();
 
+    // 3. Restaurar Historial Visual (Bolillas arriba)
     datos.fichasHistorial.forEach(ficha => {
         if (typeof agregarBolillaHistorial === 'function') {
             agregarBolillaHistorial(ficha, historialContenedor);
         }
     });
 
+    // 4. Lógica Específica
     if (soyAnfitrion) {
+        // --- LOGICA DE ANFITRIÓN ---
         if (typeof HostUI !== 'undefined') {
             HostUI.renderizarTableroVacio();
+            // Marcar todas las fichas en el tablero de control
             datos.fichasHistorial.forEach(ficha => {
                 HostUI.marcarFicha(ficha); 
             });
+            // Restaurar bolas grandes
             if (datos.ultimaFicha) {
                  HostUI.actualizarBolaVisual(fichaActual, datos.ultimaFicha, false);
             }
@@ -490,17 +581,24 @@ socket.on('reconexionExitosa', (datos) => {
                  HostUI.actualizarBolaVisual(fichaAnterior, datos.anteriorFicha, false);
             }
         }
-        checkAutomatico.checked = false;
+        if(checkAutomatico) checkAutomatico.checked = false;
         cambiarPantalla('pantalla-juego-anfitrion');
+
     } else {
+        // --- LOGICA DE JUGADOR ---
         jugadorPatron.textContent = datos.patronTexto;
-        miCartilla = datos.cartilla;
+        miCartilla = datos.cartilla; // IMPORTANTE: Actualizamos la variable global
+
+        // Dibujar cartilla
         if (typeof dibujarCartillaModerna === 'function') {
             dibujarCartillaModerna(datos.cartilla, cartillaJugador);
         }
+
+        // Restaurar marcas manuales desde LocalStorage
         const playerId = localStorage.getItem(PLAYER_ID_KEY);
         const savedMarks = JSON.parse(localStorage.getItem(`bingoMarks-${playerId}`) || '[]');
         misMarcas = savedMarks; 
+        
         if (savedMarks.length > 0) {
             const celdas = cartillaJugador.querySelectorAll('.celda-3d');
             celdas.forEach(celda => {
@@ -510,8 +608,14 @@ socket.on('reconexionExitosa', (datos) => {
                 }
             });
         }
+
         cambiarPantalla('pantalla-juego-jugador');
         setTimeout(() => hablar(`Bienvenido de vuelta ${miNombre}`), 1000);
+
+        // ¡NUEVO! Aquí es donde arreglamos el botón de la tuerca al refrescar
+        if (typeof sincronizarToggleFavorito === 'function') {
+            sincronizarToggleFavorito(); 
+        }
     }
 });
 

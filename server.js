@@ -284,22 +284,23 @@ io.on('connection', (socket) => {
         console.log(`Partida creada por ${nombreAnfitrion} (${socket.id}). Clave: ${clave}`);
     });
 
-    // -- Evento: Unirse a Partida --
+// -- Evento: Unirse a Partida (MODIFICADO: Permite entrada tardía) --
     socket.on('unirsePartida', (datos) => {
         const { nombre, clave } = datos;
+        
+        // 1. Validar que la partida exista
         if (!partidas[clave]) {
             socket.emit('errorUnion', 'Error: Esa clave de partida no existe.');
             return;
         }
-        if (partidas[clave].juegoIniciado) {
-            socket.emit('errorUnion', 'Error: ¡El juego ya ha comenzado!');
-            return;
-        }
-        
-        const playerId = generarPlayerId(); // ¡NUEVO!
+
+        // --- CAMBIO: YA NO BLOQUEAMOS SI EL JUEGO INICIÓ ---
+        // (Borramos el bloque if (partidas[clave].juegoIniciado) ...)
+
+        const playerId = generarPlayerId();
         const nuevoJugador = {
             id: socket.id,
-            playerId: playerId, // ¡NUEVO!
+            playerId: playerId,
             nombre: nombre,
             esAnfitrion: false,
             cartilla: generarCartilla()
@@ -307,16 +308,33 @@ io.on('connection', (socket) => {
         partidas[clave].jugadores.push(nuevoJugador);
 
         socket.join(clave);
-        // ¡NUEVO! Enviamos el playerId al jugador
+        
+        // Enviamos confirmación básica
         socket.emit('unionExitosa', { clave: clave, playerId: playerId });
         actualizarLobby(clave);
         console.log(`Jugador ${nombre} (${socket.id}) se unió a la partida ${clave}`);
+
+        // --- NUEVO: SI LLEGA TARDE, LE MANDAMOS TODO EL HISTORIAL ---
+        if (partidas[clave].juegoIniciado) {
+            console.log(`Jugador ${nombre} entró tarde. Sincronizando...`);
+            
+            // 1. Enviamos su cartilla y el patrón actual
+            socket.emit('partidaIniciada', {
+                patronTexto: NOMBRES_PATRONES[partidas[clave].patronJuego],
+                cartilla: nuevoJugador.cartilla,
+                esUnionTardia: true 
+            });
+
+            // 2. Enviamos una por una las fichas que ya salieron
+            partidas[clave].fichasHistorial.forEach(ficha => {
+                socket.emit('fichaAnunciada', { ficha: ficha });
+            });
+        }
     });
 
 
-    // -- Evento: Jugador pide cambiar su cartilla (Reroll) --
+// -- Evento: Jugador pide cambiar su cartilla (Reroll) --
     socket.on('pedirNuevoCarton', () => {
-        // 1. Buscar al jugador
         let clavePartida = null;
         let jugador = null;
 
@@ -329,21 +347,41 @@ io.on('connection', (socket) => {
             }
         }
 
-        // 2. Validar
         if (!jugador || !partidas[clavePartida]) return;
         
-        // IMPORTANTE: No permitir cambiar si el juego ya empezó
         if (partidas[clavePartida].juegoIniciado) {
             socket.emit('errorJuego', 'No puedes cambiar cartón con la partida iniciada.');
             return;
         }
 
-        // 3. Generar nueva cartilla y asignarla
         jugador.cartilla = generarCartilla();
         console.log(`Jugador ${jugador.nombre} ha cambiado su cartón.`);
 
-        // 4. Confirmar al cliente
-        socket.emit('cartonCambiado');
+        // --- CAMBIO AQUÍ: ENVIAMOS LA NUEVA CARTILLA AL CLIENTE ---
+        socket.emit('cartonCambiado', jugador.cartilla); 
+    });
+
+    // -- NUEVO EVENTO: Jugador carga su cartón favorito --
+    socket.on('usarCartonFavorito', (cartillaCliente) => {
+        // 1. Buscar jugador
+        let clavePartida = null;
+        let jugador = null;
+        for (const k in partidas) {
+            const j = partidas[k].jugadores.find(p => p.id === socket.id);
+            if (j) { clavePartida = k; jugador = j; break; }
+        }
+
+        // 2. Validaciones
+        if (!jugador || !partidas[clavePartida]) return;
+        if (partidas[clavePartida].juegoIniciado) return; // No se puede cambiar si ya empezó
+
+        // 3. Asignar la cartilla que nos mandó el cliente
+        jugador.cartilla = cartillaCliente;
+        
+        console.log(`Jugador ${jugador.nombre} cargó su cartón favorito.`);
+        
+        // 4. Confirmamos y devolvemos la cartilla para sincronizar
+        socket.emit('cartonCambiado', jugador.cartilla);
     });
 
 // --- ¡NUEVO EVENTO: Reconexión! ---
