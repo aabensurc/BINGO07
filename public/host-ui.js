@@ -86,20 +86,28 @@ const HostUI = {
         }
     },
 
-    /**
+/**
      * Marca una ficha en el tablero y actualiza las bolas grandes
      */
     marcarFicha: function(ficha, fichaPrevia = null) {
         // 1. Actualizar Tablero Pequeño (Grid)
         const celda = document.querySelector(`.celda-control[data-ficha="${ficha.ficha}"]`);
+        
         if (celda) {
             celda.classList.add('marcada');
-            // Añadimos clase de color de fondo (ej: bg-b, bg-i)
             celda.classList.add(`bg-${ficha.letra.toLowerCase()}`);
             
-            // Auto-scroll si es necesario
-            if (this.elements.tablero.scrollHeight > this.elements.tablero.clientHeight) {
-                 celda.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // --- MODIFICACIÓN: Scroll Condicional ---
+            // Verificamos si el panel del anfitrión-jugador está abierto
+            const panelCartillaHost = document.getElementById('panelCartillaHost');
+            const estaJugando = panelCartillaHost && panelCartillaHost.classList.contains('abierto');
+
+            // Solo hacemos el auto-scroll si el anfitrión NO está jugando (panel cerrado)
+            // Así no le movemos la pantalla cuando quiere marcar su cartón.
+            if (!estaJugando) {
+                if (this.elements.tablero.scrollHeight > this.elements.tablero.clientHeight) {
+                     celda.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
             }
         }
 
