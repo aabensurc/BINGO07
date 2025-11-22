@@ -61,8 +61,10 @@ const cartillaJugador = document.getElementById('cartillaJugador');
 const btnCantarBingo = document.getElementById('btnCantarBingo');
 const historialContenedor = document.getElementById('historialContenedor');
 const btnCambiarCarton = document.getElementById('btnCambiarCarton');
+const btnCambiarCartonHost = document.getElementById('btnCambiarCartonHost');
 const mensajeCambioCarton = document.getElementById('mensajeCambioCarton');
 const checkGuardarFavorito = document.getElementById('checkGuardarFavorito');
+
 
 // Modales
 const modalFinJuego = document.getElementById('modalFinJuego');
@@ -75,13 +77,21 @@ const segundosRestantes = document.getElementById('segundosRestantes');
 // --- FUNCIONES AUXILIARES ---
 
 function sincronizarToggleFavorito() {
-    if (!checkGuardarFavorito || !miCartilla) return;
+    // Verificamos si tenemos cartilla
+    if (!miCartilla) return;
+    
     const favoritoStr = localStorage.getItem('bingoCartonFavorito');
+    let debeEstarPrendido = false;
+
     if (favoritoStr && JSON.stringify(miCartilla) === favoritoStr) {
-        checkGuardarFavorito.checked = true;
-    } else {
-        checkGuardarFavorito.checked = false;
+        debeEstarPrendido = true;
     }
+
+    // Actualizamos el botón del Jugador (si existe)
+    if (checkGuardarFavorito) checkGuardarFavorito.checked = debeEstarPrendido;
+    
+    // Actualizamos el botón del Anfitrión (si existe)
+    if (checkGuardarFavoritoHost) checkGuardarFavoritoHost.checked = debeEstarPrendido;
 }
 
 function cambiarPantalla(idSiguientePantalla) {
@@ -169,6 +179,25 @@ if (dropdown) {
 btnEmpezarPartida.addEventListener('click', () => {
     socket.emit('empezarPartida', { patron: patronSeleccionado });
 });
+
+// --- LÓGICA TOGGLE FAVORITO (VERSIÓN HOST) ---
+if (checkGuardarFavoritoHost) {
+    checkGuardarFavoritoHost.addEventListener('change', () => {
+        if (checkGuardarFavoritoHost.checked) {
+            // GUARDAR
+            if (miCartilla) {
+                localStorage.setItem('bingoCartonFavorito', JSON.stringify(miCartilla));
+                hablar("Cartón guardado");
+            }
+        } else {
+            // BORRAR
+            localStorage.removeItem('bingoCartonFavorito');
+            hablar("Favorito eliminado");
+        }
+        // Sincronizamos visualmente el otro botón por si acaso
+        sincronizarToggleFavorito();
+    });
+}
 
 
 // --- EVENTOS DOM: ANFITRIÓN / HÍBRIDO ---
@@ -259,6 +288,23 @@ if(btnCambiarCarton) {
         if(checkGuardarFavorito) checkGuardarFavorito.checked = false;
         btnCambiarCarton.disabled = true;
         btnCambiarCarton.textContent = "🔄 Generando...";
+        socket.emit('pedirNuevoCarton');
+    });
+}
+
+// --- LÓGICA CAMBIAR CARTÓN (HOST) ---
+if(btnCambiarCartonHost) {
+    btnCambiarCartonHost.addEventListener('click', () => {
+        // 1. Borrar favorito si existía
+        localStorage.removeItem('bingoCartonFavorito');
+        if(checkGuardarFavoritoHost) checkGuardarFavoritoHost.checked = false; // Apagar toggle host
+        if(checkGuardarFavorito) checkGuardarFavorito.checked = false; // Apagar toggle jugador también
+
+        // 2. Visual
+        btnCambiarCartonHost.disabled = true;
+        btnCambiarCartonHost.textContent = "🔄 Generando...";
+        
+        // 3. Pedir al server
         socket.emit('pedirNuevoCarton');
     });
 }
@@ -386,8 +432,17 @@ socket.on('actualizarLobby', (datos) => {
 socket.on('cartonCambiado', (nuevaCartilla) => {
     if (nuevaCartilla) miCartilla = nuevaCartilla;
 
+    // Restaurar botón JUGADOR
     setTimeout(() => {
-        if(btnCambiarCarton) { btnCambiarCarton.disabled = false; btnCambiarCarton.textContent = "🔄 Cambiar mi Cartón"; }
+        if(btnCambiarCarton) { 
+            btnCambiarCarton.disabled = false; 
+            btnCambiarCarton.textContent = "🔄 Cambiar mi Cartón"; 
+        }
+        // RESTAURAR BOTÓN HOST (NUEVO)
+        if(btnCambiarCartonHost) { 
+            btnCambiarCartonHost.disabled = false; 
+            btnCambiarCartonHost.textContent = "🔄 Cambiar mi Cartón"; 
+        }
     }, 1000);
 
     if (esperandoCargaFavorito) {

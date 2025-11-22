@@ -102,12 +102,15 @@
                             
                             <div class="custom-options">
                                 <span class="option selected" data-value="linea">Línea Simple (Cualquiera)</span>
-                                <span class="option" data-value="carton_lleno">Cartón Lleno (Apagón})</span>
+                                <span class="option" data-value="carton_lleno">Cartón Lleno (Apagón)</span>
                                 <span class="option" data-value="cuadrado">Cuadrado (Marco)</span>
                                 
                                 <span class="option" data-value="letra_l">Letra L (Normal)</span>
                                 <span class="option" data-value="l_invertida">L Invertida (Opuesta)</span>
-                                <span class="option" data-value="cruz">Letra X (Cruz)</span>
+                                <span class="option" data-value="letra_x">Letra X (Aspa)</span>
+                                <span class="option" data-value="cruz_mas">Cruz (+)</span>
+                                <span class="option" data-value="diagonal_backslash">Diagonal (\)</span>
+                                <span class="option" data-value="diagonal_slash">Diagonal Invertida (/)</span>
                                 
                                 <span class="option" data-value="diagonal_backslash">Diagonal (\)</span>
                                 <span class="option" data-value="diagonal_slash">Diagonal Invertida (/)</span>
@@ -121,6 +124,9 @@
                         </div>
                     </div>
                 </div>
+                <button id="btnCambiarCartonHost" class="btn-borde" style="margin-bottom: 15px; border-color: rgba(255,255,255,0.5); font-size: 14px; padding: 10px 20px;">
+                    🔄 Cambiar mi Cartón
+                </button>
                 <button id="btnEmpezarPartida">¡COMENZAR JUEGO!</button>
             </div>
             
@@ -164,7 +170,14 @@
                             <div class="ajuste-item">Color Mesa <input type="color" id="inputColorTemaAnfitrion" value="#2ecc71"></div>
                             <div class="ajuste-item">Sonido <div id="toggleSonidoAnfitrion" style="cursor:pointer">🔊 / 🔇</div></div>
                             
-                            <div id="contenedorFavoritoHost"></div> 
+                            <hr style="border:0; border-top:1px solid #eee; margin:5px 0;">
+                            <div class="ajuste-item">
+                                <span>⭐ Cartón Favorito</span>
+                                <label class="switch-label">
+                                    <input type="checkbox" id="checkGuardarFavoritoHost"> 
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
                         </div>
                     </button>
                 </div>
