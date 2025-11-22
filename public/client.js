@@ -103,19 +103,42 @@ function cambiarPantalla(idSiguientePantalla) {
 
 function cargarVoz() {
     const voces = synth.getVoices();
-    vozSeleccionada = voces.find(v => v.lang === 'es-ES' && v.localService) || 
-                      voces.find(v => v.lang.startsWith('es-')) || 
-                      voces[0];
+    
+    // 1. Buscamos Español Estados Unidos (Preferido en Android Latam)
+    vozSeleccionada = voces.find(v => v.lang === 'es-US' || v.lang === 'es_US');
+    
+    // 2. Si no, Español España
+    if (!vozSeleccionada) vozSeleccionada = voces.find(v => v.lang === 'es-ES' || v.lang === 'es_ES');
+    
+    // 3. Si no, cualquier español
+    if (!vozSeleccionada) vozSeleccionada = voces.find(v => v.lang.startsWith('es'));
+
+    // Si sigue siendo null, no pasa nada. 
+    // La nueva función 'hablar' se encargará de usar el default del sistema.
 }
+
 cargarVoz();
 if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = cargarVoz;
 
 function hablar(texto) {
-    if (estaMuteado || !vozSeleccionada || !synth) return;
+    // CAMBIO: Quitamos "!vozSeleccionada" del bloqueo.
+    // Ahora permitimos que hable aunque no haya encontrado una voz específica.
+    if (estaMuteado || !synth) return;
+    
     synth.cancel(); 
     const anuncio = new SpeechSynthesisUtterance(texto);
-    anuncio.voice = vozSeleccionada;
-    anuncio.lang = vozSeleccionada.lang;
+    
+    if (vozSeleccionada) {
+        // ESCENARIO IDEAL: Encontramos la voz perfecta (US o ES)
+        anuncio.voice = vozSeleccionada;
+        anuncio.lang = vozSeleccionada.lang;
+    } else {
+        // ESCENARIO PLAN B: No encontramos la voz en la lista,
+        // pero forzamos al navegador a hablar en Español Estándar.
+        // Esto usará la configuración por defecto de tu Android (que ya pusiste en Español).
+        anuncio.lang = 'es-ES'; 
+    }
+
     anuncio.rate = 0.95;
     synth.speak(anuncio);
 }
