@@ -527,7 +527,7 @@ button.bingo-falso {
     background-color: var(--color-gris);
     border-radius: 34px;
     transition: background-color 0.2s;
-    margin-right: 10px;
+    margin-right: 5px;
     position: relative;
 }
 

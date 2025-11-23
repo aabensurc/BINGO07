@@ -14,10 +14,17 @@ let temporizadorSorteo = null;
 let miNombre = "";
 const PLAYER_ID_KEY = 'bingoPlayerId';
 
-// --- VOZ ---
-let estaMuteado = false;
+// --- VOZ Y SONIDO (Variables Globales) ---
+let vozMuteada = false;
+let efectosMuteados = false;
 let vozSeleccionada = null;
 const synth = window.speechSynthesis;
+
+// Elementos Checkbox Sonido
+const checkVozJugador = document.getElementById('checkVozJugador');
+const checkEfectosJugador = document.getElementById('checkEfectosJugador');
+const checkVozAnfitrion = document.getElementById('checkVozAnfitrion');
+const checkEfectosAnfitrion = document.getElementById('checkEfectosAnfitrion');
 
 // --- ELEMENTOS DOM ---
 const pantallaBienvenida = document.getElementById('pantalla-bienvenida');
@@ -158,7 +165,7 @@ if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = cargarVoz;
 function hablar(texto) {
     // CAMBIO: Quitamos "!vozSeleccionada" del bloqueo.
     // Ahora permitimos que hable aunque no haya encontrado una voz específica.
-    if (estaMuteado || !synth) return;
+    if (vozMuteada || !synth) return;
     
     synth.cancel(); 
     const anuncio = new SpeechSynthesisUtterance(texto);
@@ -181,18 +188,59 @@ function hablar(texto) {
 // Configuración de Ajustes (Color, Sonido)
 if (typeof configurarBotonesAjustes === 'function') configurarBotonesAjustes();
 
-const toggleSonido = document.getElementById('toggleSonidoMenu');
-const toggleSonidoAnf = document.getElementById('toggleSonidoAnfitrion');
 
-function toggleMute() {
-    estaMuteado = !estaMuteado;
-    const texto = estaMuteado ? "Sonido: Desactivado 🔇" : "Sonido: Activado 🔊";
-    if(toggleSonido) toggleSonido.textContent = texto;
-    if(toggleSonidoAnf) toggleSonidoAnf.textContent = texto;
-    synth.cancel();
+
+
+
+function cargarPreferenciasSonido() {
+    // 1. Leer de LocalStorage (Si no existe, asume 'false' o sea Activado)
+    const savedVoz = localStorage.getItem('bingoVozMute');
+    const savedFX = localStorage.getItem('bingoFXMute');
+
+    vozMuteada = (savedVoz === 'true');
+    efectosMuteados = (savedFX === 'true');
+
+    // 2. Aplicar a la lógica
+    if (typeof SoundFX !== 'undefined') {
+        SoundFX.setMute(efectosMuteados);
+    }
+
+    // 3. Sincronizar UI visualmente (Checkboxes)
+    // Nota: Los checkboxes dicen "Activado", así que si está Muteado, el check va en false.
+    const vozActivada = !vozMuteada;
+    const fxActivado = !efectosMuteados;
+
+    if(checkVozJugador) checkVozJugador.checked = vozActivada;
+    if(checkEfectosJugador) checkEfectosJugador.checked = fxActivado;
+    
+    if(checkVozAnfitrion) checkVozAnfitrion.checked = vozActivada;
+    if(checkEfectosAnfitrion) checkEfectosAnfitrion.checked = fxActivado;
 }
-if(toggleSonido) toggleSonido.addEventListener('click', toggleMute);
-if(toggleSonidoAnf) toggleSonidoAnf.addEventListener('click', toggleMute);
+
+// Guardar cambios
+function actualizarPreferencias(tipo, estadoActivado) {
+    if (tipo === 'voz') {
+        vozMuteada = !estadoActivado;
+        localStorage.setItem('bingoVozMute', vozMuteada);
+        // Sincronizar el otro checkbox gemelo
+        if(checkVozJugador) checkVozJugador.checked = estadoActivado;
+        if(checkVozAnfitrion) checkVozAnfitrion.checked = estadoActivado;
+        // Cancelar voz actual si se silencia
+        if(vozMuteada) synth.cancel();
+    } 
+    else if (tipo === 'fx') {
+        efectosMuteados = !estadoActivado;
+        localStorage.setItem('bingoFXMute', efectosMuteados);
+        if (typeof SoundFX !== 'undefined') SoundFX.setMute(efectosMuteados);
+        
+        // Sincronizar el otro checkbox gemelo
+        if(checkEfectosJugador) checkEfectosJugador.checked = estadoActivado;
+        if(checkEfectosAnfitrion) checkEfectosAnfitrion.checked = estadoActivado;
+    }
+}
+
+// LLAMAR AL INICIO
+cargarPreferenciasSonido();
 
 
 // --- EVENTOS DOM: INICIO Y LOBBY ---
@@ -211,6 +259,20 @@ btnUnirsePartida.addEventListener('click', () => {
     miNombre = nombre;
     socket.emit('unirsePartida', { nombre: nombre, clave: clave });
 });
+
+// --- EVENTOS DE SONIDO (NUEVO) ---
+if(checkVozJugador) {
+    checkVozJugador.addEventListener('change', (e) => actualizarPreferencias('voz', e.target.checked));
+}
+if(checkEfectosJugador) {
+    checkEfectosJugador.addEventListener('change', (e) => actualizarPreferencias('fx', e.target.checked));
+}
+if(checkVozAnfitrion) {
+    checkVozAnfitrion.addEventListener('change', (e) => actualizarPreferencias('voz', e.target.checked));
+}
+if(checkEfectosAnfitrion) {
+    checkEfectosAnfitrion.addEventListener('change', (e) => actualizarPreferencias('fx', e.target.checked));
+}
 
 // Lógica Selector Patrones (Dropdown)
 const dropdown = document.getElementById('dropdownPatrones');
@@ -317,6 +379,7 @@ function manejarClickCartilla(e) {
         
         const numero = parseInt(celda.dataset.numero);
         if (celda.classList.contains('marcada')) {
+            SoundFX.playPop(); // <--- AQUÍ
             if (!misMarcas.includes(numero)) misMarcas.push(numero);
         } else {
             misMarcas = misMarcas.filter(n => n !== numero);
@@ -436,7 +499,7 @@ function limpiarJuegoLocal(borrarMemoria = true) {
     if(cartillaJugador) cartillaJugador.innerHTML = '';
     if(cartillaHostContainer) cartillaHostContainer.innerHTML = '';
     if(tableroControlAnfitrion) tableroControlAnfitrion.innerHTML = '';
-    if(historialContenedor) historialContenedor.innerHTML = '<span>Esperando...</span>';
+    if(historialContenedor) historialContenedor.innerHTML = '<span style="color: white;">Esperando bolillas...</span>';
     
     if(fichaActual) fichaActual.textContent = '--';
     if(fichaAnterior) fichaAnterior.textContent = '--';
@@ -516,6 +579,7 @@ socket.on('unionExitosa', (datos) => {
 socket.on('errorUnion', (msg) => mensajeError.textContent = msg);
 
 socket.on('actualizarLobby', (datos) => {
+    SoundFX.playChime(); // <--- AQUÍ
     lobbyListaJugadores.innerHTML = '';
     datos.jugadores.forEach(j => {
         const li = document.createElement('li');
@@ -605,6 +669,7 @@ socket.on('partidaIniciada', (datos) => {
 
 // --- SORTEO DE FICHA (HÍBRIDO) ---
 socket.on('fichaAnunciada', (datos) => {
+    SoundFX.playNewBall(); // <--- AQUÍ, al principio
     const { ficha } = datos;
     
     // A. Común: Historial
@@ -663,6 +728,7 @@ function getLetraDeNumero(num) {
 
 // --- ALERTAS Y ERRORES ---
 socket.on('bingoFalso', () => {
+    SoundFX.playError(); // <--- AQUÍ
     hablar('Bingo Falso');
     
     // Feedback en ambos botones por si acaso
@@ -844,6 +910,7 @@ socket.on('bingoRegistrado', () => {
 
 // C) JUEGO TERMINADO
 socket.on('juegoTerminado', (datos) => {
+    SoundFX.playWin(); // <--- AQUÍ
     // 1. Limpieza de timers y avisos
     if (intervaloCuenta) clearInterval(intervaloCuenta);
     avisoCuentaRegresiva.style.display = 'none';

@@ -168,12 +168,26 @@
 
                     <button id="btnAjustesAnfitrion" class="btn-ajustes">⚙️
                         <div id="menuAjustesAnfitrion" class="ajustes-menu">
-                            <div class="ajuste-item">Color Mesa <input type="color" id="inputColorTemaAnfitrion" value="#2ecc71"></div>
-                            <div class="ajuste-item">Sonido <div id="toggleSonidoAnfitrion" style="cursor:pointer">🔊 / 🔇</div></div>
+                            <div class="ajuste-item">🎨 Color Mesa <input type="color" id="inputColorTemaAnfitrion" value="#2ecc71"></div>
                             
-                            <hr style="border:0; border-top:1px solid #eee; margin:5px 0;">
                             <div class="ajuste-item">
-                                <span>⭐ Cartón Favorito</span>
+                                <span>🗣️ Voz Narrador</span>
+                                <label class="switch-label">
+                                    <input type="checkbox" id="checkVozAnfitrion" checked> 
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="ajuste-item">
+                                <span>🎵 Efectos Sonido</span>
+                                <label class="switch-label">
+                                    <input type="checkbox" id="checkEfectosAnfitrion" checked> 
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
+                            
+                            <div class="ajuste-item">
+                                <span>⭐ Guardar Favorito</span>
                                 <label class="switch-label">
                                     <input type="checkbox" id="checkGuardarFavoritoHost"> 
                                     <span class="slider"></span>
@@ -194,7 +208,7 @@
                 <div class="controles-top-anfitrion">
                     <label class="switch-label"><input type="checkbox" id="checkAutomatico"> <span class="slider"></span></label>
                     <span style="color:white; font-weight:bold; font-size:14px;">Auto</span>
-                    <input type="number" id="inputIntervalo" class="input-mini" min="3" max="30" value="7"> <span style="color:white; font-size:12px;">seg</span>
+                    <input type="number" id="inputIntervalo" class="input-mini" min="3" max="30" value="7"> <span style="color:white; font-size:12px; margin-right:5px;">seg</span>
                 </div>
             </div>
 
@@ -235,11 +249,25 @@
                     </div>
                     <button id="btnAjustes" class="btn-ajustes">⚙️
                         <div id="menuAjustes" class="ajustes-menu">
-                            <div class="ajuste-item">Color Mesa <input type="color" id="inputColorTema" value="#2ecc71"></div>
+                            <div class="ajuste-item">🎨 Color Mesa <input type="color" id="inputColorTema" value="#2ecc71"></div>
                             
-                            <div class="ajuste-item">Sonido <div id="toggleSonidoMenu" style="cursor:pointer">🔊 / 🔇</div></div>
+                            <div class="ajuste-item">
+                                <span>🗣️ Voz Narrador</span>
+                                <label class="switch-label">
+                                    <input type="checkbox" id="checkVozJugador" checked> 
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="ajuste-item">
+                                <span>🎵 Efectos Sonido</span>
+                                <label class="switch-label">
+                                    <input type="checkbox" id="checkEfectosJugador" checked> 
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
                             
-                            <hr style="border:0; border-top:1px solid #eee; margin:5px 0;">
+                            
+                            
                             <div class="ajuste-item">
                                 <span>⭐ Cartón Favorito</span>
                                 <label class="switch-label">
@@ -248,15 +276,15 @@
                                 </label>
                             </div>
 
-                            <hr style="border:0; border-top:1px solid #eee; margin:5px 0;">
+                           
                             <div class="ajuste-item" id="btnSalirPartidaJugador" style="cursor:pointer; color: #e74c3c; font-weight: 900;">
-                                🚪 Salir
+                                🚪 Salir de la Partida
                             </div>
                         </div>
                     </button>
                 </div>
             </div>
-            <div id="historialContenedor" class="historial-bolillas"><span>Esperando...</span></div>
+            <div id="historialContenedor" class="historial-bolillas"><span style="color: white;">Esperando bolillas...</span></div>
             <div style="text-align:center; color:white; font-weight:bold; margin-bottom:5px;">
                 Jugando por: <span id="jugadorPatron">---</span>
             </div>
@@ -270,6 +298,7 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="game-ui.js"></script>
     <script src="host-ui.js"></script>
+    <script src="audio-engine.js"></script>
     <script src="client.js" defer></script>
 
 <!-- MODAL FIN (REDISEÑADO CON ESTILO CELEBRACIÓN) -->
@@ -304,6 +333,6 @@
             });
         }
     </script>
-    
+
 </body>
 </html>
