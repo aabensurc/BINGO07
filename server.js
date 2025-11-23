@@ -598,6 +598,28 @@ socket.on('cantarBingo', () => {
         }
     });
 
+    // -- NUEVO: Anfitrión fuerza el regreso al Lobby (Reset Grupal) --
+    socket.on('forzarReinicioLobby', () => {
+        // 1. Identificar la sala del anfitrión
+        let clave = null;
+        for (const k in partidas) {
+            if (partidas[k].anfitrionId === socket.id) {
+                clave = k;
+                break;
+            }
+        }
+
+        if (clave) {
+            console.log(`Anfitrión reinicia sala ${clave} al lobby.`);
+            
+            // 2. Asegurar que el estado de juego sea falso
+            if (partidas[clave]) partidas[clave].juegoIniciado = false;
+
+            // 3. Ordenar a TODOS (incluido host) volver al lobby
+            io.to(clave).emit('reiniciarLobby');
+        }
+    });
+
     // -- Evento: Desconexión (MODIFICADO: Persistencia) --
     socket.on('disconnect', () => {
         console.log(`Cliente desconectado (pérdida de señal/minimizado): ${socket.id}`);

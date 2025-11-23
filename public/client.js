@@ -47,6 +47,7 @@ const displayClaveAnfitrion = document.getElementById('displayClaveAnfitrion'); 
 const displayClaveJugador = document.getElementById('displayClaveJugador');
 const checkAutomatico = document.getElementById('checkAutomatico');
 const inputIntervalo = document.getElementById('inputIntervalo');
+const btnNuevaRondaHost = document.getElementById('btnNuevaRondaHost');
 
 // Elementos Híbridos (Panel Desplegable Host)
 const btnToggleCartillaHost = document.getElementById('btnToggleCartillaHost');
@@ -388,6 +389,46 @@ btnVolverAlLobby.addEventListener('click', () => {
     datosGanadorTemp = null;
     limpiarJuegoLocal();
     cambiarPantalla('pantalla-lobby');
+});
+
+// 1. Evento Click del Anfitrión
+if (btnNuevaRondaHost) {
+    btnNuevaRondaHost.addEventListener('click', () => {
+        // Deshabilitar para evitar doble clic
+        btnNuevaRondaHost.disabled = true;
+        btnNuevaRondaHost.textContent = "Reiniciando...";
+        // Mandar orden al servidor
+        socket.emit('forzarReinicioLobby');
+    });
+}
+
+// 2. Respuesta Global (Todos obedecen esta orden)
+socket.on('reiniciarLobby', () => {
+    // Cerrar modal
+    modalFinJuego.classList.remove('visible');
+    
+    // Restaurar botón del host para la próxima
+    if(btnNuevaRondaHost) {
+        btnNuevaRondaHost.disabled = false;
+        btnNuevaRondaHost.textContent = "👑 Nueva Ronda (Todos)";
+    }
+
+    // Limpieza y cambio de pantalla
+    datosGanadorTemp = null;
+    limpiarJuegoLocal();
+    
+    // Si soy anfitrión, restauro mi vista
+    if (soyAnfitrion) {
+        lobbyVistaAnfitrion.style.display = 'flex';
+        lobbyVistaJugador.style.display = 'none';
+    } else {
+        // Jugador
+        lobbyVistaAnfitrion.style.display = 'none';
+        lobbyVistaJugador.style.display = 'block';
+    }
+    
+    cambiarPantalla('pantalla-lobby');
+    hablar("Volviendo al lobby.");
 });
 
 function limpiarJuegoLocal(borrarMemoria = true) {
@@ -803,23 +844,31 @@ socket.on('bingoRegistrado', () => {
 
 // C) JUEGO TERMINADO
 socket.on('juegoTerminado', (datos) => {
+    // 1. Limpieza de timers y avisos
     if (intervaloCuenta) clearInterval(intervaloCuenta);
     avisoCuentaRegresiva.style.display = 'none';
     if (typeof detenerCronometro === 'function') detenerCronometro();
 
+    // 2. Guardar datos recibidos
     listaGanadoresFinal = datos.listaGanadores;
     const numerosSorteados = datos.numerosSorteados;
 
+    // 3. Limpiar y preparar la lista visual
     contenedorListaGanadores.innerHTML = ''; 
     
+    // Título dinámico (Singular/Plural)
     const titulo = listaGanadoresFinal.length > 1 ? '¡GANADORES!' : '¡GANADOR!';
     const subtitulo = document.querySelector('.modal-subtitulo');
     if (subtitulo) subtitulo.textContent = titulo;
 
+    // 4. Generar filas de ganadores
     listaGanadoresFinal.forEach((ganador, index) => {
         const fila = document.createElement('div');
         fila.className = 'fila-ganador';
+        
+        // Medalla estética
         const medalla = index === 0 ? '🥇' : (index === 1 ? '🥈' : '🏅');
+
         fila.innerHTML = `
             <div class="nombre-ganador-lista"><span class="medalla">${medalla}</span> ${ganador.nombre}</div>
             <button class="btn-ojo-mini" data-index="${index}">👁️</button>
@@ -827,18 +876,23 @@ socket.on('juegoTerminado', (datos) => {
         contenedorListaGanadores.appendChild(fila);
     });
 
+    // 5. Lógica de botones "OJO" (Ver cartones)
     contenedorListaGanadores.querySelectorAll('.btn-ojo-mini').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const botonClickeado = e.currentTarget;
             const estabaActivo = botonClickeado.classList.contains('activo');
 
+            // Primero cerramos todo
             document.querySelectorAll('.btn-ojo-mini').forEach(b => b.classList.remove('activo'));
             contenedorCartillaGanadora.classList.add('oculto');
 
+            // Si no estaba activo, abrimos este
             if (!estabaActivo) {
                 botonClickeado.classList.add('activo');
                 const index = botonClickeado.dataset.index;
                 const datosEsteGanador = listaGanadoresFinal[index];
+                
+                // Mostrar y dibujar
                 contenedorCartillaGanadora.classList.remove('oculto');
                 dibujarCartillaGanadora(
                     datosEsteGanador.cartilla,
@@ -850,12 +904,23 @@ socket.on('juegoTerminado', (datos) => {
         });
     });
 
+    // 6. Narración de voz
     if (listaGanadoresFinal.length > 1) {
         hablar(`Juego terminado. Hubo ${listaGanadoresFinal.length} ganadores.`);
     } else if(listaGanadoresFinal[0]) {
         hablar(`¡Bingo! Ganador ${listaGanadoresFinal[0].nombre}`);
     }
 
+    // 7. LÓGICA DEL BOTÓN "NUEVA RONDA" (Solo para Anfitrión)
+    if (btnNuevaRondaHost) {
+        if (soyAnfitrion) {
+            btnNuevaRondaHost.style.display = 'block'; // El Host lo ve
+        } else {
+            btnNuevaRondaHost.style.display = 'none';  // Los jugadores no
+        }
+    }
+
+    // 8. Mostrar Modal y bloquear botones de juego
     modalFinJuego.classList.add('visible');
     
     if(btnCantarBingo) btnCantarBingo.disabled = true;
