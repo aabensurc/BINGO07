@@ -440,6 +440,9 @@ io.on('connection', (socket) => {
             // 2. Lo volvemos a meter en la sala
             socket.join(claveEncontrada);
 
+            // --- CORRECCIÓN 1: AVISAR AL CHAT QUE VOLVIÓ ---
+            enviarMensajeSistema(claveEncontrada, `${jugadorEncontrado.nombre} ha vuelto a la partida.`, 'evento');
+
             // 3. Le enviamos el "paquete de reconexión"
             const datosReconexion = {
                 esAnfitrion: jugadorEncontrado.esAnfitrion,
@@ -638,7 +641,7 @@ socket.on('cantarBingo', () => {
         }
     });
 
-    // -- Evento: Desconexión (MODIFICADO: Persistencia) --
+    // -- Evento: Desconexión (CORREGIDO) --
     socket.on('disconnect', () => {
         console.log(`Cliente desconectado (pérdida de señal/minimizado): ${socket.id}`);
         
@@ -650,13 +653,15 @@ socket.on('cantarBingo', () => {
                 // CASO A: Es Anfitrión -> Se cierra todo (No hay persistencia para host)
                 if (jugador.esAnfitrion) {
                     console.log(`Anfitrión desconectado. Cerrando sala ${clave}`);
+                    enviarMensajeSistema(clave, `¡El anfitrión (${jugador.nombre}) se ha desconectado! Juego terminado.`, 'alerta'); // También corregido aquí por si acaso
                     io.to(clave).emit('errorJuego', '¡El anfitrión se ha desconectado! Juego terminado.');
                     delete partidas[clave];
                 } 
-                // CASO B: Es Jugador -> NO HACEMOS NADA
-                // Lo dejamos en el array 'jugadores'. Si vuelve, se reconectará con su playerId.
-                // Si no vuelve nunca, se borrará cuando el anfitrión cierre la sala.
-                enviarMensajeSistema(clave, `${jugadorDesconectado.nombre} perdió la conexión.`, 'alerta');
+                // CASO B: Es Jugador -> NO HACEMOS NADA (Persistencia)
+                else {
+                    // CORRECCIÓN AQUÍ: Usamos 'jugador.nombre', no 'jugadorDesconectado'
+                    enviarMensajeSistema(clave, `${jugador.nombre} perdió la conexión.`, 'alerta');
+                }
                 break;
             }
         }

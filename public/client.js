@@ -882,6 +882,13 @@ socket.on('reconexionExitosa', (datos) => {
 
     // --- CASO B: El juego YA EMPEZÓ (Restaurar estado de juego) ---
 
+    // CORRECCIÓN CRÍTICA PARA EL CHAT: 
+    // Restauramos la clave interna aunque estemos en la pantalla de juego.
+    // Sin esto, el chat intenta enviar a la sala "---" y falla.
+    if (lobbyClave) lobbyClave.textContent = datos.clave;
+
+    if (typeof iniciarCronometro === 'function') iniciarCronometro();
+
     // Restaurar Historial Visual
     datos.fichasHistorial.forEach(ficha => {
         if (typeof agregarBolillaHistorial === 'function') {
