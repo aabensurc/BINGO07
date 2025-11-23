@@ -85,7 +85,46 @@ const contenedorListaGanadores = document.getElementById('contenedorListaGanador
 const avisoCuentaRegresiva = document.getElementById('avisoCuentaRegresiva');
 const segundosRestantes = document.getElementById('segundosRestantes');
 
+// Elementos Chat
+const chatLogLobby = document.getElementById('chatLogLobby');
+const chatInputLobby = document.getElementById('chatInputLobby');
+const btnEnviarLobby = document.getElementById('btnEnviarLobby');
+
+const chatLogJugador = document.getElementById('chatLogJugador');
+const chatInputJugador = document.getElementById('chatInputJugador');
+const btnEnviarJugador = document.getElementById('btnEnviarJugador');
+
+const chatLogHost = document.getElementById('chatLogHost');
+const chatInputHost = document.getElementById('chatInputHost');
+const btnEnviarHost = document.getElementById('btnEnviarHost');
+
 // --- FUNCIONES AUXILIARES ---
+
+function mostrarMensajeChat(logElement, data) {
+    if (!logElement) return;
+
+    const div = document.createElement('div');
+    const now = new Date();
+    const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    
+    let html = `<span style="opacity:0.6;">[${time}] </span>`;
+
+    if (data.type === 'usuario') {
+        html += `<span class="msg-usuario">${data.nombre}:</span> <span class="msg-texto">${data.msg}</span>`;
+    } else if (data.type === 'evento') {
+        html += `<span class="msg-evento">${data.msg}</span>`;
+    } else if (data.type === 'alerta') {
+        html += `<span class="msg-sistema">${data.msg}</span>`;
+    } else {
+        html += `<span class="msg-sistema">${data.msg}</span>`;
+    }
+
+    div.innerHTML = html;
+    logElement.appendChild(div);
+    
+    // Auto-scroll al final
+    logElement.scrollTop = logElement.scrollHeight;
+}
 
 function sincronizarToggleFavorito() {
     // Verificamos si tenemos cartilla
@@ -322,6 +361,32 @@ if (checkGuardarFavoritoHost) {
 
 // --- EVENTOS DOM: ANFITRIÓN / HÍBRIDO ---
 
+// Helper para enviar mensaje y limpiar input
+function enviarMensaje(inputElement, logElement) {
+    const mensaje = inputElement.value.trim();
+    if (!mensaje || !lobbyClave.textContent) return;
+
+    socket.emit('sendMessage', {
+        mensaje: mensaje,
+        clave: lobbyClave.textContent,
+        nombre: miNombre
+    });
+    inputElement.value = '';
+    
+    // Inicializar AudioContext en el primer click (por política del navegador)
+    if (typeof SoundFX !== 'undefined') SoundFX.init();
+}
+
+// Conectar botones
+if (btnEnviarLobby) btnEnviarLobby.addEventListener('click', () => enviarMensaje(chatInputLobby, chatLogLobby));
+if (chatInputLobby) chatInputLobby.addEventListener('keydown', (e) => { if (e.key === 'Enter') enviarMensaje(chatInputLobby, chatLogLobby); });
+
+if (btnEnviarJugador) btnEnviarJugador.addEventListener('click', () => enviarMensaje(chatInputJugador, chatLogJugador));
+if (chatInputJugador) chatInputJugador.addEventListener('keydown', (e) => { if (e.key === 'Enter') enviarMensaje(chatInputJugador, chatLogJugador); });
+
+if (btnEnviarHost) btnEnviarHost.addEventListener('click', () => enviarMensaje(chatInputHost, chatLogHost));
+if (chatInputHost) chatInputHost.addEventListener('keydown', (e) => { if (e.key === 'Enter') enviarMensaje(chatInputHost, chatLogHost); });
+
 // Panel Desplegable (Acordeón)
 if (btnToggleCartillaHost && panelCartillaHost) {
     btnToggleCartillaHost.addEventListener('click', () => {
@@ -499,10 +564,12 @@ function limpiarJuegoLocal(borrarMemoria = true) {
     if(cartillaJugador) cartillaJugador.innerHTML = '';
     if(cartillaHostContainer) cartillaHostContainer.innerHTML = '';
     if(tableroControlAnfitrion) tableroControlAnfitrion.innerHTML = '';
-    if(historialContenedor) historialContenedor.innerHTML = '<span style="color: white;">Esperando bolillas...</span>';
+    if(historialContenedor) historialContenedor.innerHTML = '<span>Esperando...</span>';
     
-    if(fichaActual) fichaActual.textContent = '--';
-    if(fichaAnterior) fichaAnterior.textContent = '--';
+    // --- NUEVO: LIMPIAR LOGS DE CHAT ---
+    if(chatLogLobby) chatLogLobby.innerHTML = '';
+    if(chatLogJugador) chatLogJugador.innerHTML = '';
+    if(chatLogHost) chatLogHost.innerHTML = '';
     
     // Memorias y Timers
     if (borrarMemoria) {
@@ -538,6 +605,27 @@ socket.on('connect', () => {
     if (playerId) {
         pantallaBienvenida.querySelector('.form-unirse').style.display = 'none';
         socket.emit('quieroReconectar', { playerId: playerId });
+    }
+});
+
+// --- NUEVO: RECIBIR MENSAJES Y EVENTOS DEL SISTEMA ---
+socket.on('systemLog', (data) => {
+    // Si es un evento de conexión (solo suena)
+    if (data.type === 'evento' && typeof SoundFX !== 'undefined') {
+        SoundFX.playChime();
+    }
+
+    // Dibujar en el Lobby (si estamos ahí)
+    if (pantallaLobby.classList.contains('activa')) {
+        mostrarMensajeChat(chatLogLobby, data);
+        return;
+    }
+
+    // Dibujar en el Juego
+    if (pantallaJuegoAnfitrion.classList.contains('activa')) {
+        mostrarMensajeChat(chatLogHost, data);
+    } else if (pantallaJuegoJugador.classList.contains('activa')) {
+        mostrarMensajeChat(chatLogJugador, data);
     }
 });
 

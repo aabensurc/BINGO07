@@ -63,6 +63,16 @@ function actualizarLobby(clave) {
     }
 }
 
+function enviarMensajeSistema(clave, mensaje, tipo = 'sistema', nombreUsuario = null) {
+    if (partidas[clave]) {
+        io.to(clave).emit('systemLog', {
+            msg: mensaje,
+            type: tipo,
+            nombre: nombreUsuario // Usado para mensajes de chat de usuario
+        });
+    }
+}
+
 function generarNumeroColumna(columna, numerosUsados) {
     const rangos = [
         { min: 1, max: 15 },  // B
@@ -292,6 +302,8 @@ io.on('connection', (socket) => {
         socket.emit('partidaCreada', { clave: clave, playerId: playerId });
         actualizarLobby(clave);
         console.log(`Partida creada por ${nombreAnfitrion} (${socket.id}). Clave: ${clave}`);
+
+        enviarMensajeSistema(clave, `${nombreAnfitrion} ha creado la partida. ¡Bienvenido!`, 'evento');
     });
 
 // -- Evento: Unirse a Partida (MODIFICADO: Permite entrada tardía) --
@@ -323,6 +335,7 @@ io.on('connection', (socket) => {
         socket.emit('unionExitosa', { clave: clave, playerId: playerId });
         actualizarLobby(clave);
         console.log(`Jugador ${nombre} (${socket.id}) se unió a la partida ${clave}`);
+        enviarMensajeSistema(clave, `${nombre} se unió a la sala.`, 'evento');
 
         // --- NUEVO: SI LLEGA TARDE, LE MANDAMOS TODO EL HISTORIAL ---
         if (partidas[clave].juegoIniciado) {
@@ -464,6 +477,7 @@ io.on('connection', (socket) => {
         if (!partidas[clave] || partidas[clave].anfitrionId !== socket.id) return;
 
         console.log(`Anfitrión ${socket.id} inicia la partida ${clave} con patrón ${patron}`);
+        enviarMensajeSistema(clave, `El anfitrión ha iniciado el juego. ¡A marcar por ${NOMBRES_PATRONES[patron]}!`, 'evento');
         
         const partida = partidas[clave];
         partida.juegoIniciado = true;
@@ -535,6 +549,7 @@ socket.on('cantarBingo', () => {
     const celdasGanadoras = verificarBingo(jugador.cartilla, partida.patronJuego, partida.fichasSorteadasSet);
 
     if (celdasGanadoras) {
+        enviarMensajeSistema(clave, `¡ALERTA! ${jugador.nombre} cantó BINGO. Verificando...`, 'alerta');
         console.log(`¡BINGO VÁLIDO para ${jugador.nombre}!`);
 
         // --- LÓGICA DE VENTANA DE 10 SEGUNDOS ---
@@ -569,6 +584,7 @@ socket.on('cantarBingo', () => {
 
     } else {
         socket.emit('bingoFalso');
+        enviarMensajeSistema(clave, `Bingo Falso de ${jugador.nombre}.`, 'alerta');
     }
 });
 
@@ -585,9 +601,11 @@ socket.on('cantarBingo', () => {
                 
                 // Si es anfitrión, cerramos la sala (igual que antes)
                 if (jugador.esAnfitrion) {
+                    enviarMensajeSistema(clave, `¡El anfitrión (${jugador.nombre}) ha cerrado la sala!`, 'alerta');
                     io.to(clave).emit('errorJuego', 'El anfitrión ha cerrado la sala.');
                     delete partidas[clave];
                 } else {
+                    enviarMensajeSistema(clave, `${jugador.nombre} abandonó la sala.`, 'evento');
                     // Si es jugador normal, LO BORRAMOS DE VERDAD
                     partida.jugadores.splice(indice, 1);
                     console.log(`Jugador ${jugador.nombre} abandonó voluntariamente la sala ${clave}`);
@@ -638,10 +656,26 @@ socket.on('cantarBingo', () => {
                 // CASO B: Es Jugador -> NO HACEMOS NADA
                 // Lo dejamos en el array 'jugadores'. Si vuelve, se reconectará con su playerId.
                 // Si no vuelve nunca, se borrará cuando el anfitrión cierre la sala.
+                enviarMensajeSistema(clave, `${jugadorDesconectado.nombre} perdió la conexión.`, 'alerta');
                 break;
             }
         }
     });
+
+    // -- Evento: Mensaje de Usuario (Chat) --
+    socket.on('sendMessage', (datos) => {
+        const { mensaje, clave, nombre } = datos;
+
+        if (partidas[clave]) {
+            // Reenviamos el mensaje a todos en la sala (tipo 'usuario')
+            io.to(clave).emit('systemLog', {
+                msg: mensaje,
+                type: 'usuario',
+                nombre: nombre
+            });
+        }
+    });
+    
 });
 
 

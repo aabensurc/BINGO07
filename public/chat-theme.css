@@ -1,0 +1,87 @@
+/* --- ESTILOS EXCLUSIVOS PARA EL COMPONENTE DE CHAT --- */
+
+:root {
+    /* Color usado para el fondo del chat (como los custom options) */
+    --chat-fondo-oscuro: rgba(40, 50, 60, 0.9);
+}
+
+.chat-contenedor {
+    display: flex;
+    flex-direction: column;
+    width: 95%;
+    max-width: 450px;
+    margin: 15px auto;
+    border-radius: 12px;
+    background: var(--chat-fondo-oscuro);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    overflow: hidden;
+}
+
+/* Área de los Mensajes (Log) */
+.chat-log {
+    flex-grow: 1;
+    height: 150px; /* Altura fija para visualización móvil */
+    padding: 10px;
+    overflow-y: auto;
+    color: white;
+    font-size: 13px;
+    line-height: 1.4;
+    
+    /* Efecto "Glass" en la parte superior */
+    background: var(--chat-fondo-oscuro);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+
+    text-align: left;
+}
+
+.chat-log::-webkit-scrollbar {
+    width: 6px;
+}
+.chat-log::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.3);
+    border-radius: 3px;
+}
+
+/* Línea de entrada */
+.chat-input-area {
+    display: flex;
+    padding: 8px;
+    background: var(--chat-fondo-oscuro);
+}
+
+/* Campo de texto */
+.chat-input-area input[type="text"] {
+    flex-grow: 1 !important;
+    padding: 10px !important;
+    border: none !important;
+    background: rgba(255, 255, 255, 0.1) !important; /* Ligeramente más claro que el fondo */
+    color: white !important;
+    border-radius: 6px !important;
+    margin-right: 8px !important;
+    font-size: 14px !important;
+
+    margin-bottom: 0px !important;
+}
+.chat-input-area input[type="text"]::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Botón de envío (Color dinámico) */
+.btn-chat-enviar {
+    background-color: var(--tema-principal); /* Utiliza el color de la tuerca */
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0 15px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+
+    width: 40% !important;
+}
+
+/* Estilos de mensajes */
+.msg-usuario { color: #f1c40f; /* Amarillo para el nombre */ }
+.msg-texto { color: white; }
+.msg-evento { color: #55efc4; font-style: italic; font-weight: bold; } /* Cian para eventos */
+.msg-sistema { color: #74b9ff; font-weight: bold; } /* Azul para sistema */

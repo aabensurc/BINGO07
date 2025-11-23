@@ -322,7 +322,7 @@
 
 /* Clase para abrirlo */
 .panel-cartilla-host.abierto .contenido-cartilla-host {
-    max-height: 600px; /* Altura suficiente para la cartilla */
+    max-height: 800px; /* Altura suficiente para la cartilla */
     opacity: 1;
     text-align: center
     
