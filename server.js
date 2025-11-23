@@ -432,7 +432,9 @@ io.on('connection', (socket) => {
                 esAnfitrion: jugadorEncontrado.esAnfitrion,
                 nombre: jugadorEncontrado.nombre, // <--- ¡AQUÍ ESTÁ LA CORRECCIÓN! Enviamos el nombre guardado
                 patronTexto: NOMBRES_PATRONES[partidaEncontrada.patronJuego],
-                fichasHistorial: partidaEncontrada.fichasHistorial
+                fichasHistorial: partidaEncontrada.fichasHistorial,
+                juegoIniciado: partidaEncontrada.juegoIniciado,
+                clave: claveEncontrada // <--- ¡ESTA LÍNEA FALTABA!
             };
 
             if (jugadorEncontrado.esAnfitrion) {
@@ -570,42 +572,50 @@ socket.on('cantarBingo', () => {
     }
 });
 
-    // -- Evento: Desconexión --
-    socket.on('disconnect', () => {
-        console.log(`Cliente desconectado: ${socket.id}`);
-        
-        // ¡NUEVO! La lógica de desconexión cambia.
-        // Ya no borramos al jugador, solo lo marcamos como "desconectado"
-        // El verdadero borrado ocurre si el ANFITRIÓN se va.
 
-        let clavePartida = null;
-        let jugadorDesconectado = null;
-
+    // -- NUEVO: Salir voluntariamente (Botón Salir) --
+    socket.on('abandonarPartida', () => {
+        // Buscamos dónde está el jugador
         for (const clave in partidas) {
             const partida = partidas[clave];
             const indice = partida.jugadores.findIndex(j => j.id === socket.id);
 
             if (indice !== -1) {
-                clavePartida = clave;
-                jugadorDesconectado = partida.jugadores[indice];
+                const jugador = partida.jugadores[indice];
                 
-                // Si el anfitrión se desconecta, matamos la partida
-                if (jugadorDesconectado.esAnfitrion) {
-                    console.log(`Anfitrión se desconectó. Cerrando sala ${clave}`);
-                    // ¡NUEVO! Emitimos el error ANTES de borrar la partida
-                    io.to(clave).emit('errorJuego', '¡El anfitrión se ha desconectado! Juego terminado.');
+                // Si es anfitrión, cerramos la sala (igual que antes)
+                if (jugador.esAnfitrion) {
+                    io.to(clave).emit('errorJuego', 'El anfitrión ha cerrado la sala.');
                     delete partidas[clave];
                 } else {
-                    // Si un jugador se va ANTES de que empiece el juego, lo sacamos
-                    if (!partida.juegoIniciado) {
-                         partida.jugadores.splice(indice, 1)[0];
-                         console.log(`Jugador ${jugadorDesconectado.nombre} salió del lobby ${clavePartida}`);
-                         actualizarLobby(clavePartida);
-                    }
-                    // Si el juego YA EMPEZÓ, no lo borramos,
-                    // solo dejamos de tener su 'socket.id'.
-                    // Podrá reconectarse con su 'playerId'.
+                    // Si es jugador normal, LO BORRAMOS DE VERDAD
+                    partida.jugadores.splice(indice, 1);
+                    console.log(`Jugador ${jugador.nombre} abandonó voluntariamente la sala ${clave}`);
+                    actualizarLobby(clave);
                 }
+                break;
+            }
+        }
+    });
+
+    // -- Evento: Desconexión (MODIFICADO: Persistencia) --
+    socket.on('disconnect', () => {
+        console.log(`Cliente desconectado (pérdida de señal/minimizado): ${socket.id}`);
+        
+        for (const clave in partidas) {
+            const partida = partidas[clave];
+            const jugador = partida.jugadores.find(j => j.id === socket.id);
+
+            if (jugador) {
+                // CASO A: Es Anfitrión -> Se cierra todo (No hay persistencia para host)
+                if (jugador.esAnfitrion) {
+                    console.log(`Anfitrión desconectado. Cerrando sala ${clave}`);
+                    io.to(clave).emit('errorJuego', '¡El anfitrión se ha desconectado! Juego terminado.');
+                    delete partidas[clave];
+                } 
+                // CASO B: Es Jugador -> NO HACEMOS NADA
+                // Lo dejamos en el array 'jugadores'. Si vuelve, se reconectará con su playerId.
+                // Si no vuelve nunca, se borrará cuando el anfitrión cierre la sala.
                 break;
             }
         }

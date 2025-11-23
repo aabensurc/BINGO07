@@ -44,6 +44,7 @@ const fichaAnterior = document.getElementById('fichaAnterior');
 const tableroControlAnfitrion = document.getElementById('grid75'); 
 const nombreAnfitrionDisplay = document.getElementById('nombreAnfitrionDisplay');
 const displayClaveAnfitrion = document.getElementById('displayClaveAnfitrion'); // ¡NUEVO!
+const displayClaveJugador = document.getElementById('displayClaveJugador');
 const checkAutomatico = document.getElementById('checkAutomatico');
 const inputIntervalo = document.getElementById('inputIntervalo');
 
@@ -69,6 +70,8 @@ const checkGuardarFavorito = document.getElementById('checkGuardarFavorito');
 // Modales
 const modalFinJuego = document.getElementById('modalFinJuego');
 const btnVolverAlLobby = document.getElementById('btnVolverAlLobby');
+const btnSalirLobby = document.getElementById('btnSalirLobby');
+const btnSalirPartidaJugador = document.getElementById('btnSalirPartidaJugador');
 const contenedorCartillaGanadora = document.getElementById('contenedorCartillaGanadora');
 const contenedorListaGanadores = document.getElementById('contenedorListaGanadores');
 const avisoCuentaRegresiva = document.getElementById('avisoCuentaRegresiva');
@@ -92,6 +95,37 @@ function sincronizarToggleFavorito() {
     
     // Actualizamos el botón del Anfitrión (si existe)
     if (checkGuardarFavoritoHost) checkGuardarFavoritoHost.checked = debeEstarPrendido;
+}
+
+// --- LÓGICA DE SALIDA MANUAL ---
+
+function salirDelJuegoTotalmente() {
+    if (confirm("¿Seguro que quieres salir?")) {
+        // 1. Avisar al servidor para que me borre de la lista
+        socket.emit('abandonarPartida');
+        
+        // 2. Borrar mis credenciales locales
+        localStorage.removeItem(PLAYER_ID_KEY);
+        // Opcional: Borrar también marcas y favoritos si quieres limpieza total
+        // localStorage.removeItem('bingoCartonFavorito'); 
+        
+        // 3. Recargar página para ir al inicio
+        location.reload();
+    }
+}
+
+// Botón X en el Lobby
+if (btnSalirLobby) {
+    btnSalirLobby.addEventListener('click', salirDelJuegoTotalmente);
+}
+
+// Opción Roja en el Menú de Juego
+if (btnSalirPartidaJugador) {
+    btnSalirPartidaJugador.addEventListener('click', () => {
+        // Ocultar menú primero
+        document.getElementById('menuAjustes').classList.remove('visible');
+        salirDelJuegoTotalmente();
+    });
 }
 
 function cambiarPantalla(idSiguientePantalla) {
@@ -513,6 +547,9 @@ socket.on('partidaIniciada', (datos) => {
         jugadorPatron.textContent = datos.patronTexto;
         if(nombreJugadorDisplay) nombreJugadorDisplay.textContent = miNombre || "Jugador";
         
+        // --- NUEVO: MOSTRAR CÓDIGO EN LA CABECERA ---
+        if(displayClaveJugador) displayClaveJugador.textContent = lobbyClave.textContent;
+
         if (typeof dibujarCartillaModerna === 'function') {
             dibujarCartillaModerna(miCartilla, cartillaJugador);
         }
@@ -616,7 +653,7 @@ socket.on('forzarLimpieza', () => {
 
 // --- RECONEXIÓN (HÍBRIDA) ---
 socket.on('reconexionExitosa', (datos) => {
-    // 1. Datos Base
+    // 1. Restaurar datos básicos (Nombre y Rol)
     if (datos.nombre) {
         miNombre = datos.nombre; 
         if(nombreJugadorDisplay) nombreJugadorDisplay.textContent = datos.nombre; 
@@ -624,25 +661,46 @@ socket.on('reconexionExitosa', (datos) => {
     }
     soyAnfitrion = datos.esAnfitrion;
     
-    // 2. Limpieza
+    // 2. Limpieza previa (sin borrar memoria de marcas)
     limpiarJuegoLocal(false);
-    if (typeof iniciarCronometro === 'function') iniciarCronometro();
 
-    // 3. Historial
+    // 3. DECISIÓN CRÍTICA: ¿LOBBY O JUEGO?
+    if (!datos.juegoIniciado) {
+        // --- CASO A: Estamos en el Lobby (Aún no empieza) ---
+        
+        // Recuperar código de sala
+        const codigoSala = datos.clave || "---";
+        if(lobbyClave) lobbyClave.textContent = codigoSala;
+        
+        if (soyAnfitrion) {
+            lobbyVistaAnfitrion.style.display = 'flex';
+            lobbyVistaJugador.style.display = 'none';
+        } else {
+            lobbyVistaAnfitrion.style.display = 'none';
+            lobbyVistaJugador.style.display = 'block';
+            // Verificar si hay favorito para cargar
+            sincronizarToggleFavorito(); 
+        }
+        cambiarPantalla('pantalla-lobby');
+        return; // ¡IMPORTANTE! Detenemos aquí para no cargar la pantalla de juego
+    }
+
+    // --- CASO B: El juego YA EMPEZÓ (Restaurar estado de juego) ---
+
+    // Restaurar Historial Visual
     datos.fichasHistorial.forEach(ficha => {
         if (typeof agregarBolillaHistorial === 'function') {
             agregarBolillaHistorial(ficha, historialContenedor);
         }
     });
 
-    // 4. Recuperar Marcas de Memoria
+    // Recuperar Marcas Manuales
     const playerId = localStorage.getItem(PLAYER_ID_KEY);
     const savedMarks = JSON.parse(localStorage.getItem(`bingoMarks-${playerId}`) || '[]');
     misMarcas = savedMarks;
 
-    // 5. Renderizado Híbrido
     if (soyAnfitrion) {
-        // A. UI HOST
+        // --- RESTAURAR ANFITRION ---
         if (typeof HostUI !== 'undefined') {
             HostUI.renderizarTableroVacio();
             datos.fichasHistorial.forEach(ficha => HostUI.marcarFicha(ficha));
@@ -651,15 +709,16 @@ socket.on('reconexionExitosa', (datos) => {
             if (datos.anteriorFicha) HostUI.actualizarBolaVisual(fichaAnterior, datos.anteriorFicha, false);
         }
         if(checkAutomatico) checkAutomatico.checked = false;
-        if(displayClaveAnfitrion) displayClaveAnfitrion.textContent = lobbyClave.textContent;
+        
+        // Restaurar Código en Cabecera Host
+        if(displayClaveAnfitrion) displayClaveAnfitrion.textContent = datos.clave;
 
-        // B. CARTILLA JUGADOR DEL HOST (Si la tiene)
+        // Restaurar Cartilla Híbrida (si existe)
         if (datos.cartilla) {
             miCartilla = datos.cartilla;
             if (typeof dibujarCartillaModerna === 'function') {
                 dibujarCartillaModerna(miCartilla, cartillaHostContainer);
             }
-            // Re-aplicar marcas en el contenedor del host
             if (savedMarks.length > 0) {
                 const celdas = cartillaHostContainer.querySelectorAll('.celda-3d');
                 celdas.forEach(celda => {
@@ -670,9 +729,12 @@ socket.on('reconexionExitosa', (datos) => {
         cambiarPantalla('pantalla-juego-anfitrion');
 
     } else {
-        // C. JUGADOR NORMAL
+        // --- RESTAURAR JUGADOR ---
         jugadorPatron.textContent = datos.patronTexto;
         miCartilla = datos.cartilla;
+        
+        // Restaurar Código en Cabecera Jugador (Donde antes estaba el reloj)
+        if(displayClaveJugador) displayClaveJugador.textContent = datos.clave;
 
         if (typeof dibujarCartillaModerna === 'function') {
             dibujarCartillaModerna(miCartilla, cartillaJugador);

@@ -78,15 +78,16 @@
 
 <!-- PANTALLA 2: LOBBY (REDISEÑADO) -->
         <section id="pantalla-lobby" class="pantalla pantalla-lobby-moderna">
+            
+            <button id="btnSalirLobby" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: none; color: white; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-weight: bold; z-index: 10; display: flex; justify-content: center; align-items: center; padding: 0; line-height: 1;">✕</button>
+
             <h2>Sala de Espera</h2>
             
-            <!-- Caja de Clave destacada -->
             <div class="caja-clave">
                 <p>CÓDIGO DE PARTIDA</p>
                 <strong id="lobbyClave" class="clave-gigante">---</strong>
             </div>
             
-            <!-- Vista Anfitrión -->
             <div id="lobby-vista-anfitrion" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
           
                 <div class="patron-selector-container">
@@ -109,8 +110,6 @@
                                 <span class="option" data-value="l_invertida">L Invertida (Opuesta)</span>
                                 <span class="option" data-value="letra_x">Letra X (Aspa)</span>
                                 <span class="option" data-value="cruz_mas">Cruz (+)</span>
-                                <span class="option" data-value="diagonal_backslash">Diagonal (\)</span>
-                                <span class="option" data-value="diagonal_slash">Diagonal Invertida (/)</span>
                                 
                                 <span class="option" data-value="diagonal_backslash">Diagonal (\)</span>
                                 <span class="option" data-value="diagonal_slash">Diagonal Invertida (/)</span>
@@ -124,13 +123,14 @@
                         </div>
                     </div>
                 </div>
+
                 <button id="btnCambiarCartonHost" class="btn-borde" style="margin-bottom: 15px; border-color: rgba(255,255,255,0.5); font-size: 14px; padding: 10px 20px;">
                     🔄 Cambiar mi Cartón
                 </button>
+
                 <button id="btnEmpezarPartida">¡COMENZAR JUEGO!</button>
             </div>
             
-            <!-- Vista Jugador -->
             <div id="lobby-vista-jugador" style="width: 100%; text-align: center;">
                 <p>Esperando al anfitrión... <br> ¡Prepara tus cartones!</p>
                 
@@ -140,12 +140,10 @@
                 <div id="mensajeCambioCarton" style="font-size: 12px; color: #f1c40f; margin-top: 5px; min-height: 20px;"></div>
             </div>
 
-            <!-- Lista de Jugadores (Ahora con estilo cápsulas) -->
             <div class="lista-jugadores-container">
                 <h3>JUGADORES CONECTADOS</h3>
                 <ul id="lobbyListaJugadores">
-                    <!-- Se llenará con JS: <li>👤 Nombre</li> -->
-                </ul>
+                    </ul>
             </div>
         </section>
 
@@ -229,10 +227,13 @@
                     </div>
                 </div>
                 <div class="header-derecha">
-                    <div class="timer-container"><span>⏱</span> <span id="tiempoJuego">00:00</span></div>
+                    <div class="codigo-sala-badge" title="Código de Sala">
+                        🔑 <span id="displayClaveJugador">---</span>
+                    </div>
                     <button id="btnAjustes" class="btn-ajustes">⚙️
                         <div id="menuAjustes" class="ajustes-menu">
                             <div class="ajuste-item">Color Mesa <input type="color" id="inputColorTema" value="#2ecc71"></div>
+                            
                             <div class="ajuste-item">Sonido <div id="toggleSonidoMenu" style="cursor:pointer">🔊 / 🔇</div></div>
                             
                             <hr style="border:0; border-top:1px solid #eee; margin:5px 0;">
@@ -242,6 +243,11 @@
                                     <input type="checkbox" id="checkGuardarFavorito"> 
                                     <span class="slider"></span>
                                 </label>
+                            </div>
+
+                            <hr style="border:0; border-top:1px solid #eee; margin:5px 0;">
+                            <div class="ajuste-item" id="btnSalirPartidaJugador" style="cursor:pointer; color: #e74c3c; font-weight: 900;">
+                                🚪 Salir
                             </div>
                         </div>
                     </button>
