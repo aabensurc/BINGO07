@@ -128,6 +128,11 @@
                     </div>
                 </div>
 
+                <div class="apuesta-container">
+                    <span class="label-apuesta">APUESTA S/.</span>
+                    <input type="number" id="inputMontoApuesta" class="input-apuesta" value="1.00" step="0.50" min="0">
+                </div>
+
                 <button id="btnCambiarCartonHost" class="btn-borde" style="margin-bottom: 15px; border-color: rgba(255,255,255,0.5); font-size: 14px; padding: 10px 20px;">
                     🔄 Cambiar mi Cartón
                 </button>
@@ -138,17 +143,26 @@
             <div id="lobby-vista-jugador" style="width: 100%; text-align: center;">
                 <p>Esperando al anfitrión... <br> ¡Prepara tus cartones!</p>
                 
-                <button id="btnCambiarCarton" class="btn-borde" style="margin-top: 15px; border-color: rgba(255,255,255,0.5); font-size: 14px; padding: 10px 20px;">
+                <button id="btnCambiarCarton" class="btn-borde" style="border-color: rgba(255,255,255,0.5); font-size: 14px; padding: 10px 20px;">
                     🔄 Cambiar mi Cartón
                 </button>
                 <div id="mensajeCambioCarton" style="font-size: 12px; color: #f1c40f; margin-top: 5px; min-height: 20px;"></div>
             </div>
 
             <div class="lista-jugadores-container">
-                <h3>JUGADORES CONECTADOS</h3>
-                <ul id="lobbyListaJugadores">
-                    </ul>
+                <h3>RANKING DE SESIÓN</h3>
+                
+                <div class="ranking-header">
+                    <div>#</div>
+                    <div style="text-align: left;">Jugador</div>
+                    <div style="text-align: center;">🏆</div>
+                    <div style="text-align: right;">S/.</div>
+                </div>
+
+                <div id="lobbyListaJugadores">
+                    </div>
             </div>
+
             <div class="chat-contenedor">
                 <div id="chatLogLobby" class="chat-log" style="height: 200px;"></div>
                 <div class="chat-input-area">
@@ -166,7 +180,11 @@
                     <div class="avatar-img anfitrion-avatar"></div> 
                     <div class="datos-usuario">
                         <span class="nombre-usuario" id="nombreAnfitrionDisplay">Anfitrión</span>
-                        <span class="puntos-usuario">Anfitrión</span> </div>
+                        <span class="puntos-usuario">Anfitrión</span>
+                    </div>
+                    <div class="contenedor-saldo-badge">
+                        <span id="displaySaldoAnfitrion" class="badge-saldo">S/. 0.00</span>
+                    </div>
                 </div>
                 
                 <div class="header-derecha">
@@ -256,6 +274,9 @@
                     <div class="datos-usuario">
                         <span class="nombre-usuario" id="nombreJugadorDisplay">Jugador</span>
                         <span class="puntos-usuario">Jugador</span>
+                    </div>
+                    <div class="contenedor-saldo-badge">
+                        <span id="displaySaldoJugador" class="badge-saldo">S/. 0.00</span>
                     </div>
                 </div>
                 <div class="header-derecha">

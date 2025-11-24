@@ -98,6 +98,10 @@ const chatLogHost = document.getElementById('chatLogHost');
 const chatInputHost = document.getElementById('chatInputHost');
 const btnEnviarHost = document.getElementById('btnEnviarHost');
 
+const inputMontoApuesta = document.getElementById('inputMontoApuesta');
+const displaySaldoJugador = document.getElementById('displaySaldoJugador');
+const displaySaldoAnfitrion = document.getElementById('displaySaldoAnfitrion');
+
 // --- FUNCIONES AUXILIARES ---
 
 function mostrarMensajeChat(logElement, data) {
@@ -336,7 +340,11 @@ if (dropdown) {
 }
 
 btnEmpezarPartida.addEventListener('click', () => {
-    socket.emit('empezarPartida', { patron: patronSeleccionado });
+    const monto = inputMontoApuesta ? inputMontoApuesta.value : 0;
+    socket.emit('empezarPartida', { 
+        patron: patronSeleccionado,
+        montoApuesta: monto 
+    });
 });
 
 // --- LÓGICA TOGGLE FAVORITO (VERSIÓN HOST) ---
@@ -667,14 +675,25 @@ socket.on('unionExitosa', (datos) => {
 socket.on('errorUnion', (msg) => mensajeError.textContent = msg);
 
 socket.on('actualizarLobby', (datos) => {
-    SoundFX.playChime(); // <--- AQUÍ
+    SoundFX.playChime();
     lobbyListaJugadores.innerHTML = '';
-    datos.jugadores.forEach(j => {
-        const li = document.createElement('li');
-        const iconClass = j.esAnfitrion ? 'icono-corona' : 'icono-usuario';
-        li.innerHTML = `<div class="icono-jugador-lista ${iconClass}"></div><span>${j.nombre}</span>`;
-        if (j.esAnfitrion) li.style.fontWeight = 'bold';
-        lobbyListaJugadores.appendChild(li);
+    
+    datos.jugadores.forEach((j, index) => {
+        const div = document.createElement('div');
+        div.className = 'fila-ranking';
+        
+        // Icono (Corona o nada) + Nombre
+        const icono = j.esAnfitrion ? '👑' : '🧑'; 
+        const claseNombre = j.esAnfitrion ? 'color:#f1c40f;' : '';
+
+        // PROTECCIÓN: Usamos (j.saldo || 0) para evitar el crash si es undefined
+        div.innerHTML = `
+            <div class="rank-num">${index + 1}</div>
+            <div class="rank-nombre" style="${claseNombre}">${icono} ${j.nombre}</div>
+            <div class="rank-wins">${j.victorias || 0}</div>
+            <div class="rank-saldo">S/. ${(j.saldo || 0).toFixed(2)}</div>
+        `;
+        lobbyListaJugadores.appendChild(div);
     });
 });
 
@@ -723,10 +742,18 @@ socket.on('partidaIniciada', (datos) => {
     // 1. Guardar datos comunes
     miCartilla = datos.cartilla; // Todos reciben cartilla ahora
     
-    // 2. Configurar Pantalla
+    // 2. Actualizar VISUALMENTE el Saldo (Badge)
+    const saldoTexto = `S/. ${parseFloat(datos.saldoActual || 0).toFixed(2)}`;
+    if(displaySaldoJugador) displaySaldoJugador.textContent = saldoTexto;
+    if(displaySaldoAnfitrion) displaySaldoAnfitrion.textContent = saldoTexto;
+
+    // 3. Configurar Pantalla según Rol
     if (soyAnfitrion) {
-        // Renderizar cosas de host
+        // --- ANFITRION ---
+        // Renderizar tablero de control vacío
         if (typeof HostUI !== 'undefined') HostUI.renderizarTableroVacio();
+        
+        // Texto del patrón en el acordeón
         if(hostPatronTexto) hostPatronTexto.textContent = "Jugando por: " + datos.patronTexto;
         
         // Renderizar cartilla de jugador del host (en el acordeón)
@@ -735,12 +762,13 @@ socket.on('partidaIniciada', (datos) => {
         }
         
         cambiarPantalla('pantalla-juego-anfitrion');
+
     } else {
-        // Renderizar pantalla normal de jugador
+        // --- JUGADOR NORMAL ---
         jugadorPatron.textContent = datos.patronTexto;
         if(nombreJugadorDisplay) nombreJugadorDisplay.textContent = miNombre || "Jugador";
         
-        // --- NUEVO: MOSTRAR CÓDIGO EN LA CABECERA ---
+        // Mostrar Código de Sala en la cabecera (donde antes iba el reloj)
         if(displayClaveJugador) displayClaveJugador.textContent = lobbyClave.textContent;
 
         if (typeof dibujarCartillaModerna === 'function') {
@@ -749,6 +777,7 @@ socket.on('partidaIniciada', (datos) => {
         cambiarPantalla('pantalla-juego-jugador');
     }
 
+    // 4. Narración de inicio (si no es unión tardía)
     if(!datos.esUnionTardia) {
         setTimeout(() => hablar(`Iniciando juego. ${datos.patronTexto}`), 1000);
     }
@@ -856,10 +885,15 @@ socket.on('reconexionExitosa', (datos) => {
     }
     soyAnfitrion = datos.esAnfitrion;
     
-    // 2. Limpieza previa (sin borrar memoria de marcas)
+    // 2. Actualizar el Saldo recuperado
+    const saldoTexto = `S/. ${parseFloat(datos.saldo || 0).toFixed(2)}`;
+    if(displaySaldoJugador) displaySaldoJugador.textContent = saldoTexto;
+    if(displaySaldoAnfitrion) displaySaldoAnfitrion.textContent = saldoTexto;
+
+    // 3. Limpieza previa (sin borrar memoria de marcas)
     limpiarJuegoLocal(false);
 
-    // 3. DECISIÓN CRÍTICA: ¿LOBBY O JUEGO?
+    // 4. DECISIÓN CRÍTICA: ¿LOBBY O JUEGO?
     if (!datos.juegoIniciado) {
         // --- CASO A: Estamos en el Lobby (Aún no empieza) ---
         
@@ -884,7 +918,6 @@ socket.on('reconexionExitosa', (datos) => {
 
     // CORRECCIÓN CRÍTICA PARA EL CHAT: 
     // Restauramos la clave interna aunque estemos en la pantalla de juego.
-    // Sin esto, el chat intenta enviar a la sala "---" y falla.
     if (lobbyClave) lobbyClave.textContent = datos.clave;
 
     if (typeof iniciarCronometro === 'function') iniciarCronometro();
@@ -935,7 +968,7 @@ socket.on('reconexionExitosa', (datos) => {
         jugadorPatron.textContent = datos.patronTexto;
         miCartilla = datos.cartilla;
         
-        // Restaurar Código en Cabecera Jugador (Donde antes estaba el reloj)
+        // Restaurar Código en Cabecera Jugador
         if(displayClaveJugador) displayClaveJugador.textContent = datos.clave;
 
         if (typeof dibujarCartillaModerna === 'function') {

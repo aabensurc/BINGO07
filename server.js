@@ -55,11 +55,18 @@ function generarPlayerId() {
 
 function actualizarLobby(clave) {
     if (partidas[clave]) {
-        const jugadores = partidas[clave].jugadores.map(j => ({
+        // Ordenamos por victorias (Descendente: el que más gana arriba)
+        const jugadoresOrdenados = [...partidas[clave].jugadores].sort((a, b) => b.victorias - a.victorias);
+
+        // Mapeamos incluyendo los nuevos campos
+        const listaData = jugadoresOrdenados.map(j => ({
             nombre: j.nombre,
-            esAnfitrion: j.esAnfitrion
+            esAnfitrion: j.esAnfitrion,
+            victorias: j.victorias || 0, // Evita undefined
+            saldo: j.saldo || 0.00       // Evita undefined
         }));
-        io.to(clave).emit('actualizarLobby', { jugadores: jugadores });
+        
+        io.to(clave).emit('actualizarLobby', { jugadores: listaData });
     }
 }
 
@@ -247,23 +254,49 @@ function terminarJuego(clave) {
     const partida = partidas[clave];
     if (!partida || !partida.ganadoresTemp) return;
 
-    // Convertimos el Set de fichas a Array para enviarlo
-    const numerosSorteados = Array.from(partida.fichasSorteadasSet);
+    // 1. CÁLCULO FINANCIERO (CORREGIDO A GANANCIA NETA)
+    const cantidadGanadores = partida.ganadoresTemp.length;
+    const cantidadJugadoresTotal = partida.jugadores.length;
+    const apuestaPorPersona = partida.montoApuesta || 0;
+    
+    // Pozo Bruto Total
+    const pozoTotal = apuestaPorPersona * cantidadJugadoresTotal;
+    
+    // Lo que le corresponde retirar a cada ganador (Bruto)
+    const premioBrutoPorGanador = cantidadGanadores > 0 ? (pozoTotal / cantidadGanadores) : 0;
 
-    // Emitimos el evento final con la LISTA de ganadores
-    io.to(clave).emit('juegoTerminado', {
-        listaGanadores: partida.ganadoresTemp, // Array de ganadores
-        numerosSorteados: numerosSorteados
+    // Ganancia NETA (Lo que me llevo - Lo que aposté)
+    // Esto es lo que realmente "gané de los demás"
+    const gananciaNeta = premioBrutoPorGanador - apuestaPorPersona;
+
+    // 2. ACTUALIZAR DATOS
+    partida.ganadoresTemp.forEach(ganadorTemp => {
+        const jugadorReal = partida.jugadores.find(j => j.id === ganadorTemp.id);
+        if (jugadorReal) {
+            jugadorReal.victorias += 1;
+            // Solo sumamos la ganancia limpia
+            jugadorReal.saldo += gananciaNeta;
+        }
     });
 
-    // Limpieza de partida
+    // 3. Enviar resultados
+    const numerosSorteados = Array.from(partida.fichasSorteadasSet);
+
+    io.to(clave).emit('juegoTerminado', {
+        listaGanadores: partida.ganadoresTemp,
+        numerosSorteados: numerosSorteados,
+        // Enviamos la neta para que sepan cuánto ganaron realmente
+        premioGanado: gananciaNeta 
+    });
+
     partida.juegoIniciado = false;
     partida.cierreEnCurso = false;
     partida.ganadoresTemp = null;
     partida.bombo = [];
     partida.fichasSorteadasSet.clear();
     partida.fichasHistorial = [];
-    console.log(`Partida ${clave} finalizada con ${partida.ganadoresTemp?.length || 0} ganadores.`);
+    
+    actualizarLobby(clave);
 }
 
 
@@ -275,7 +308,7 @@ io.on('connection', (socket) => {
     socket.on('crearPartida', (datos) => {
         const nombreAnfitrion = datos.nombre;
         const clave = generarClave();
-        const playerId = generarPlayerId(); // ¡NUEVO!
+        const playerId = generarPlayerId();
 
         partidas[clave] = {
             clave: clave,
@@ -285,7 +318,8 @@ io.on('connection', (socket) => {
             juegoIniciado: false,
             bombo: [],
             fichasSorteadasSet: new Set(),
-            fichasHistorial: [] // ¡NUEVO! Guardamos el historial de fichas con letra
+            fichasHistorial: [],
+            montoApuesta: 0 // Inicializamos la apuesta de la sala
         };
 
         const anfitrion = {
@@ -293,12 +327,15 @@ io.on('connection', (socket) => {
             playerId: playerId,
             nombre: nombreAnfitrion,
             esAnfitrion: true,
-            cartilla: generarCartilla() // <--- CAMBIO: ¡El anfitrión ya tiene cartón!
+            cartilla: generarCartilla(),
+            
+            // ¡IMPORTANTE: INICIALIZAR ESTADÍSTICAS!
+            victorias: 0,
+            saldo: 0.00
         };
         partidas[clave].jugadores.push(anfitrion);
 
         socket.join(clave);
-        // ¡NUEVO! Enviamos el playerId al anfitrión
         socket.emit('partidaCreada', { clave: clave, playerId: playerId });
         actualizarLobby(clave);
         console.log(`Partida creada por ${nombreAnfitrion} (${socket.id}). Clave: ${clave}`);
@@ -306,18 +343,14 @@ io.on('connection', (socket) => {
         enviarMensajeSistema(clave, `${nombreAnfitrion} ha creado la partida. ¡Bienvenido!`, 'evento');
     });
 
-// -- Evento: Unirse a Partida (MODIFICADO: Permite entrada tardía) --
+// -- Evento: Unirse a Partida (MODIFICADO: Permite entrada tardía + Stats) --
     socket.on('unirsePartida', (datos) => {
         const { nombre, clave } = datos;
         
-        // 1. Validar que la partida exista
         if (!partidas[clave]) {
             socket.emit('errorUnion', 'Error: Esa clave de partida no existe.');
             return;
         }
-
-        // --- CAMBIO: YA NO BLOQUEAMOS SI EL JUEGO INICIÓ ---
-        // (Borramos el bloque if (partidas[clave].juegoIniciado) ...)
 
         const playerId = generarPlayerId();
         const nuevoJugador = {
@@ -325,30 +358,31 @@ io.on('connection', (socket) => {
             playerId: playerId,
             nombre: nombre,
             esAnfitrion: false,
-            cartilla: generarCartilla()
+            cartilla: generarCartilla(),
+            
+            // ¡IMPORTANTE: INICIALIZAR ESTADÍSTICAS!
+            victorias: 0,
+            saldo: 0.00
         };
         partidas[clave].jugadores.push(nuevoJugador);
 
         socket.join(clave);
         
-        // Enviamos confirmación básica
         socket.emit('unionExitosa', { clave: clave, playerId: playerId });
         actualizarLobby(clave);
         console.log(`Jugador ${nombre} (${socket.id}) se unió a la partida ${clave}`);
         enviarMensajeSistema(clave, `${nombre} se unió a la sala.`, 'evento');
 
-        // --- NUEVO: SI LLEGA TARDE, LE MANDAMOS TODO EL HISTORIAL ---
         if (partidas[clave].juegoIniciado) {
             console.log(`Jugador ${nombre} entró tarde. Sincronizando...`);
             
-            // 1. Enviamos su cartilla y el patrón actual
             socket.emit('partidaIniciada', {
                 patronTexto: NOMBRES_PATRONES[partidas[clave].patronJuego],
                 cartilla: nuevoJugador.cartilla,
+                saldoActual: nuevoJugador.saldo, // Enviamos su saldo
                 esUnionTardia: true 
             });
 
-            // 2. Enviamos una por una las fichas que ya salieron
             partidas[clave].fichasHistorial.forEach(ficha => {
                 socket.emit('fichaAnunciada', { ficha: ficha });
             });
@@ -446,11 +480,12 @@ io.on('connection', (socket) => {
             // 3. Le enviamos el "paquete de reconexión"
             const datosReconexion = {
                 esAnfitrion: jugadorEncontrado.esAnfitrion,
-                nombre: jugadorEncontrado.nombre, // <--- ¡AQUÍ ESTÁ LA CORRECCIÓN! Enviamos el nombre guardado
+                nombre: jugadorEncontrado.nombre,
                 patronTexto: NOMBRES_PATRONES[partidaEncontrada.patronJuego],
                 fichasHistorial: partidaEncontrada.fichasHistorial,
                 juegoIniciado: partidaEncontrada.juegoIniciado,
-                clave: claveEncontrada // <--- ¡ESTA LÍNEA FALTABA!
+                clave: claveEncontrada,
+                saldo: jugadorEncontrado.saldo // <--- ¡ESTA ES LA LÍNEA QUE FALTABA!
             };
 
             if (jugadorEncontrado.esAnfitrion) {
@@ -473,21 +508,26 @@ io.on('connection', (socket) => {
         }
     });
 
-    // -- Evento: Empezar Partida --
+    // -- Evento: Empezar Partida (CON APUESTA) --
     socket.on('empezarPartida', (datos) => {
-        const { patron } = datos;
+        const { patron, montoApuesta } = datos; // Recibimos el monto
         const clave = Array.from(socket.rooms)[1];
+        
         if (!partidas[clave] || partidas[clave].anfitrionId !== socket.id) return;
 
-        console.log(`Anfitrión ${socket.id} inicia la partida ${clave} con patrón ${patron}`);
-        enviarMensajeSistema(clave, `El anfitrión ha iniciado el juego. ¡A marcar por ${NOMBRES_PATRONES[patron]}!`, 'evento');
+        // Guardamos la apuesta en la partida
+        const apuesta = parseFloat(montoApuesta) || 0;
+        partidas[clave].montoApuesta = apuesta;
+
+        console.log(`Partida ${clave} inicia. Patrón: ${patron}. Apuesta: S/. ${apuesta.toFixed(2)}`);
+        enviarMensajeSistema(clave, `Juego iniciado. Patrón: ${NOMBRES_PATRONES[patron]}. Pozo por jugador: S/. ${apuesta.toFixed(2)}`, 'evento');
         
         const partida = partidas[clave];
         partida.juegoIniciado = true;
         partida.patronJuego = patron;
         partida.bombo = generarBombo();
         partida.fichasSorteadasSet.clear();
-        partida.fichasHistorial = []; // ¡NUEVO! Limpiamos historial
+        partida.fichasHistorial = []; 
 
         partida.jugadores.forEach(jugador => {
             const socketJugador = io.sockets.sockets.get(jugador.id);
@@ -495,7 +535,8 @@ io.on('connection', (socket) => {
 
             let datosPartida = {
                 patronTexto: NOMBRES_PATRONES[patron] || "Línea Simple",
-                cartilla: jugador.cartilla // <--- CAMBIO: Se la enviamos a TODOS (incluido host)
+                cartilla: jugador.cartilla,
+                saldoActual: jugador.saldo // Enviamos saldo actualizado
             };
             
             socketJugador.emit('partidaIniciada', datosPartida);
