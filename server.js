@@ -271,45 +271,63 @@ function verificarBingo(cartilla, patron, fichasSet) {
 // --- Fin de funciones de verificación ---
 
 
+// server.js (Función MODIFICADA para descontar a perdedores)
+
 function terminarJuego(clave) {
     const partida = partidas[clave];
     if (!partida || !partida.ganadoresTemp) return;
 
-    // 1. CÁLCULO FINANCIERO (CORREGIDO A GANANCIA NETA)
+    // 1. DATOS FINANCIEROS
+    const cantidadJugadoresTotal = partida.jugadores.length; // Todos los que están en la sala
     const cantidadGanadores = partida.ganadoresTemp.length;
-    const cantidadJugadoresTotal = partida.jugadores.length;
     const apuestaPorPersona = partida.montoApuesta || 0;
     
-    // Pozo Bruto Total
+    // Pozo Bruto Total (Todo el dinero en la mesa)
     const pozoTotal = apuestaPorPersona * cantidadJugadoresTotal;
     
-    // Lo que le corresponde retirar a cada ganador (Bruto)
+    // Lo que recibe cada ganador en total (Bruto)
+    // Ej: Si hay 6 soles y 2 ganadores, cada uno recibe 3 soles.
     const premioBrutoPorGanador = cantidadGanadores > 0 ? (pozoTotal / cantidadGanadores) : 0;
 
-    // Ganancia NETA (Lo que me llevo - Lo que aposté)
-    // Esto es lo que realmente "gané de los demás"
-    const gananciaNeta = premioBrutoPorGanador - apuestaPorPersona;
+    // 2. CALCULAR NETO (GANANCIA REAL O PÉRDIDA)
+    // Ganador: Recibe su premio bruto MENOS lo que puso de su bolsillo.
+    const gananciaNetaGanador = premioBrutoPorGanador - apuestaPorPersona;
+    
+    // Perdedor: Pierde exactamente lo que apostó.
+    const perdidaPerdedor = apuestaPorPersona;
 
-    // 2. ACTUALIZAR DATOS
-    partida.ganadoresTemp.forEach(ganadorTemp => {
-        const jugadorReal = partida.jugadores.find(j => j.id === ganadorTemp.id);
-        if (jugadorReal) {
-            jugadorReal.victorias += 1;
-            // Solo sumamos la ganancia limpia
-            jugadorReal.saldo += gananciaNeta;
+    // 3. APLICAR SALDOS A TODOS LOS JUGADORES (Ganadores y Perdedores)
+    partida.jugadores.forEach(jugador => {
+        // Verificamos si este jugador está en la lista de ganadores temporales
+        const esGanador = partida.ganadoresTemp.some(g => g.id === jugador.id);
+
+        if (esGanador) {
+            // --- ES GANADOR ---
+            jugador.victorias += 1;
+            jugador.saldo += gananciaNetaGanador; 
+            // Nota: Si son muchos ganadores, la "gananciaNeta" podría ser negativa matemáticamente,
+            // pero en Bingo lo normal es que ganen pocos.
+        } else {
+            // --- ES PERDEDOR ---
+            // Aquí es donde hacemos que el saldo baje (y pueda ser negativo)
+            jugador.saldo -= perdidaPerdedor;
         }
     });
 
-    // 3. Enviar resultados
+    // 4. PREPARAR DATOS PARA EL CLIENTE
     const numerosSorteados = Array.from(partida.fichasSorteadasSet);
 
+    // Enviamos resultados
     io.to(clave).emit('juegoTerminado', {
         listaGanadores: partida.ganadoresTemp,
         numerosSorteados: numerosSorteados,
-        // Enviamos la neta para que sepan cuánto ganaron realmente
-        premioGanado: gananciaNeta 
+        
+        // Enviamos datos informativos para mostrar en el modal si quisieras
+        premioGanado: gananciaNetaGanador, 
+        montoPerdido: perdidaPerdedor
     });
 
+    // 5. RESET DE ESTADO DE LA PARTIDA
     partida.juegoIniciado = false;
     partida.cierreEnCurso = false;
     partida.ganadoresTemp = null;
@@ -317,6 +335,7 @@ function terminarJuego(clave) {
     partida.fichasSorteadasSet.clear();
     partida.fichasHistorial = [];
     
+    // Actualizamos el Lobby para que se vean los nuevos saldos y ranking
     actualizarLobby(clave);
 }
 
