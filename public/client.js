@@ -64,6 +64,7 @@ const lobbyVistaJugador = document.getElementById('lobby-vista-jugador');
 const btnEmpezarPartida = document.getElementById('btnEmpezarPartida');
 
 // Elementos Anfitrión
+const btnSalirPartidaHost = document.getElementById('btnSalirPartidaHost');
 const btnSortearFicha = document.getElementById('btnSortearFicha');
 const fichaActual = document.getElementById('fichaActual');
 const fichaAnterior = document.getElementById('fichaAnterior');
@@ -197,6 +198,27 @@ if (btnSalirPartidaJugador) {
         // Ocultar menú primero
         document.getElementById('menuAjustes').classList.remove('visible');
         salirDelJuegoTotalmente();
+    });
+}
+
+if (btnSalirPartidaHost) {
+    btnSalirPartidaHost.addEventListener('click', () => {
+        // 1. Ocultar el menú visualmente
+        const menu = document.getElementById('menuAjustesAnfitrion');
+        if (menu) menu.classList.remove('visible');
+
+        // 2. Confirmación de seguridad
+        if (confirm("⚠️ ¿Estás seguro de cerrar la sala?\n\nEsto terminará la partida para TODOS los jugadores.")) {
+            
+            // 3. Avisar al servidor (El server borrará la sala y sacará a todos)
+            socket.emit('abandonarPartida');
+            
+            // 4. Limpieza local
+            localStorage.removeItem(PLAYER_ID_KEY);
+            
+            // 5. Recargar para volver al inicio
+            location.reload();
+        }
     });
 }
 

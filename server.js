@@ -506,7 +506,8 @@ io.on('connection', (socket) => {
         socket.emit('cartonCambiado', jugador.cartilla);
     });
 
-// --- ¡NUEVO EVENTO: Reconexión! ---
+// server.js (Evento quieroReconectar MODIFICADO para devolver el control al Host)
+
     socket.on('quieroReconectar', (datos) => {
         const { playerId } = datos;
         if (!playerId) return;
@@ -535,11 +536,20 @@ io.on('connection', (socket) => {
             
             // 1. Actualizamos su ID de socket
             jugadorEncontrado.id = socket.id;
+
+            // --- ¡NUEVO! IMPORTANTE PARA EL ANFITRIÓN ---
+            // Si es el jefe, actualizamos la referencia principal de la partida
+            // para que pueda volver a usar los botones de control.
+            if (jugadorEncontrado.esAnfitrion) {
+                partidaEncontrada.anfitrionId = socket.id;
+                console.log(`Control de anfitrión restaurado para ${jugadorEncontrado.nombre} en sala ${claveEncontrada}`);
+            }
+            // --------------------------------------------
             
-            // 2. Lo volvemos a meter en la sala
+            // 2. Lo volvemos a meter en la sala de socket.io
             socket.join(claveEncontrada);
 
-            // --- CORRECCIÓN 1: AVISAR AL CHAT QUE VOLVIÓ ---
+            // Avisar al chat que volvió
             enviarMensajeSistema(claveEncontrada, `${jugadorEncontrado.nombre} ha vuelto a la partida.`, 'evento');
 
             // 3. Le enviamos el "paquete de reconexión"
@@ -550,10 +560,11 @@ io.on('connection', (socket) => {
                 fichasHistorial: partidaEncontrada.fichasHistorial,
                 juegoIniciado: partidaEncontrada.juegoIniciado,
                 clave: claveEncontrada,
-                saldo: jugadorEncontrado.saldo // <--- ¡ESTA ES LA LÍNEA QUE FALTABA!
+                saldo: jugadorEncontrado.saldo 
             };
 
             if (jugadorEncontrado.esAnfitrion) {
+                // Datos extra para el Host (Bolas actuales)
                 if (partidaEncontrada.fichasHistorial.length > 0) {
                     datosReconexion.ultimaFicha = partidaEncontrada.fichasHistorial[partidaEncontrada.fichasHistorial.length - 1];
                     if (partidaEncontrada.fichasHistorial.length > 1) {
@@ -561,14 +572,19 @@ io.on('connection', (socket) => {
                     }
                 }
             } else {
+                // Datos extra para Jugador (Su cartilla)
                 datosReconexion.cartilla = jugadorEncontrado.cartilla;
             }
             
             socket.emit('reconexionExitosa', datosReconexion);
+            
+            // Refrescamos el lobby por si cambió algo visualmente
             actualizarLobby(claveEncontrada);
 
         } else {
-            console.log(`PlayerId ${playerId} no encontrado. Forzando limpieza.`);
+            console.log(`PlayerId ${playerId} no encontrado o sala expirada.`);
+            // Si no lo encontramos (quizás reiniciaste el servidor y se borró la RAM),
+            // le decimos que limpie su navegador.
             socket.emit('forzarLimpieza'); 
         }
     });
@@ -747,7 +763,8 @@ socket.on('cantarBingo', () => {
         }
     });
 
-    // -- Evento: Desconexión (CORREGIDO) --
+// server.js (Evento disconnect MODIFICADO para persistencia del Host)
+
     socket.on('disconnect', () => {
         console.log(`Cliente desconectado (pérdida de señal/minimizado): ${socket.id}`);
         
@@ -756,16 +773,16 @@ socket.on('cantarBingo', () => {
             const jugador = partida.jugadores.find(j => j.id === socket.id);
 
             if (jugador) {
-                // CASO A: Es Anfitrión -> Se cierra todo (No hay persistencia para host)
+                // CASO A: Es Anfitrión
                 if (jugador.esAnfitrion) {
-                    console.log(`Anfitrión desconectado. Cerrando sala ${clave}`);
-                    enviarMensajeSistema(clave, `¡El anfitrión (${jugador.nombre}) se ha desconectado! Juego terminado.`, 'alerta'); // También corregido aquí por si acaso
-                    io.to(clave).emit('errorJuego', '¡El anfitrión se ha desconectado! Juego terminado.');
-                    delete partidas[clave];
+                    console.log(`Anfitrión desconectado momentáneamente de sala ${clave}. Esperando reconexión...`);
+                    
+                    // AVISO SUAVE: No cerramos la sala, solo avisamos.
+                    // No enviamos 'errorJuego' porque eso recarga la página de los jugadores.
+                    enviarMensajeSistema(clave, `⚠️ El anfitrión perdió conexión. Esperando a que vuelva...`, 'alerta');
                 } 
-                // CASO B: Es Jugador -> NO HACEMOS NADA (Persistencia)
+                // CASO B: Es Jugador Normal
                 else {
-                    // CORRECCIÓN AQUÍ: Usamos 'jugador.nombre', no 'jugadorDesconectado'
                     enviarMensajeSistema(clave, `${jugador.nombre} perdió la conexión.`, 'alerta');
                 }
                 break;
