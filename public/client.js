@@ -14,6 +14,25 @@ let temporizadorSorteo = null;
 let miNombre = "";
 const PLAYER_ID_KEY = 'bingoPlayerId';
 
+// NUEVA VARIABLE DE ESTADO GLOBAL PARA EL NOMBRE AUTENTICADO
+let usuarioLogueadoNombre = "";
+
+// NUEVOS ELEMENTOS DE LOGIN
+const tabInvitado = document.getElementById('tabInvitado');
+const tabUsuario = document.getElementById('tabUsuario');
+const formInvitado = document.getElementById('formInvitado');
+const formUsuario = document.getElementById('formUsuario');
+const btnLoginUsuario = document.getElementById('btnLoginUsuario');
+const inputUsuario = document.getElementById('inputUsuario');
+const inputContrasena = document.getElementById('inputContrasena');
+const errorFlotanteUsuario = document.getElementById('errorFlotanteUsuario');
+const errorFlotanteInvitado = document.getElementById('errorFlotanteInvitado');
+const mensajeBienvenida = document.getElementById('mensajeBienvenida');
+const bienvenidaNombre = document.getElementById('bienvenidaNombre');
+const tabsContainer = document.getElementById('tabsContainer');
+
+const btnLogout = document.getElementById('btnLogout');
+
 // --- VOZ Y SONIDO (Variables Globales) ---
 let vozMuteada = false;
 let efectosMuteados = false;
@@ -35,7 +54,7 @@ const pantallaJuegoJugador = document.getElementById('pantalla-juego-jugador');
 const inputNombre = document.getElementById('inputNombre');
 const btnCrearPartida = document.getElementById('btnCrearPartida');
 const inputClave = document.getElementById('inputClave');
-const btnUnirsePartida = document.getElementById('btnUnirsePartida');
+const btnUnirsePartida = document.getElementById('btnUnirsePartida'); // <--- ¡ASEGÚRATE DE QUE ESTO EXISTA!
 const mensajeError = document.getElementById('mensajeError');
 
 const lobbyClave = document.getElementById('lobbyClave');
@@ -101,6 +120,8 @@ const btnEnviarHost = document.getElementById('btnEnviarHost');
 const inputMontoApuesta = document.getElementById('inputMontoApuesta');
 const displaySaldoJugador = document.getElementById('displaySaldoJugador');
 const displaySaldoAnfitrion = document.getElementById('displaySaldoAnfitrion');
+
+
 
 // --- FUNCIONES AUXILIARES ---
 
@@ -288,19 +309,90 @@ cargarPreferenciasSonido();
 
 // --- EVENTOS DOM: INICIO Y LOBBY ---
 
+// client.js (REEMPLAZO COMPLETO: Evento btnCrearPartida)
+
 btnCrearPartida.addEventListener('click', () => {
-    const nombre = inputNombre.value.trim();
-    if (!nombre) { mensajeError.textContent = 'Nombre requerido'; return; }
-    miNombre = nombre;
-    socket.emit('crearPartida', { nombre: nombre });
+    
+    // 1. Obtener el nombre correcto: usa el nombre autenticado si existe, sino usa el input (que es lo que usaba antes del login)
+    // El nombre a usar SIEMPRE debe estar en la variable global 'miNombre' o 'usuarioLogueadoNombre'
+    const nombreAUsar = usuarioLogueadoNombre || inputNombre.value.trim();
+
+    // 2. Validación de Nombre (necesaria incluso para crear partida)
+    if (nombreAUsar.length < 2) { 
+        // Si no está logueado, intentará mostrar el error en el flotante de invitado.
+        // Si está logueado, el inputNombre está oculto, pero el chequeo es el mismo.
+        mostrarErrorFlotante(errorFlotanteInvitado || mensajeError, 'Debes ingresar un nombre para crear la partida.');
+        return; 
+    }
+    
+    // 3. Establecer el nombre global y emitir
+    miNombre = nombreAUsar; 
+    
+    // El mensajeError original es el que no encuentra el script, por eso debemos usar el flotante.
+    // Aunque no está en el DOM, tu `client.js` original tenía la línea:
+    // if (!nombre) { mensajeError.textContent = 'Nombre requerido'; return; }
+    // Lo corregimos para usar el nuevo sistema de errores flotantes:
+    if (errorFlotanteInvitado) mostrarErrorFlotante(errorFlotanteInvitado, '', true); // Limpiar error flotante
+
+    socket.emit('crearPartida', { nombre: miNombre });
 });
 
+// --- Evento: UNIRSE A LA PARTIDA (MODIFICADO para soportar Login) ---
 btnUnirsePartida.addEventListener('click', () => {
-    const nombre = inputNombre.value.trim();
+    
+    // Habilitar temporalmente los campos por si estaban desactivados
+    btnUnirsePartida.disabled = false;
+    inputClave.disabled = false; 
+
+    // 1. Lógica de selección de nombre 
+    const nombreAUsar = usuarioLogueadoNombre || inputNombre.value.trim();
     const clave = inputClave.value.trim().toUpperCase();
-    if (!nombre || !clave) { mensajeError.textContent = 'Datos requeridos'; return; }
-    miNombre = nombre;
-    socket.emit('unirsePartida', { nombre: nombre, clave: clave });
+
+    // Resetear el error
+    if(errorFlotanteInvitado) mostrarErrorFlotante(errorFlotanteInvitado, '', true);
+
+    // 2. Validación de Campos
+    if (nombreAUsar.length < 2) {
+        if(errorFlotanteInvitado) {
+             mostrarErrorFlotante(errorFlotanteInvitado, 'Ingresa un nombre válido (mín. 2 letras).');
+        } else {
+             // Fallback si errorFlotanteInvitado no existe (para evitar que se bloquee)
+             alert('Ingresa un nombre válido (mín. 2 letras).'); 
+        }
+        return;
+    }
+    if (clave.length !== 4) {
+        if(errorFlotanteInvitado) {
+            mostrarErrorFlotante(errorFlotanteInvitado, 'La clave de la sala debe ser de 4 letras.');
+        } else {
+            alert('La clave de la sala debe ser de 4 letras.');
+        }
+        return;
+    }
+
+    // 3. Establecer el nombre global y obtener o generar el PlayerId
+    miNombre = nombreAUsar; 
+    let playerId = localStorage.getItem(PLAYER_ID_KEY);
+    
+    // Generar un ID si es invitado nuevo
+    if (!playerId) {
+        playerId = Date.now().toString(36) + Math.random().toString(36).substring(2, 5);
+        localStorage.setItem(PLAYER_ID_KEY, playerId);
+    }
+    
+
+    // 4. Emitir el evento de unión
+    socket.emit('unirsePartida', { // <--- CORRECCIÓN IMPORTANTE: el server.js espera 'unirsePartida' o 'unirseSala'?
+                                  // Según server.js, espera 'unirsePartida'
+        nombre: miNombre,
+        clave: clave,
+        playerId: playerId
+    });
+    
+    // 5. Bloquear UI mientras se conecta
+    btnUnirsePartida.disabled = true;
+    inputClave.disabled = true;
+    
 });
 
 // --- EVENTOS DE SONIDO (NUEVO) ---
@@ -519,6 +611,177 @@ if (checkGuardarFavorito) {
 }
 
 
+/**
+ * Muestra el error en el elemento HTML especificado.
+ * @param {HTMLElement} elementoError - El div de error a mostrar.
+ * @param {string} mensaje - El mensaje de error.
+ * @param {boolean} limpiar - Si es true, solo limpia el error (para reset).
+ */
+function mostrarErrorFlotante(elementoError, mensaje, limpiar = false) {
+    if (limpiar || mensaje === '') {
+        elementoError.textContent = '';
+        elementoError.classList.add('oculto');
+        return;
+    }
+    
+    elementoError.textContent = mensaje;
+    elementoError.classList.remove('oculto');
+
+    // Ocultar después de 5 segundos
+    setTimeout(() => {
+        mostrarErrorFlotante(elementoError, '', true);
+    }, 5000);
+}
+
+/**
+ * Maneja el cambio entre el formulario de Invitado y Usuario.
+ * @param {string} modo - 'invitado' o 'usuario'.
+ */
+function cambiarModoLogin(modo) {
+    const inputClaveEl = document.getElementById('inputClave');
+    const btnUnirseEl = document.getElementById('btnUnirsePartida');
+    
+    if (modo === 'invitado') {
+        formInvitado.classList.remove('oculto');
+        formUsuario.classList.add('oculto');
+        tabInvitado.classList.add('activo');
+        tabUsuario.classList.remove('activo');
+        if(errorFlotanteUsuario) mostrarErrorFlotante(errorFlotanteUsuario, '', true);
+        
+        // MOSTRAR CAMPOS DE JUEGO
+        if(inputClaveEl) inputClaveEl.classList.remove('oculto');
+        if(btnUnirseEl) btnUnirseEl.classList.remove('oculto');
+        
+    } else {
+        formInvitado.classList.add('oculto');
+        formUsuario.classList.remove('oculto');
+        tabInvitado.classList.remove('activo');
+        tabUsuario.classList.add('activo');
+        if(errorFlotanteInvitado) mostrarErrorFlotante(errorFlotanteInvitado, '', true);
+
+        // OCULTAR CAMPOS DE JUEGO (Mientras se loguea)
+        if(inputClaveEl) inputClaveEl.classList.add('oculto');
+        if(btnUnirseEl) btnUnirseEl.classList.add('oculto');
+    }
+    
+    // Resetear UI
+    if(mensajeBienvenida) mensajeBienvenida.classList.add('oculto');
+    if(inputNombre) inputNombre.classList.remove('oculto'); 
+    if(tabsContainer) tabsContainer.classList.remove('oculto');
+}
+
+
+/**
+ * Transforma la interfaz de Bienvenida a la vista post-login (solo código de sala).
+ * @param {string} nombre - Nombre del usuario logueado.
+ */
+function transformarAPostLogin(nombre) {
+    // 1. OCULTAR ELEMENTOS DE AUTENTICACIÓN
+    if(tabsContainer) tabsContainer.classList.add('oculto');
+    if(formInvitado) formInvitado.classList.add('oculto');
+    if(formUsuario) formUsuario.classList.add('oculto');
+
+    // 2. MOSTRAR EL MENSAJE DE BIENVENIDA
+    if(mensajeBienvenida) {
+        mensajeBienvenida.classList.remove('oculto');
+        bienvenidaNombre.textContent = `¡Bienvenido de vuelta, ${nombre}! 👋`;
+    }
+    
+    // 3. MOSTRAR INPUT DE SALA Y BOTÓN DE UNIRSE
+    const inputClaveEl = document.getElementById('inputClave');
+    const btnUnirseEl = document.getElementById('btnUnirsePartida');
+    
+    if(inputClaveEl) { inputClaveEl.classList.remove('oculto'); inputClaveEl.disabled = false; }
+    if(btnUnirseEl) { btnUnirseEl.classList.remove('oculto'); btnUnirseEl.disabled = false; }
+
+    // 4. CONTROL DE BOTONES INFERIORES
+    if(btnCrearPartida) btnCrearPartida.style.display = 'block'; 
+    if(btnConexionFavorito) btnConexionFavorito.style.display = 'block';
+
+    // 5. NUEVO: MOSTRAR BOTÓN DE LOGOUT
+    if(btnLogout) btnLogout.classList.remove('oculto');
+}
+
+
+const btnConexionFavorito = document.getElementById('btnConexionFavorito');
+
+if (btnConexionFavorito) {
+    btnConexionFavorito.addEventListener('click', () => {
+        const playerId = localStorage.getItem(PLAYER_ID_KEY);
+
+        if (playerId) {
+            console.log("Reconexión manual forzada.");
+            // Usamos la misma lógica del on('connect')
+            if(formInvitado) formInvitado.classList.add('oculto');
+            if(tabsContainer) tabsContainer.classList.add('oculto');
+            if(mensajeBienvenida) {
+                mensajeBienvenida.classList.remove('oculto');
+                bienvenidaNombre.textContent = "Intentando reconexión...";
+            }
+            socket.emit('quieroReconectar', { playerId: playerId });
+        } else {
+            alert("No hay datos de partida guardados en tu navegador.");
+        }
+    });
+}
+
+/**
+ * Configura los Event Listeners para el Login (Tabs y Botones)
+ */
+function setupLoginListeners() {
+    // 1. Manejo de Pestañas
+    if (tabInvitado) tabInvitado.addEventListener('click', () => cambiarModoLogin('invitado'));
+    if (tabUsuario) tabUsuario.addEventListener('click', () => cambiarModoLogin('usuario'));
+
+    // 2. Botón de Iniciar Sesión (Usuario)
+    if (btnLoginUsuario) {
+        btnLoginUsuario.addEventListener('click', () => {
+            const usuario = inputUsuario.value.trim();
+            const contrasena = inputContrasena.value.trim();
+
+            mostrarErrorFlotante(errorFlotanteUsuario, '', true); // Limpiar errores
+
+            if (usuario === '' || contrasena === '') {
+                mostrarErrorFlotante(errorFlotanteUsuario, 'Debes ingresar usuario y contraseña.');
+                return;
+            }
+
+            // Emitir el evento al servidor
+            socket.emit('loginUsuario', { usuario, contrasena });
+
+            // Bloquear temporalmente el botón
+            btnLoginUsuario.disabled = true;
+            btnLoginUsuario.textContent = 'Iniciando...';
+        });
+    }
+}
+
+// Llamar a la función de configuración de listeners
+setupLoginListeners();
+
+
+// client.js - LÓGICA DE CERRAR SESIÓN
+if (btnLogout) {
+    btnLogout.addEventListener('click', () => {
+        // 1. Limpiar variables de sesión y memoria local
+        usuarioLogueadoNombre = "";
+        miNombre = "";
+        localStorage.removeItem('bingoUsuarioNombre'); // <--- BORRAR LA SESIÓN
+        // Opcional: localStorage.removeItem(PLAYER_ID_KEY); 
+
+        // 2. Ocultar elementos de usuario logueado
+        if(mensajeBienvenida) mensajeBienvenida.classList.add('oculto');
+        btnLogout.classList.add('oculto');
+
+        // 3. Restaurar la vista de pestañas
+        if(tabsContainer) tabsContainer.classList.remove('oculto');
+        
+        // 4. Forzar vista de invitado
+        cambiarModoLogin('invitado');
+    });
+}
+
+
 // --- LIMPIEZA Y RESET ---
 btnVolverAlLobby.addEventListener('click', () => {
     modalFinJuego.classList.remove('visible');
@@ -567,6 +830,39 @@ socket.on('reiniciarLobby', () => {
     hablar("Volviendo al lobby.");
 });
 
+
+// NUEVO: Manejo de Login Exitoso
+socket.on('loginExitoso', (datos) => {
+    // A. Restaurar botón
+    btnLoginUsuario.disabled = false;
+    btnLoginUsuario.textContent = 'Iniciar Sesión';
+
+    // B. Almacenar el nombre y el playerId
+    miNombre = datos.nombre; 
+    usuarioLogueadoNombre = datos.nombre; // Guardamos el nombre autenticado
+
+    // --- NUEVO: GUARDAR PERSISTENCIA DE SESIÓN ---
+    localStorage.setItem('bingoUsuarioNombre', datos.nombre); 
+    localStorage.setItem(PLAYER_ID_KEY, datos.playerId);
+
+    // C. Transformar la UI
+    transformarAPostLogin(datos.nombre);
+
+    // D. Mostrar éxito temporal
+    mostrarErrorFlotante(errorFlotanteUsuario, `¡Login exitoso! Bienvenido, ${datos.nombre}.`);
+
+});
+
+// NUEVO: Manejo de Error de Login
+socket.on('loginError', (mensaje) => {
+    // A. Restaurar botón
+    btnLoginUsuario.disabled = false;
+    btnLoginUsuario.textContent = 'Iniciar Sesión';
+
+    // B. Mostrar error
+    mostrarErrorFlotante(errorFlotanteUsuario, mensaje);
+});
+
 function limpiarJuegoLocal(borrarMemoria = true) {
     // Limpiar visuales
     if(cartillaJugador) cartillaJugador.innerHTML = '';
@@ -608,11 +904,49 @@ function limpiarJuegoLocal(borrarMemoria = true) {
 //                 SOCKET.IO EVENTS
 // =========================================================
 
+// client.js - CONEXIÓN INICIAL Y RECONEXIÓN
 socket.on('connect', () => {
     const playerId = localStorage.getItem(PLAYER_ID_KEY);
-    if (playerId) {
-        pantallaBienvenida.querySelector('.form-unirse').style.display = 'none';
+    const nombreGuardado = localStorage.getItem('bingoUsuarioNombre'); // <--- RECUPERAR NOMBRE
+
+    // ESCENARIO A: El usuario ya estaba logueado (tiene nombre guardado)
+    if (nombreGuardado) {
+        console.log(`Sesión restaurada para: ${nombreGuardado}`);
+        
+        // 1. Restaurar variables globales
+        miNombre = nombreGuardado;
+        usuarioLogueadoNombre = nombreGuardado;
+
+        // 2. Restaurar la interfaz de usuario logueado INMEDIATAMENTE
+        transformarAPostLogin(nombreGuardado);
+        
+        // 3. Si además tiene playerId, intentamos reconectar SILENCIOSAMENTE a una partida
+        // (por si estaba jugando y dio F5).
+        if (playerId) {
+            socket.emit('quieroReconectar', { playerId: playerId });
+        }
+    } 
+    // ESCENARIO B: No estaba logueado, pero tiene un ID de invitado (Posible reconexión de invitado)
+    else if (playerId) {
+        console.log(`Invitado detectado con ID: ${playerId}. Intentando reconectar...`);
+        
+        // Aquí sí ocultamos todo porque no sabemos el nombre aún
+        if(formInvitado) formInvitado.classList.add('oculto');
+        if(formUsuario) formUsuario.classList.add('oculto');
+        if(tabsContainer) tabsContainer.classList.add('oculto');
+        
         socket.emit('quieroReconectar', { playerId: playerId });
+        
+        if(mensajeBienvenida) {
+            mensajeBienvenida.classList.remove('oculto');
+            bienvenidaNombre.textContent = "Reconectando...";
+        }
+    } 
+    // ESCENARIO C: Usuario nuevo o limpio
+    else {
+        // Aseguramos que se vea el formulario de invitado
+        if(formInvitado) formInvitado.classList.remove('oculto');
+        if(tabsContainer) tabsContainer.classList.remove('oculto');
     }
 });
 

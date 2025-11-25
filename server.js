@@ -1,7 +1,8 @@
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
-const crypto = require('crypto'); // ¡NUEVO! Para generar IDs únicos
+const crypto = require('crypto');
+const fs = require('fs'); // <--- AÑADIDO: Módulo para leer archivos
 
 const app = express();
 const server = http.createServer(app);
@@ -10,6 +11,26 @@ const io = socketIo(server);
 const PORT = process.env.PORT || 3000;
 
 app.use(express.static('public'));
+
+
+// --- NUEVO: CARGA DE USUARIOS DESDE JSON (Simulando Google Drive) ---
+let USUARIOS_AUTORIZADOS = [];
+const RUTA_USUARIOS = './users.json'; // Ruta al archivo que acabas de crear
+
+function cargarUsuarios() {
+    try {
+        const data = fs.readFileSync(RUTA_USUARIOS, 'utf8');
+        USUARIOS_AUTORIZADOS = JSON.parse(data);
+        console.log(`[AUTH] Usuarios cargados exitosamente desde ${RUTA_USUARIOS}. Total: ${USUARIOS_AUTORIZADOS.length}`);
+    } catch (error) {
+        // Esto es CRÍTICO para que el servidor no se caiga si no encuentra el archivo
+        console.error(`[ERROR] No se pudo cargar el archivo de usuarios: ${RUTA_USUARIOS}`);
+        console.error(`[ERROR] Detalle: ${error.message}`);
+        USUARIOS_AUTORIZADOS = [];
+        console.log('[AUTH] Inicializando lista de usuarios vacía. No habrá logins de usuario.');
+    }
+}
+cargarUsuarios(); // Ejecutar la carga al iniciar el servidor
 
 // --- LÓGICA DEL JUEGO ---
 
@@ -303,6 +324,31 @@ function terminarJuego(clave) {
 // --- Lógica de Conexión ---
 io.on('connection', (socket) => {
     console.log(`Nuevo cliente conectado: ${socket.id}`);
+
+    // -- Evento: Login de Usuario --
+    socket.on('loginUsuario', (datos) => {
+        const { usuario, contrasena } = datos;
+
+        // 1. Buscar el usuario en la lista cargada en memoria
+        const usuarioEncontrado = USUARIOS_AUTORIZADOS.find(
+            u => u.usuario === usuario && u.contrasena === contrasena
+        );
+
+        // 2. Respuesta al cliente
+        if (usuarioEncontrado) {
+            // Éxito: Enviar el nombre y playerId persistente
+            socket.emit('loginExitoso', { 
+                nombre: usuarioEncontrado.nombre, 
+                playerId: usuarioEncontrado.playerId 
+            });
+            console.log(`[AUTH] Login exitoso para ${usuarioEncontrado.nombre}`);
+
+        } else {
+            // Falla: Enviar un mensaje de error
+            socket.emit('loginError', 'Credenciales incorrectas. Inténtalo de nuevo.');
+            console.log(`[AUTH] Intento de login fallido para usuario: ${usuario}`);
+        }
+    });
 
     // -- Evento: Crear Partida --
     socket.on('crearPartida', (datos) => {

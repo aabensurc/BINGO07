@@ -1,0 +1,26 @@
+[
+  {
+    "usuario": "alex",
+    "contrasena": "1234",
+    "nombre": "Alex Abensur",
+    "playerId": "a_12345"
+  },
+  {
+    "usuario": "maria",
+    "contrasena": "5678",
+    "nombre": "María Lopez",
+    "playerId": "m_67890"
+  },
+  {
+    "usuario": "juan",
+    "contrasena": "bingo",
+    "nombre": "Juan Carlos",
+    "playerId": "j_00112"
+  },
+  {
+    "usuario": "invitado",
+    "contrasena": "free",
+    "nombre": "Mi Invitado Favorito",
+    "playerId": "i_00000"
+  }
+]

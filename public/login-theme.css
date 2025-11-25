@@ -50,51 +50,64 @@
     50% { transform: translateY(-10px); }
 }
 
-/* --- INPUTS MODERNOS (EFECTO CRISTAL / GLASSMORPHISM) --- */
-.input-group {
+/* --- INPUTS MODERNOS (CORRECCIÓN ESTÉTICA) --- */
+.login-form input[type="text"], 
+.login-form input[type="password"],
+.login-form input[type="number"],
+input[type="text"], /* Inputs que viven fuera de login-form (como inputClave) */
+input[type="password"] {
+    /* Hacemos que los inputs tengan el mismo ancho y estén centrados */
     width: 100%;
-    /* CORRECCIÓN: Reducimos el margen para pegar el input al botón */
-    margin-bottom: 8px; 
-}
-
-/* Estilo específico para los inputs dentro del login */
-.pantalla-login-moderna input[type="text"] {
-    width: 100%;
-    /* Fondo verde oscuro muy transparente */
+    max-width: 300px; 
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    margin-bottom: 15px; /* Espacio uniforme entre campos */
+    
+    /* Estilos Glassmorphismo */
     background: rgba(0, 0, 0, 0.1); 
-    /* Borde semitransparente blanco */
     border: 2px solid rgba(255, 255, 255, 0.3);
     color: white;
     padding: 15px 20px;
     border-radius: 15px;
-    font-size: 18px; /* Letra un poco más grande */
+    font-size: 18px; 
     outline: none;
     transition: all 0.3s ease;
     text-align: center;
     font-weight: 500;
 }
 
-.pantalla-login-moderna input[type="text"]::placeholder {
-    color: rgba(255, 255, 255, 0.6);
-}
-
-.pantalla-login-moderna input[type="text"]:focus {
+/* Aplicar el mismo estilo de foco/zoom a todos */
+.login-form input[type="text"]:focus,
+.login-form input[type="password"]:focus,
+input[type="text"]:focus,
+input[type="password"]:focus {
     background: rgba(0, 0, 0, 0.2);
     border-color: rgba(255, 255, 255, 0.9);
-    transform: scale(1.02); /* Pequeño zoom al escribir */
+    transform: scale(1.02);
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* Placeholder para todos */
+.login-form input::placeholder,
+input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
 }
 
 /* --- BOTONES --- */
 .btn-inicio {
     width: 100%;
+    max-width: 300px; /* Asegura el mismo ancho que los inputs */
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    
     padding: 16px;
     font-size: 16px;
     font-weight: 900;
     border-radius: 50px; /* Completamente redondos */
     cursor: pointer;
     transition: transform 0.1s, box-shadow 0.2s, background 0.2s;
-    /* Margen inferior para separar los bloques (Crear vs Unirse) */
     margin-bottom: 15px;
     border: none;
     text-transform: uppercase;
@@ -129,38 +142,42 @@
 
 /* --- ELEMENTOS DECORATIVOS --- */
 .divider-text {
-    /* Ajustamos márgenes para equilibrar el espacio entre bloques */
     margin: 15px 0 25px 0;
     font-size: 12px;
     color: rgba(255,255,255,0.6);
     font-weight: bold;
-    text-align: center; /* Centrado */
+    text-align: center;
     width: 100%;
     position: relative;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .separador-sutil {
-    /* CORRECCIÓN: Quitamos la altura extra para juntarlos más */
     height: 0px; 
     display: none;
 }
 
 /* MENSAJE DE ERROR (Oculto por defecto) */
 .error-flotante {
-    display: none; /* Oculto si no hay texto */
-    color: #ff6b6b; /* Rojo suave pastel */
+    display: none; 
+    color: #ff6b6b;
     font-weight: bold;
     background: rgba(255, 255, 255, 0.95);
     padding: 10px 15px;
     border-radius: 8px;
     margin-top: 15px;
+    margin-bottom: 15px;
     min-height: 20px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     font-size: 14px;
     text-align: center;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-/* Solo se muestra si tiene contenido (cuando JS le pone texto) */
 .error-flotante:not(:empty) {
     display: block;
     animation: shake 0.4s ease-in-out;
@@ -170,4 +187,95 @@
     0%, 100% { transform: translateX(0); }
     25% { transform: translateX(-5px); }
     75% { transform: translateX(5px); }
+}
+
+
+
+/* --- ESTILOS DE TABS DE LOGIN Y UI TRANSFORMADA --- */
+
+/* Contenedor de Pestañas */
+.tabs-container {
+    display: flex;
+    width: 100%;
+    max-width: 300px;
+    margin-bottom: 25px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 4px;
+}
+
+/* Botón de Pestaña */
+.tab-btn {
+    flex-grow: 1;
+    padding: 10px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    font-weight: 700;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+/* Pestaña Activa */
+.tab-btn.activo {
+    background: white;
+    color: var(--tema-principal);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.login-forms-container {
+    width: 100%;
+    max-width: 300px;
+}
+
+/* Ocultar elementos (Clase de utilidad) */
+.oculto {
+    display: none !important;
+}
+
+/* Estilo para el mensaje de bienvenida post-login */
+.mensaje-bienvenida {
+    text-align: center;
+    margin-bottom: 20px;
+    max-width: 300px;
+}
+.mensaje-bienvenida h3 {
+    font-size: 22px;
+    font-weight: 800;
+    margin: 0;
+    color: white;
+}
+
+
+
+/* --- BOTÓN CERRAR SESIÓN (LOGOUT) --- */
+.btn-logout {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    transition: all 0.2s ease;
+    z-index: 20; /* Asegura que esté encima de todo */
+}
+
+.btn-logout:hover {
+    background: rgba(231, 76, 60, 0.9); /* Rojo al pasar el mouse */
+    border-color: #c0392b;
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(231, 76, 60, 0.4);
 }
