@@ -369,9 +369,14 @@ io.on('connection', (socket) => {
         }
     });
 
-    // -- Evento: Crear Partida --
+// -- Evento: Crear Partida --
     socket.on('crearPartida', (datos) => {
         const nombreAnfitrion = datos.nombre;
+        
+        // 1. Verificamos si el cliente mandó una cartilla favorita (datos.cartilla)
+        // Si es null, generamos una aleatoria.
+        const cartillaInicial = datos.cartilla || generarCartilla(); 
+
         const clave = generarClave();
         const playerId = generarPlayerId();
 
@@ -384,7 +389,7 @@ io.on('connection', (socket) => {
             bombo: [],
             fichasSorteadasSet: new Set(),
             fichasHistorial: [],
-            montoApuesta: 0 // Inicializamos la apuesta de la sala
+            montoApuesta: 0 
         };
 
         const anfitrion = {
@@ -392,9 +397,9 @@ io.on('connection', (socket) => {
             playerId: playerId,
             nombre: nombreAnfitrion,
             esAnfitrion: true,
-            cartilla: generarCartilla(),
+            // USAMOS LA CARTILLA QUE LLEGÓ (FAVORITA) O LA GENERADA
+            cartilla: cartillaInicial, 
             
-            // ¡IMPORTANTE: INICIALIZAR ESTADÍSTICAS!
             victorias: 0,
             saldo: 0.00
         };
@@ -460,6 +465,7 @@ io.on('connection', (socket) => {
         let clavePartida = null;
         let jugador = null;
 
+        // Buscar quién lo pide
         for (const k in partidas) {
             const j = partidas[k].jugadores.find(p => p.id === socket.id);
             if (j) {
@@ -471,15 +477,17 @@ io.on('connection', (socket) => {
 
         if (!jugador || !partidas[clavePartida]) return;
         
+        // No permitir cambio si el juego ya corre
         if (partidas[clavePartida].juegoIniciado) {
             socket.emit('errorJuego', 'No puedes cambiar cartón con la partida iniciada.');
             return;
         }
 
+        // Generar nueva
         jugador.cartilla = generarCartilla();
         console.log(`Jugador ${jugador.nombre} ha cambiado su cartón.`);
 
-        // --- CAMBIO AQUÍ: ENVIAMOS LA NUEVA CARTILLA AL CLIENTE ---
+        // Enviar la nueva cartilla al cliente para que actualice su UI
         socket.emit('cartonCambiado', jugador.cartilla); 
     });
 
@@ -506,19 +514,18 @@ io.on('connection', (socket) => {
         socket.emit('cartonCambiado', jugador.cartilla);
     });
 
-// server.js (Evento quieroReconectar MODIFICADO para devolver el control al Host)
-
+// -- Evento: Reconexión (Host y Jugador) --
     socket.on('quieroReconectar', (datos) => {
         const { playerId } = datos;
         if (!playerId) return;
 
         console.log(`Socket ${socket.id} intenta reconectar con playerId ${playerId}`);
 
-        // Buscar al jugador en CUALQUIER partida
         let partidaEncontrada = null;
         let jugadorEncontrado = null;
         let claveEncontrada = null;
 
+        // Buscar al jugador en TODAS las partidas
         for (const clave in partidas) {
             const partida = partidas[clave];
             const jugador = partida.jugadores.find(j => j.playerId === playerId);
@@ -531,28 +538,21 @@ io.on('connection', (socket) => {
         }
 
         if (jugadorEncontrado) {
-            // ¡Lo encontramos!
             console.log(`Jugador ${jugadorEncontrado.nombre} reconectado.`);
             
-            // 1. Actualizamos su ID de socket
+            // 1. Actualizar ID de socket
             jugadorEncontrado.id = socket.id;
 
-            // --- ¡NUEVO! IMPORTANTE PARA EL ANFITRIÓN ---
-            // Si es el jefe, actualizamos la referencia principal de la partida
-            // para que pueda volver a usar los botones de control.
+            // 2. Si es Anfitrión, devolverle el mando
             if (jugadorEncontrado.esAnfitrion) {
                 partidaEncontrada.anfitrionId = socket.id;
-                console.log(`Control de anfitrión restaurado para ${jugadorEncontrado.nombre} en sala ${claveEncontrada}`);
+                console.log(`Control de anfitrión restaurado para ${jugadorEncontrado.nombre}`);
             }
-            // --------------------------------------------
             
-            // 2. Lo volvemos a meter en la sala de socket.io
             socket.join(claveEncontrada);
-
-            // Avisar al chat que volvió
             enviarMensajeSistema(claveEncontrada, `${jugadorEncontrado.nombre} ha vuelto a la partida.`, 'evento');
 
-            // 3. Le enviamos el "paquete de reconexión"
+            // 3. Preparar paquete de datos
             const datosReconexion = {
                 esAnfitrion: jugadorEncontrado.esAnfitrion,
                 nombre: jugadorEncontrado.nombre,
@@ -560,31 +560,29 @@ io.on('connection', (socket) => {
                 fichasHistorial: partidaEncontrada.fichasHistorial,
                 juegoIniciado: partidaEncontrada.juegoIniciado,
                 clave: claveEncontrada,
-                saldo: jugadorEncontrado.saldo 
+                saldo: jugadorEncontrado.saldo,
+                
+                // ¡AQUÍ ESTÁ LA CORRECCIÓN!
+                // Enviamos la cartilla A TODOS (incluido el host para que pueda ver "Mi Cartón")
+                cartilla: jugadorEncontrado.cartilla 
             };
 
+            // Datos extra exclusivos para Anfitrión (Bolas previas para el tablero visual)
             if (jugadorEncontrado.esAnfitrion) {
-                // Datos extra para el Host (Bolas actuales)
                 if (partidaEncontrada.fichasHistorial.length > 0) {
                     datosReconexion.ultimaFicha = partidaEncontrada.fichasHistorial[partidaEncontrada.fichasHistorial.length - 1];
                     if (partidaEncontrada.fichasHistorial.length > 1) {
                         datosReconexion.anteriorFicha = partidaEncontrada.fichasHistorial[partidaEncontrada.fichasHistorial.length - 2];
                     }
                 }
-            } else {
-                // Datos extra para Jugador (Su cartilla)
-                datosReconexion.cartilla = jugadorEncontrado.cartilla;
             }
             
             socket.emit('reconexionExitosa', datosReconexion);
-            
-            // Refrescamos el lobby por si cambió algo visualmente
             actualizarLobby(claveEncontrada);
 
         } else {
-            console.log(`PlayerId ${playerId} no encontrado o sala expirada.`);
-            // Si no lo encontramos (quizás reiniciaste el servidor y se borró la RAM),
-            // le decimos que limpie su navegador.
+            // Si no se encuentra (ej: reinicio de servidor), limpiar cliente
+            console.log(`PlayerId ${playerId} no encontrado. Forzando limpieza.`);
             socket.emit('forzarLimpieza'); 
         }
     });

@@ -105,6 +105,11 @@ const contenedorListaGanadores = document.getElementById('contenedorListaGanador
 const avisoCuentaRegresiva = document.getElementById('avisoCuentaRegresiva');
 const segundosRestantes = document.getElementById('segundosRestantes');
 
+// --- LISTENERS PARA CARGAR CARTÓN (HOST Y JUGADOR) ---
+const btnCargarCartonHost = document.getElementById('btnCargarCartonHost');
+const btnCargarCartonJugador = document.getElementById('btnCargarCartonJugador');
+const btnCerrarGestor = document.getElementById('btnCerrarGestor');
+
 // Elementos Chat
 const chatLogLobby = document.getElementById('chatLogLobby');
 const chatInputLobby = document.getElementById('chatInputLobby');
@@ -152,21 +157,58 @@ function mostrarMensajeChat(logElement, data) {
     logElement.scrollTop = logElement.scrollHeight;
 }
 
+// Abrir Modal
+if (btnCargarCartonHost) {
+    btnCargarCartonHost.addEventListener('click', () => {
+        CardManager.abrirModal();
+    });
+}
+
+if (btnCargarCartonJugador) {
+    btnCargarCartonJugador.addEventListener('click', () => {
+        CardManager.abrirModal();
+    });
+}
+// Cerrar Modal
+if(btnCerrarGestor) {
+    btnCerrarGestor.addEventListener('click', () => {
+        CardManager.cerrarModal();
+    });
+}
+
+// FUNCIÓN PUENTE: Recibe la cartilla desde el Gestor
+function recibirCartonDesdeGestor(nuevaCartilla) {
+    // 1. Asignar globalmente
+    miCartilla = nuevaCartilla;
+    
+    // 2. Avisar al servidor (para sincronizar persistencia del lado servidor si la hubiera)
+    // Usamos el evento existente 'usarCartonFavorito' que ya tenías
+    socket.emit('usarCartonFavorito', nuevaCartilla);
+    
+    // 3. Sincronizar el Toggle (Como elegí uno guardado, el toggle debe estar ON)
+    if(checkGuardarFavorito) checkGuardarFavorito.checked = true;
+    
+    hablar("Cartón cargado exitosamente.");
+}
+
 function sincronizarToggleFavorito() {
-    // Verificamos si tenemos cartilla
+    // 1. Verificamos si tenemos cartilla cargada
     if (!miCartilla) return;
     
-    const favoritoStr = localStorage.getItem('bingoCartonFavorito');
+    // 2. Consultamos al Manager si hay un ID Activo seleccionado
+    const idActivo = CardManager.obtenerIdActivo();
     let debeEstarPrendido = false;
 
-    if (favoritoStr && JSON.stringify(miCartilla) === favoritoStr) {
+    if (idActivo) {
+        // Si hay un ID activo, significa que este cartón proviene de la colección (o fue guardado).
+        // Por lo tanto, el toggle debe estar ENCENDIDO.
         debeEstarPrendido = true;
     }
 
-    // Actualizamos el botón del Jugador (si existe)
+    // 3. Actualizamos visualmente el botón del Jugador
     if (checkGuardarFavorito) checkGuardarFavorito.checked = debeEstarPrendido;
     
-    // Actualizamos el botón del Anfitrión (si existe)
+    // 4. Actualizamos visualmente el botón del Anfitrión
     if (checkGuardarFavoritoHost) checkGuardarFavoritoHost.checked = debeEstarPrendido;
 }
 
@@ -331,32 +373,41 @@ cargarPreferenciasSonido();
 
 // --- EVENTOS DOM: INICIO Y LOBBY ---
 
-// client.js (REEMPLAZO COMPLETO: Evento btnCrearPartida)
+// client.js - Listener btnCrearPartida
 
 btnCrearPartida.addEventListener('click', () => {
     
-    // 1. Obtener el nombre correcto: usa el nombre autenticado si existe, sino usa el input (que es lo que usaba antes del login)
-    // El nombre a usar SIEMPRE debe estar en la variable global 'miNombre' o 'usuarioLogueadoNombre'
+    // 1. Validaciones de nombre
     const nombreAUsar = usuarioLogueadoNombre || inputNombre.value.trim();
 
-    // 2. Validación de Nombre (necesaria incluso para crear partida)
     if (nombreAUsar.length < 2) { 
-        // Si no está logueado, intentará mostrar el error en el flotante de invitado.
-        // Si está logueado, el inputNombre está oculto, pero el chequeo es el mismo.
         mostrarErrorFlotante(errorFlotanteInvitado || mensajeError, 'Debes ingresar un nombre para crear la partida.');
         return; 
     }
     
-    // 3. Establecer el nombre global y emitir
-    miNombre = nombreAUsar; 
-    
-    // El mensajeError original es el que no encuentra el script, por eso debemos usar el flotante.
-    // Aunque no está en el DOM, tu `client.js` original tenía la línea:
-    // if (!nombre) { mensajeError.textContent = 'Nombre requerido'; return; }
-    // Lo corregimos para usar el nuevo sistema de errores flotantes:
-    if (errorFlotanteInvitado) mostrarErrorFlotante(errorFlotanteInvitado, '', true); // Limpiar error flotante
+    if (errorFlotanteInvitado) mostrarErrorFlotante(errorFlotanteInvitado, '', true);
 
-    socket.emit('crearPartida', { nombre: miNombre });
+    miNombre = nombreAUsar; 
+
+    // 2. LÓGICA DE CARTÓN FAVORITO PARA ANFITRION
+    // Antes de crear, verificamos si el usuario tiene un cartón activo seleccionado en el Gestor
+    let cartillaParaEnviar = null;
+    const idActivo = CardManager.obtenerIdActivo();
+
+    if (idActivo) {
+        const coleccion = CardManager.obtenerColeccion();
+        const cartonGuardado = coleccion.find(c => c.id === idActivo);
+        if (cartonGuardado) {
+            cartillaParaEnviar = cartonGuardado.cartilla;
+            console.log("Creando partida con cartón favorito: " + cartonGuardado.nombre);
+        }
+    }
+
+    // 3. Emitir con la cartilla (si existe)
+    socket.emit('crearPartida', { 
+        nombre: miNombre,
+        cartilla: cartillaParaEnviar // Si es null, el server genera uno random
+    });
 });
 
 // --- Evento: UNIRSE A LA PARTIDA (MODIFICADO para soportar Login) ---
@@ -461,22 +512,24 @@ btnEmpezarPartida.addEventListener('click', () => {
     });
 });
 
-// --- LÓGICA TOGGLE FAVORITO (VERSIÓN HOST) ---
+//Listener Toggle Anfitrión (MODIFICADO)
+
 if (checkGuardarFavoritoHost) {
     checkGuardarFavoritoHost.addEventListener('change', () => {
         if (checkGuardarFavoritoHost.checked) {
-            // GUARDAR
+            // INTENCIÓN: GUARDAR PERMANENTE
             if (miCartilla) {
-                localStorage.setItem('bingoCartonFavorito', JSON.stringify(miCartilla));
-                hablar("Cartón guardado");
+                CardManager.guardarFavorito(miCartilla);
+                hablar("Cartón guardado en colección.");
             }
         } else {
-            // BORRAR
-            localStorage.removeItem('bingoCartonFavorito');
-            hablar("Favorito eliminado");
+            // INTENCIÓN: ELIMINAR DE COLECCIÓN (Volver temporal)
+            CardManager.eliminarActivoDeColeccion();
+            hablar("Cartón ya no es favorito.");
         }
-        // Sincronizamos visualmente el otro botón por si acaso
-        sincronizarToggleFavorito();
+        
+        // Sincronizar visualmente el toggle del jugador por si el anfitrión cambia de rol
+        if (typeof sincronizarToggleFavorito === 'function') sincronizarToggleFavorito();
     });
 }
 
@@ -589,46 +642,55 @@ if (btnCantarBingo) {
     });
 }
 
-// Botón Cambiar Cartón (Lobby)
-if(btnCambiarCarton) {
-    btnCambiarCarton.addEventListener('click', () => {
-        localStorage.removeItem('bingoCartonFavorito');
-        if(checkGuardarFavorito) checkGuardarFavorito.checked = false;
-        btnCambiarCarton.disabled = true;
-        btnCambiarCarton.textContent = "🔄 Generando...";
-        socket.emit('pedirNuevoCarton');
-    });
-}
+// (Listener Botón Cambiar Cartón JUGADOR)
+btnCambiarCarton.addEventListener('click', () => {
+    // 1. Limpiar la persistencia (ID Activo = null)
+    CardManager.fijarIdActivo(null); 
+    
+    // 2. APAGAR EL TOGGLE VISUALMENTE (Crucial)
+    if(checkGuardarFavorito) checkGuardarFavorito.checked = false;
+    
+    // 3. Visual y Socket
+    btnCambiarCarton.disabled = true;
+    btnCambiarCarton.textContent = "🔄 Generando...";
+    socket.emit('pedirNuevoCarton');
+});
 
-// --- LÓGICA CAMBIAR CARTÓN (HOST) ---
+// (Listener Botón Cambiar Cartón HOST)
 if(btnCambiarCartonHost) {
     btnCambiarCartonHost.addEventListener('click', () => {
-        // 1. Borrar favorito si existía
-        localStorage.removeItem('bingoCartonFavorito');
-        if(checkGuardarFavoritoHost) checkGuardarFavoritoHost.checked = false; // Apagar toggle host
-        if(checkGuardarFavorito) checkGuardarFavorito.checked = false; // Apagar toggle jugador también
+        // 1. Limpiar persistencia
+        CardManager.fijarIdActivo(null); 
+        
+        // 2. Apagar toggles
+        if(checkGuardarFavoritoHost) checkGuardarFavoritoHost.checked = false; 
+        if(checkGuardarFavorito) checkGuardarFavorito.checked = false; 
 
-        // 2. Visual
         btnCambiarCartonHost.disabled = true;
         btnCambiarCartonHost.textContent = "🔄 Generando...";
-        
-        // 3. Pedir al server
         socket.emit('pedirNuevoCarton');
     });
 }
 
-// Toggle Guardar Favorito
+//Listener Toggle Jugador (MODIFICADO)
 if (checkGuardarFavorito) {
     checkGuardarFavorito.addEventListener('change', () => {
         if (checkGuardarFavorito.checked) {
+            // INTENCIÓN: GUARDAR PERMANENTE
+            // Si el cartón actual (miCartilla) existe, lo guardamos en la colección.
             if (miCartilla) {
-                localStorage.setItem('bingoCartonFavorito', JSON.stringify(miCartilla));
-                hablar("Cartón guardado");
+                CardManager.guardarFavorito(miCartilla);
+                hablar("Cartón guardado en colección.");
             }
         } else {
-            localStorage.removeItem('bingoCartonFavorito');
-            hablar("Favorito eliminado");
+            // INTENCIÓN: ELIMINAR DE COLECCIÓN (Volver temporal)
+            // Quitamos el cartón activo de la lista de guardados.
+            CardManager.eliminarActivoDeColeccion();
+            hablar("Cartón ya no es favorito.");
         }
+        
+        // Opcional: Sincronizar visualmente si tuvieras ambos menús abiertos (raro, pero posible)
+        if (typeof sincronizarToggleFavorito === 'function') sincronizarToggleFavorito();
     });
 }
 
@@ -1014,16 +1076,36 @@ socket.on('unionExitosa', (datos) => {
     soyAnfitrion = false;
     localStorage.setItem(PLAYER_ID_KEY, datos.playerId);
     lobbyClave.textContent = datos.clave;
+    
+    // Configurar vista de Lobby para Jugador
     lobbyVistaAnfitrion.style.display = 'none';
     lobbyVistaJugador.style.display = 'block';
     cambiarPantalla('pantalla-lobby');
 
-    // Auto-Cargar Favorito
-    const favoritoGuardado = localStorage.getItem('bingoCartonFavorito');
-    if (favoritoGuardado) {
-        esperandoCargaFavorito = true;
-        socket.emit('usarCartonFavorito', JSON.parse(favoritoGuardado));
+    // --- NUEVA LÓGICA DE CARGA INICIAL (COLECCIÓN) ---
+    // Verificamos si el usuario dejó un cartón seleccionado previamente
+    const idActivo = CardManager.obtenerIdActivo();
+    
+    if (idActivo) {
+        // Buscamos el cartón en la colección usando el ID
+        const coleccion = CardManager.obtenerColeccion();
+        const cartonGuardado = coleccion.find(c => c.id === idActivo);
+        
+        if (cartonGuardado) {
+            esperandoCargaFavorito = true;
+            // Enviamos al servidor este cartón para que lo use en la partida
+            socket.emit('usarCartonFavorito', cartonGuardado.cartilla);
+            
+            // Visualmente prendemos el toggle porque es un favorito guardado
+            if(checkGuardarFavorito) checkGuardarFavorito.checked = true;
+        } else {
+            // El ID existía en memoria pero el cartón ya no está en la colección (quizás se borró).
+            // Limpiamos el puntero para evitar errores futuros.
+            CardManager.fijarIdActivo(null);
+            if(checkGuardarFavorito) checkGuardarFavorito.checked = false;
+        }
     } else {
+        // No hay favorito activo seleccionado, el toggle empieza apagado.
         if(checkGuardarFavorito) checkGuardarFavorito.checked = false;
     }
 });
@@ -1057,20 +1139,21 @@ socket.on('actualizarLobby', (datos) => {
 socket.on('cartonCambiado', (nuevaCartilla) => {
     if (nuevaCartilla) miCartilla = nuevaCartilla;
 
-    // Restaurar botón JUGADOR
+    // Restaurar botones
     setTimeout(() => {
         if(btnCambiarCarton) { 
             btnCambiarCarton.disabled = false; 
             btnCambiarCarton.textContent = "🔄 Cambiar mi Cartón"; 
         }
-        // RESTAURAR BOTÓN HOST (NUEVO)
         if(btnCambiarCartonHost) { 
             btnCambiarCartonHost.disabled = false; 
             btnCambiarCartonHost.textContent = "🔄 Cambiar mi Cartón"; 
         }
-    }, 1000);
+    }, 500); // Un poco más rápido
 
+    // LÓGICA DE MENSAJES Y TOGGLE
     if (esperandoCargaFavorito) {
+        // Caso: Venimos de seleccionar un favorito en el Modal
         if(mensajeCambioCarton) {
             mensajeCambioCarton.textContent = "¡Favorito cargado!";
             mensajeCambioCarton.style.opacity = 1;
@@ -1078,16 +1161,23 @@ socket.on('cartonCambiado', (nuevaCartilla) => {
         }
         hablar("Cartón cargado.");
         esperandoCargaFavorito = false;
+        // Aquí SI sincronizamos (se prenderá)
+        sincronizarToggleFavorito(); 
     } else {
+        // Caso: Venimos de "Cambiar Cartón" (Aleatorio)
         if(mensajeCambioCarton) {
             mensajeCambioCarton.textContent = "¡Nuevo cartón listo!";
             mensajeCambioCarton.style.opacity = 1;
             mensajeCambioCarton.style.color = "#f1c40f";
         }
         hablar("Cartón cambiado.");
+        
+        // FORZAR APAGADO DEL TOGGLE (Porque es nuevo y aleatorio)
+        if(checkGuardarFavorito) checkGuardarFavorito.checked = false;
+        if(checkGuardarFavoritoHost) checkGuardarFavoritoHost.checked = false;
     }
+    
     if(mensajeCambioCarton) setTimeout(() => mensajeCambioCarton.style.opacity = 0, 3000);
-    sincronizarToggleFavorito();
 });
 
 
@@ -1096,9 +1186,9 @@ socket.on('partidaIniciada', (datos) => {
     limpiarJuegoLocal();
     
     // 1. Guardar datos comunes
-    miCartilla = datos.cartilla; // Todos reciben cartilla ahora
+    miCartilla = datos.cartilla; 
     
-    // 2. Actualizar VISUALMENTE el Saldo (Badge)
+    // 2. Actualizar VISUALMENTE el Saldo
     const saldoTexto = `S/. ${parseFloat(datos.saldoActual || 0).toFixed(2)}`;
     if(displaySaldoJugador) displaySaldoJugador.textContent = saldoTexto;
     if(displaySaldoAnfitrion) displaySaldoAnfitrion.textContent = saldoTexto;
@@ -1106,25 +1196,18 @@ socket.on('partidaIniciada', (datos) => {
     // 3. Configurar Pantalla según Rol
     if (soyAnfitrion) {
         // --- ANFITRION ---
-        // Renderizar tablero de control vacío
         if (typeof HostUI !== 'undefined') HostUI.renderizarTableroVacio();
-        
-        // Texto del patrón en el acordeón
         if(hostPatronTexto) hostPatronTexto.textContent = "Jugando por: " + datos.patronTexto;
         
-        // Renderizar cartilla de jugador del host (en el acordeón)
         if (miCartilla && typeof dibujarCartillaModerna === 'function') {
             dibujarCartillaModerna(miCartilla, cartillaHostContainer);
         }
-        
         cambiarPantalla('pantalla-juego-anfitrion');
 
     } else {
         // --- JUGADOR NORMAL ---
         jugadorPatron.textContent = datos.patronTexto;
         if(nombreJugadorDisplay) nombreJugadorDisplay.textContent = miNombre || "Jugador";
-        
-        // Mostrar Código de Sala en la cabecera (donde antes iba el reloj)
         if(displayClaveJugador) displayClaveJugador.textContent = lobbyClave.textContent;
 
         if (typeof dibujarCartillaModerna === 'function') {
@@ -1133,7 +1216,11 @@ socket.on('partidaIniciada', (datos) => {
         cambiarPantalla('pantalla-juego-jugador');
     }
 
-    // 4. Narración de inicio (si no es unión tardía)
+    // 4. IMPORTANTE: Sincronizar el Toggle de Favorito
+    // Esto asegura que si cargaste un cartón en el lobby, el switch aparezca prendido aquí.
+    sincronizarToggleFavorito();
+
+    // 5. Narración de inicio
     if(!datos.esUnionTardia) {
         setTimeout(() => hablar(`Iniciando juego. ${datos.patronTexto}`), 1000);
     }
@@ -1231,7 +1318,8 @@ socket.on('forzarLimpieza', () => {
 });
 
 
-// --- RECONEXIÓN (HÍBRIDA) ---
+// client.js - Evento reconexionExitosa (MODIFICADO para sincronizar Toggle)
+
 socket.on('reconexionExitosa', (datos) => {
     // 1. Restaurar datos básicos (Nombre y Rol)
     if (datos.nombre) {
@@ -1253,7 +1341,6 @@ socket.on('reconexionExitosa', (datos) => {
     if (!datos.juegoIniciado) {
         // --- CASO A: Estamos en el Lobby (Aún no empieza) ---
         
-        // Recuperar código de sala
         const codigoSala = datos.clave || "---";
         if(lobbyClave) lobbyClave.textContent = codigoSala;
         
@@ -1263,19 +1350,17 @@ socket.on('reconexionExitosa', (datos) => {
         } else {
             lobbyVistaAnfitrion.style.display = 'none';
             lobbyVistaJugador.style.display = 'block';
-            // Verificar si hay favorito para cargar
-            sincronizarToggleFavorito(); 
         }
+        
+        // ¡IMPORTANTE! Sincronizar el toggle AQUI también para el lobby
+        sincronizarToggleFavorito(); 
+        
         cambiarPantalla('pantalla-lobby');
-        return; // ¡IMPORTANTE! Detenemos aquí para no cargar la pantalla de juego
+        return; 
     }
 
     // --- CASO B: El juego YA EMPEZÓ (Restaurar estado de juego) ---
-
-    // CORRECCIÓN CRÍTICA PARA EL CHAT: 
-    // Restauramos la clave interna aunque estemos en la pantalla de juego.
     if (lobbyClave) lobbyClave.textContent = datos.clave;
-
     if (typeof iniciarCronometro === 'function') iniciarCronometro();
 
     // Restaurar Historial Visual
@@ -1290,6 +1375,10 @@ socket.on('reconexionExitosa', (datos) => {
     const savedMarks = JSON.parse(localStorage.getItem(`bingoMarks-${playerId}`) || '[]');
     misMarcas = savedMarks;
 
+    // --- RESTAURAR CARTILLA Y ROL ---
+    // La cartilla ahora está en datos.cartilla (se envía a todos)
+    miCartilla = datos.cartilla;
+    
     if (soyAnfitrion) {
         // --- RESTAURAR ANFITRION ---
         if (typeof HostUI !== 'undefined') {
@@ -1300,31 +1389,22 @@ socket.on('reconexionExitosa', (datos) => {
             if (datos.anteriorFicha) HostUI.actualizarBolaVisual(fichaAnterior, datos.anteriorFicha, false);
         }
         if(checkAutomatico) checkAutomatico.checked = false;
-        
-        // Restaurar Código en Cabecera Host
         if(displayClaveAnfitrion) displayClaveAnfitrion.textContent = datos.clave;
 
-        // Restaurar Cartilla Híbrida (si existe)
-        if (datos.cartilla) {
-            miCartilla = datos.cartilla;
-            if (typeof dibujarCartillaModerna === 'function') {
-                dibujarCartillaModerna(miCartilla, cartillaHostContainer);
-            }
-            if (savedMarks.length > 0) {
-                const celdas = cartillaHostContainer.querySelectorAll('.celda-3d');
-                celdas.forEach(celda => {
-                    if (savedMarks.includes(parseInt(celda.dataset.numero))) celda.classList.add('marcada');
-                });
-            }
+        if (datos.cartilla && typeof dibujarCartillaModerna === 'function') {
+            dibujarCartillaModerna(miCartilla, cartillaHostContainer);
+        }
+        if (savedMarks.length > 0) {
+            const celdas = cartillaHostContainer.querySelectorAll('.celda-3d');
+            celdas.forEach(celda => {
+                if (savedMarks.includes(parseInt(celda.dataset.numero))) celda.classList.add('marcada');
+            });
         }
         cambiarPantalla('pantalla-juego-anfitrion');
 
     } else {
         // --- RESTAURAR JUGADOR ---
         jugadorPatron.textContent = datos.patronTexto;
-        miCartilla = datos.cartilla;
-        
-        // Restaurar Código en Cabecera Jugador
         if(displayClaveJugador) displayClaveJugador.textContent = datos.clave;
 
         if (typeof dibujarCartillaModerna === 'function') {
@@ -1337,8 +1417,10 @@ socket.on('reconexionExitosa', (datos) => {
             });
         }
         cambiarPantalla('pantalla-juego-jugador');
-        sincronizarToggleFavorito(); 
     }
+    
+    // 5. LLAMADA CRÍTICA: Sincronizar el estado del Toggle
+    sincronizarToggleFavorito(); 
     
     setTimeout(() => hablar(`Bienvenido de vuelta ${miNombre}`), 1000);
 });

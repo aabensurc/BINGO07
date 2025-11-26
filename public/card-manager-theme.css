@@ -1,0 +1,150 @@
+/* card-manager-theme.css (VERSIÓN FINAL MÓVIL) */
+
+/* --- BOTÓN DE CARGAR CARTÓN (LOBBY) --- */
+.btn-cargar-carton {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    color: white;
+    font-size: 14px;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    
+    /* CAMBIO CLAVE: Alinear al centro */
+    display: flex; /* Cambiamos de inline-flex a flex */
+    align-items: center;
+    justify-content: center; 
+    
+    /* Aseguramos el ancho total para el centrado */
+    width: 100%; 
+    max-width: 300px; 
+    margin-left: auto;
+    margin-right: auto;
+    
+    gap: 8px;
+    font-weight: bold;
+    transition: all 0.2s;
+    margin-bottom: 15px; /* Separación de los elementos de abajo */
+}
+
+.btn-cargar-carton:hover {
+    background: white;
+    color: var(--tema-principal);
+}
+
+/* --- GRID DE CARTONES EN EL MODAL --- */
+.grid-cartones-guardados {
+    display: grid;
+    /* En móvil: 1 columna (1fr). En PC: auto-ajustable */
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+    max-height: 50vh; /* Altura relativa a la pantalla */
+    overflow-y: auto;
+    padding: 10px;
+}
+
+/* --- TARJETA INDIVIDUAL (CONTENEDOR) --- */
+.carton-item {
+    background: #f1f2f6;
+    border-radius: 12px;
+    padding: 15px 5px 5px 5px; /* Más padding arriba para la X */
+    position: relative;
+    border: 3px solid transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: visible; /* IMPORTANTE: Para que la X no se corte */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.carton-item.activo {
+    border-color: var(--tema-principal);
+    background: #eafff3;
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.4);
+}
+
+/* --- MINIATURA VISUAL (AJUSTE PERFECTO) --- */
+.mini-cartilla-visual {
+    width: 100%;
+    height: 160px; /* Altura suficiente para el escalado */
+    position: relative;
+    display: flex;
+    justify-content: center; /* Centrado horizontal */
+    align-items: flex-start; /* Pegado arriba */
+    overflow: hidden;
+    pointer-events: none;
+    margin-bottom: 5px;
+}
+
+/* Escalamos el contenido generado por JS */
+.mini-cartilla-visual .contenedor-cartilla-3d, 
+.mini-cartilla-visual .cartilla-grid {
+    transform: scale(0.55); /* Un poco más grande para legibilidad */
+    transform-origin: top center; /* Escalar desde el centro superior */
+    width: 240px; /* Ancho base ficticio para el cálculo del scale */
+    margin-top: 5px;
+}
+
+/* --- INPUT NOMBRE --- */
+.input-nombre-carton {
+    width: 90%;
+    border: none;
+    background: transparent;
+    border-bottom: 1px solid #ccc;
+    font-size: 13px;
+    text-align: center;
+    padding: 5px;
+    color: #2d3436;
+    font-weight: bold;
+    margin-top: -10px; /* Subir para compensar espacio vacío */
+    z-index: 2;
+}
+.input-nombre-carton:focus {
+    border-bottom-color: var(--tema-principal);
+    outline: none;
+    background: white;
+}
+
+/* --- BOTÓN ELIMINAR (AJUSTADO) --- */
+.btn-eliminar-carton {
+    position: absolute;
+    top: -8px; /* Que sobresalga un poco por arriba */
+    right: -8px; /* Que sobresalga un poco por la derecha */
+    background: #e74c3c;
+    color: white;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 2px solid white; /* Borde blanco para separar */
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    z-index: 20;
+}
+
+/* --- BOTÓN USAR --- */
+.btn-usar-este {
+    width: 90%;
+    margin-top: 8px;
+    background: var(--tema-principal);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.btn-usar-este:hover { opacity: 0.9; }
+.btn-usar-este:disabled { 
+    background: #bdc3c7; 
+    cursor: default; 
+    opacity: 0.7; 
+}

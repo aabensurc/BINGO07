@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="host-theme.css">
     <link rel="stylesheet" href="modal-theme.css">
     <link rel="stylesheet" href="chat-theme.css">
+    <link rel="stylesheet" href="card-manager-theme.css">
 </head>
 <body class="fondo-juego">
 
@@ -99,94 +100,105 @@
 <!-- PANTALLA 2: LOBBY (REDISEÑADO) -->
         <section id="pantalla-lobby" class="pantalla pantalla-lobby-moderna">
             
-            <button id="btnSalirLobby" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: none; color: white; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-weight: bold; z-index: 10; display: flex; justify-content: center; align-items: center; padding: 0; line-height: 1;">✕</button>
+    <button id="btnSalirLobby" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: none; color: white; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-weight: bold; z-index: 10; display: flex; justify-content: center; align-items: center; padding: 0; line-height: 1;">✕</button>
 
-            <h2>Sala de Espera</h2>
+    <h2>Sala de Espera</h2>
+    
+    <div class="caja-clave">
+        <p>CÓDIGO DE PARTIDA</p>
+        <strong id="lobbyClave" class="clave-gigante">---</strong>
+    </div>
+    
+    <div id="lobby-vista-anfitrion" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+  
+        <div class="patron-selector-container">
+            <label class="label-selector">Modalidad de Juego:</label>
             
-            <div class="caja-clave">
-                <p>CÓDIGO DE PARTIDA</p>
-                <strong id="lobbyClave" class="clave-gigante">---</strong>
-            </div>
-            
-            <div id="lobby-vista-anfitrion" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
-          
-                <div class="patron-selector-container">
-                    <label class="label-selector">Modalidad de Juego:</label>
+            <div class="custom-select-wrapper">
+                <div class="custom-select" id="dropdownPatrones">
                     
-                    <div class="custom-select-wrapper">
-                        <div class="custom-select" id="dropdownPatrones">
-                            
-                            <div class="select-trigger">
-                                <span id="textoPatronSeleccionado">Línea Simple (Cualquiera)</span>
-                                <span class="arrow">▼</span>
-                            </div>
-                            
-                            <div class="custom-options">
-                                <span class="option selected" data-value="linea">Línea Simple (Cualquiera)</span>
-                                <span class="option" data-value="carton_lleno">Cartón Lleno (Apagón)</span>
-                                <span class="option" data-value="cuadrado">Cuadrado (Marco)</span>
-                                
-                                <span class="option" data-value="letra_l">Letra L (Normal)</span>
-                                <span class="option" data-value="l_invertida">L Invertida (Opuesta)</span>
-                                <span class="option" data-value="letra_x">Letra X (Aspa)</span>
-                                <span class="option" data-value="cruz_mas">Cruz (+)</span>
-                                
-                                <span class="option" data-value="diagonal_backslash">Diagonal (\)</span>
-                                <span class="option" data-value="diagonal_slash">Diagonal Invertida (/)</span>
-                                
-                                <span class="option" data-value="columna_b">Columna B</span>
-                                <span class="option" data-value="columna_i">Columna I</span>
-                                <span class="option" data-value="columna_n">Columna N</span>
-                                <span class="option" data-value="columna_g">Columna G</span>
-                                <span class="option" data-value="columna_o">Columna O</span>
-                            </div>
-                        </div>
+                    <div class="select-trigger">
+                        <span id="textoPatronSeleccionado">Línea Simple (Cualquiera)</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    
+                    <div class="custom-options">
+                        <span class="option selected" data-value="linea">Línea Simple (Cualquiera)</span>
+                        <span class="option" data-value="carton_lleno">Cartón Lleno (Apagón)</span>
+                        <span class="option" data-value="cuadrado">Cuadrado (Marco)</span>
+                        
+                        <span class="option" data-value="letra_l">Letra L</span>
+                        <span class="option" data-value="l_invertida">L Invertida</span>
+                        <span class="option" data-value="letra_x">Letra X (Aspa)</span>
+                        <span class="option" data-value="cruz_mas">Cruz (+)</span>
+                        
+                        <span class="option" data-value="diagonal_backslash">Diagonal (\)</span>
+                        <span class="option" data-value="diagonal_slash">Diagonal Invertida (/)</span>
+                        
+                        <span class="option" data-value="columna_b">Columna B</span>
+                        <span class="option" data-value="columna_i">Columna I</span>
+                        <span class="option" data-value="columna_n">Columna N</span>
+                        <span class="option" data-value="columna_g">Columna G</span>
+                        <span class="option" data-value="columna_o">Columna O</span>
                     </div>
                 </div>
-
-                <div class="apuesta-container">
-                    <span class="label-apuesta">APUESTA S/.</span>
-                    <input type="number" id="inputMontoApuesta" class="input-apuesta" value="1.00" step="0.50" min="0">
-                </div>
-
-                <button id="btnCambiarCartonHost" class="btn-borde" style="margin-bottom: 15px; border-color: rgba(255,255,255,0.5); font-size: 14px; padding: 10px 20px;">
-                    🔄 Cambiar mi Cartón
-                </button>
-
-                <button id="btnEmpezarPartida">¡COMENZAR JUEGO!</button>
             </div>
+        </div>
+
+        <div class="apuesta-container">
+            <span class="label-apuesta">APUESTA S/.</span>
+            <input type="number" id="inputMontoApuesta" class="input-apuesta" value="1.00" step="0.50" min="0">
+        </div>
+
+        <div style="width: 100%; max-width: 300px; margin: 0 auto; text-align: center;">
+            <button id="btnCambiarCartonHost" class="btn-borde" style="border-color: rgba(255,255,255,0.5); font-size: 14px; padding: 10px 20px; width: 100%; margin-bottom: 15px;">
+                🔄 Cambiar mi Cartón
+            </button>
+            <button id="btnCargarCartonHost" class="btn-cargar-carton">
+                📂 Cargar Cartón
+            </button>
+        </div>
+
+        <button id="btnEmpezarPartida">¡COMENZAR JUEGO!</button>
+    </div>
+    
+    <div id="lobby-vista-jugador" style="width: 100%; text-align: center;">
+        <p>Esperando al anfitrión... <br> ¡Prepara tus cartones!</p>
+        
+        <div style="width: 100%; max-width: 300px; margin: 0 auto;">
+            <button id="btnCambiarCarton" class="btn-borde" style="border-color: rgba(255,255,255,0.5); font-size: 14px; padding: 10px 20px; width: 100%; margin-bottom: 15px;">
+                🔄 Cambiar mi Cartón
+            </button>
+            <div id="mensajeCambioCarton" style="font-size: 12px; color: #f1c40f; margin-top: -5px; min-height: 20px; text-align: center;"></div>
             
-            <div id="lobby-vista-jugador" style="width: 100%; text-align: center;">
-                <p>Esperando al anfitrión... <br> ¡Prepara tus cartones!</p>
-                
-                <button id="btnCambiarCarton" class="btn-borde" style="border-color: rgba(255,255,255,0.5); font-size: 14px; padding: 10px 20px;">
-                    🔄 Cambiar mi Cartón
-                </button>
-                <div id="mensajeCambioCarton" style="font-size: 12px; color: #f1c40f; margin-top: 5px; min-height: 20px;"></div>
-            </div>
+            <button id="btnCargarCartonJugador" class="btn-cargar-carton">
+                📂 Cargar Cartón
+            </button>
+        </div>
+    </div>
 
-            <div class="lista-jugadores-container">
-                <h3>RANKING DE SESIÓN</h3>
-                
-                <div class="ranking-header">
-                    <div>#</div>
-                    <div style="text-align: left;">Jugador</div>
-                    <div style="text-align: center;">🏆</div>
-                    <div style="text-align: right;">S/.</div>
-                </div>
+    <div class="lista-jugadores-container">
+        <h3>RANKING DE SESIÓN</h3>
+        
+        <div class="ranking-header">
+            <div>#</div>
+            <div style="text-align: left;">Jugador</div>
+            <div style="text-align: center;">🏆</div>
+            <div style="text-align: right;">S/.</div>
+        </div>
 
-                <div id="lobbyListaJugadores">
-                    </div>
+        <div id="lobbyListaJugadores">
             </div>
+    </div>
 
-            <div class="chat-contenedor">
-                <div id="chatLogLobby" class="chat-log" style="height: 200px;"></div>
-                <div class="chat-input-area">
-                    <input type="text" id="chatInputLobby" placeholder="Escribe un mensaje...">
-                    <button id="btnEnviarLobby" class="btn-chat-enviar">Enviar</button>
-                </div>
-            </div>
-        </section>
+    <div class="chat-contenedor">
+        <div id="chatLogLobby" class="chat-log" style="height: 200px;"></div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInputLobby" placeholder="Escribe un mensaje...">
+            <button id="btnEnviarLobby" class="btn-chat-enviar">Enviar</button>
+        </div>
+    </div>
+</section>
 
         <!-- PANTALLA 3: ANFITRIÓN -->
         <section id="pantalla-juego-anfitrion" class="pantalla" style="padding:0;">
@@ -262,7 +274,7 @@
                     👇 Jugar también (Mi Cartón) <span class="icono-toggle">▼</span>
                 </div>
                 <div class="contenido-cartilla-host">
-                    <div style="text-align:center; color:white; margin-bottom:10px; font-size:12px;">
+                    <div style="text-align:center; color:white; margin-bottom:10px; margin-top:10px; font-size:12px;">
                         <span id="hostPatronTexto">---</span>
                     </div>
                     <div id="cartillaHostContainer"></div>
@@ -361,6 +373,7 @@
     <script src="game-ui.js"></script>
     <script src="host-ui.js"></script>
     <script src="audio-engine.js"></script>
+    <script src="card-manager-logic.js"></script>
     <script src="client.js" defer></script>
 
 <!-- MODAL FIN (REDISEÑADO CON ESTILO CELEBRACIÓN) -->
@@ -380,6 +393,19 @@
         </button>
 
         <button id="btnVolverAlLobby" class="btn-modal">Volver al Lobby</button>
+    </div>
+</div>
+
+
+<div id="modalGestorCartones" class="modal-overlay">
+    <div class="modal-contenido" style="max-width: 600px; width: 95%;">
+        <h2>📂 Mis Cartones</h2>
+        <p style="font-size: 14px; color: #666; margin-bottom: 10px;">Selecciona un cartón para usarlo permanentemente.</p>
+        
+        <div id="gridCartonesGuardados" class="grid-cartones-guardados">
+            </div>
+
+        <button id="btnCerrarGestor" class="btn-modal" style="margin-top: 20px; background: #95a5a6;">Cerrar</button>
     </div>
 </div>
 
