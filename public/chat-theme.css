@@ -47,6 +47,7 @@
     display: flex;
     padding: 8px;
     background: var(--chat-fondo-oscuro);
+    align-items: center; /* Alineación vertical */
 }
 
 /* Campo de texto */
@@ -76,8 +77,56 @@
     font-weight: bold;
     cursor: pointer;
     transition: background-color 0.2s;
+    height: 38px;
 
-    width: 40% !important;
+    /* width: 40% !important;  <-- QUITADO para dar espacio al mic */
+}
+
+/* --- NUEVO: BOTÓN DE MICRÓFONO --- */
+.btn-mic {
+    background-color: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    border-radius: 6px;
+    padding: 0;
+    margin-right: 5px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.2s;
+    width: 40px;
+    height: 38px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.btn-mic:hover {
+    background-color: rgba(255,255,255,0.1);
+}
+
+.btn-mic.recording {
+    background-color: #e74c3c;
+    border-color: #e74c3c;
+    animation: pulso 1s infinite;
+}
+
+@keyframes pulso {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Estilo para el reproductor de Audio */
+.chat-log audio {
+    width: 100%;
+    margin-top: 5px;
+    height: 32px;
+    border-radius: 16px;
+    outline: none;
+}
+/* Audio Webkit (Chrome) */
+.chat-log audio::-webkit-media-controls-panel {
+    background-color: rgba(255, 255, 255, 0.9);
 }
 
 /* Estilos de mensajes */

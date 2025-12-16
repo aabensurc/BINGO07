@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,194 +19,203 @@
     <link rel="stylesheet" href="chat-theme.css">
     <link rel="stylesheet" href="card-manager-theme.css">
 </head>
+
 <body class="fondo-juego">
 
     <div class="app-container">
 
         <!-- PANTALLA 1: BIENVENIDA -->
-       <section id="pantalla-bienvenida" class="pantalla activa pantalla-login-moderna">
-    
-    <button id="btnLogout" class="btn-logout oculto" title="Cerrar Sesión">
-        Salir🔴 </button>
+        <section id="pantalla-bienvenida" class="pantalla activa pantalla-login-moderna">
 
-    <div class="logo-container">
-        <svg class="logo-img" width="300" height="130" viewBox="0 0 300 130" xmlns="http://www.w3.org/2000/svg">
-            <filter id="sombraTexto" x="-20%" y="-20%" width="140%" height="140%">
-                <feDropShadow dx="2" dy="3" stdDeviation="2" flood-color="rgba(0,0,0,0.2)"/>
-            </filter>
-            <path d="M150 15 L165 45 L185 25 L175 65 L125 65 L115 25 L135 45 Z" 
-                  fill="#f1c40f" stroke="white" stroke-width="2" 
-                  style="filter: url(#sombraTexto);"/>
-            <text x="50%" y="80" text-anchor="middle" 
-                  font-family="Arial, sans-serif" font-weight="900" font-size="65" 
-                  fill="white" style="filter: url(#sombraTexto); letter-spacing: 2px;">
-                BINGO
-            </text>
-            <text x="50%" y="115" text-anchor="middle" 
-                  font-family="Arial, sans-serif" font-weight="bold" font-size="22" 
-                  fill="white" style="opacity: 0.9; letter-spacing: 6px;">
-                FAMILIAR
-            </text>
-        </svg>
-    </div>
-    
-    <div class="contenedor-control-login">
-        
-        <div id="tabsContainer" class="tabs-container">
-            <button id="tabInvitado" class="tab-btn activo">Invitado</button>
-            <button id="tabUsuario" class="tab-btn">Usuario</button>
-        </div>
+            <button id="btnLogout" class="btn-logout oculto" title="Cerrar Sesión">
+                Salir🔴 </button>
 
-        <div id="mensajeBienvenida" class="mensaje-bienvenida oculto">
-            <h3 id="bienvenidaNombre"></h3>
-        </div>
-        
-        <div id="formInvitado" class="login-form">
-            <input type="text" id="inputNombre" placeholder="Ingresa tu Nombre" maxlength="15" autocomplete="off"> 
-            <p id="errorFlotanteInvitado" class="error-flotante"></p>
-        </div>
-        
-        <div id="formUsuario" class="login-form oculto">
-            <input type="text" id="inputUsuario" placeholder="Usuario">
-            <input type="password" id="inputContrasena" placeholder="Contraseña">
+            <div class="logo-container">
+                <svg class="logo-img" width="300" height="130" viewBox="0 0 300 130" xmlns="http://www.w3.org/2000/svg">
+                    <filter id="sombraTexto" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="2" dy="3" stdDeviation="2" flood-color="rgba(0,0,0,0.2)" />
+                    </filter>
+                    <path d="M150 15 L165 45 L185 25 L175 65 L125 65 L115 25 L135 45 Z" fill="#f1c40f" stroke="white"
+                        stroke-width="2" style="filter: url(#sombraTexto);" />
+                    <text x="50%" y="80" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900"
+                        font-size="65" fill="white" style="filter: url(#sombraTexto); letter-spacing: 2px;">
+                        BINGO
+                    </text>
+                    <text x="50%" y="115" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold"
+                        font-size="22" fill="white" style="opacity: 0.9; letter-spacing: 6px;">
+                        FAMILIAR
+                    </text>
+                </svg>
+            </div>
 
-            <p id="errorFlotanteUsuario" class="error-flotante"></p>
+            <div class="contenedor-control-login">
 
-            <button id="btnLoginUsuario" class="btn-inicio btn-blanco">Iniciar Sesión</button>
-        </div>
-    </div>
-    
-    <div id="contenedorUnirse" style="width: 100%; max-width: 300px;">
-        <input type="text" id="inputClave" placeholder="Código de Sala" maxlength="4" autocomplete="off" style="text-transform:uppercase; margin-bottom: 10px;">
-        
-        <button id="btnUnirsePartida" class="btn-inicio btn-borde">Unirse a la Partida</button>
-    </div>
-    
-    
-    <div class="separador-sutil"></div>
-    <div class="divider-text">O</div>
-    <button id="btnCrearPartida" class="btn-inicio btn-blanco">👑 Crear Nueva Partida</button>
+                <div id="tabsContainer" class="tabs-container">
+                    <button id="tabInvitado" class="tab-btn activo">Invitado</button>
+                    <button id="tabUsuario" class="tab-btn">Usuario</button>
+                </div>
 
-    
-    <button id="btnConexionFavorito" class="btn-inicio btn-borde" style="margin-top: 15px; font-size: 14px; padding: 10px; opacity:0.7;">
-        🔄 Intentar Reconexión
-    </button>
+                <div id="mensajeBienvenida" class="mensaje-bienvenida oculto">
+                    <h3 id="bienvenidaNombre"></h3>
+                </div>
 
-    <div style="position: absolute; bottom: 25px; font-size: 14px; opacity: 0.8; color: white; letter-spacing: 1px;">
-        Creado por <strong>Alex Abensur</strong>
-    </div>
+                <div id="formInvitado" class="login-form">
+                    <input type="text" id="inputNombre" placeholder="Ingresa tu Nombre" maxlength="15"
+                        autocomplete="off">
+                    <p id="errorFlotanteInvitado" class="error-flotante"></p>
+                </div>
 
-</section>
+                <div id="formUsuario" class="login-form oculto">
+                    <input type="text" id="inputUsuario" placeholder="Usuario">
+                    <input type="password" id="inputContrasena" placeholder="Contraseña">
 
-<!-- PANTALLA 2: LOBBY (REDISEÑADO) -->
-        <section id="pantalla-lobby" class="pantalla pantalla-lobby-moderna">
-            
-    <button id="btnSalirLobby" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: none; color: white; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-weight: bold; z-index: 10; display: flex; justify-content: center; align-items: center; padding: 0; line-height: 1;">✕</button>
+                    <p id="errorFlotanteUsuario" class="error-flotante"></p>
 
-    <h2>Sala de Espera</h2>
-    
-    <div class="caja-clave">
-        <p>CÓDIGO DE PARTIDA</p>
-        <strong id="lobbyClave" class="clave-gigante">---</strong>
-    </div>
-    
-    <div id="lobby-vista-anfitrion" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
-  
-        <div class="patron-selector-container">
-            <label class="label-selector">Modalidad de Juego:</label>
-            
-            <div class="custom-select-wrapper">
-                <div class="custom-select" id="dropdownPatrones">
-                    
-                    <div class="select-trigger">
-                        <span id="textoPatronSeleccionado">Línea Simple (Cualquiera)</span>
-                        <span class="arrow">▼</span>
-                    </div>
-                    
-                    <div class="custom-options">
-                        <span class="option selected" data-value="linea">Línea Simple (Cualquiera)</span>
-                        <span class="option" data-value="carton_lleno">Cartón Lleno (Apagón)</span>
-                        <span class="option" data-value="cuadrado">Cuadrado (Marco)</span>
-                        
-                        <span class="option" data-value="letra_l">Letra L</span>
-                        <span class="option" data-value="l_invertida">L Invertida</span>
-                        <span class="option" data-value="letra_x">Letra X (Aspa)</span>
-                        <span class="option" data-value="cruz_mas">Cruz (+)</span>
-                        
-                        <span class="option" data-value="diagonal_backslash">Diagonal (\)</span>
-                        <span class="option" data-value="diagonal_slash">Diagonal Invertida (/)</span>
-                        
-                        <span class="option" data-value="columna_b">Columna B</span>
-                        <span class="option" data-value="columna_i">Columna I</span>
-                        <span class="option" data-value="columna_n">Columna N</span>
-                        <span class="option" data-value="columna_g">Columna G</span>
-                        <span class="option" data-value="columna_o">Columna O</span>
-                    </div>
+                    <button id="btnLoginUsuario" class="btn-inicio btn-blanco">Iniciar Sesión</button>
                 </div>
             </div>
-        </div>
 
-        <div class="apuesta-container">
-            <span class="label-apuesta">APUESTA S/.</span>
-            <input type="number" id="inputMontoApuesta" class="input-apuesta" value="1.00" step="0.50" min="0">
-        </div>
+            <div id="contenedorUnirse" style="width: 100%; max-width: 300px;">
+                <input type="text" id="inputClave" placeholder="Código de Sala" maxlength="4" autocomplete="off"
+                    style="text-transform:uppercase; margin-bottom: 10px;">
 
-        <div style="width: 100%; max-width: 300px; margin: 0 auto; text-align: center;">
-            <button id="btnCambiarCartonHost" class="btn-borde" style="border-color: rgba(255,255,255,0.5); font-size: 14px; padding: 10px 20px; width: 100%; margin-bottom: 15px;">
-                🔄 Cambiar mi Cartón
-            </button>
-            <button id="btnCargarCartonHost" class="btn-cargar-carton">
-                📂 Cargar Cartón
-            </button>
-        </div>
-
-        <button id="btnEmpezarPartida">¡COMENZAR JUEGO!</button>
-    </div>
-    
-    <div id="lobby-vista-jugador" style="width: 100%; text-align: center;">
-        <p>Esperando al anfitrión... <br> ¡Prepara tus cartones!</p>
-        
-        <div style="width: 100%; max-width: 300px; margin: 0 auto;">
-            <button id="btnCambiarCarton" class="btn-borde" style="border-color: rgba(255,255,255,0.5); font-size: 14px; padding: 10px 20px; width: 100%; margin-bottom: 15px;">
-                🔄 Cambiar mi Cartón
-            </button>
-            <div id="mensajeCambioCarton" style="font-size: 12px; color: #f1c40f; margin-top: -5px; min-height: 20px; text-align: center;"></div>
-            
-            <button id="btnCargarCartonJugador" class="btn-cargar-carton">
-                📂 Cargar Cartón
-            </button>
-        </div>
-    </div>
-
-    <div class="lista-jugadores-container">
-        <h3>RANKING DE SESIÓN</h3>
-        
-        <div class="ranking-header">
-            <div>#</div>
-            <div style="text-align: left;">Jugador</div>
-            <div style="text-align: center;">🏆</div>
-            <div style="text-align: right;">S/.</div>
-        </div>
-
-        <div id="lobbyListaJugadores">
+                <button id="btnUnirsePartida" class="btn-inicio btn-borde">Unirse a la Partida</button>
             </div>
-    </div>
 
-    <div class="chat-contenedor">
-        <div id="chatLogLobby" class="chat-log" style="height: 200px;"></div>
-        <div class="chat-input-area">
-            <input type="text" id="chatInputLobby" placeholder="Escribe un mensaje...">
-            <button id="btnEnviarLobby" class="btn-chat-enviar">Enviar</button>
-        </div>
-    </div>
-</section>
+
+            <div class="separador-sutil"></div>
+            <div class="divider-text">O</div>
+            <button id="btnCrearPartida" class="btn-inicio btn-blanco">👑 Crear Nueva Partida</button>
+
+
+            <button id="btnConexionFavorito" class="btn-inicio btn-borde"
+                style="margin-top: 15px; font-size: 14px; padding: 10px; opacity:0.7;">
+                🔄 Intentar Reconexión
+            </button>
+
+            <div
+                style="position: absolute; bottom: 25px; font-size: 14px; opacity: 0.8; color: white; letter-spacing: 1px;">
+                Creado por <strong>Alex Abensur</strong>
+            </div>
+
+        </section>
+
+        <!-- PANTALLA 2: LOBBY (REDISEÑADO) -->
+        <section id="pantalla-lobby" class="pantalla pantalla-lobby-moderna">
+
+            <button id="btnSalirLobby"
+                style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: none; color: white; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-weight: bold; z-index: 10; display: flex; justify-content: center; align-items: center; padding: 0; line-height: 1;">✕</button>
+
+            <h2>Sala de Espera</h2>
+
+            <div class="caja-clave">
+                <p>CÓDIGO DE PARTIDA</p>
+                <strong id="lobbyClave" class="clave-gigante">---</strong>
+            </div>
+
+            <div id="lobby-vista-anfitrion"
+                style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+
+                <div class="patron-selector-container">
+                    <label class="label-selector">Modalidad de Juego:</label>
+
+                    <div class="custom-select-wrapper">
+                        <div class="custom-select" id="dropdownPatrones">
+
+                            <div class="select-trigger">
+                                <span id="textoPatronSeleccionado">Línea Simple (Cualquiera)</span>
+                                <span class="arrow">▼</span>
+                            </div>
+
+                            <div class="custom-options">
+                                <span class="option selected" data-value="linea">Línea Simple (Cualquiera)</span>
+                                <span class="option" data-value="carton_lleno">Cartón Lleno (Apagón)</span>
+                                <span class="option" data-value="cuadrado">Cuadrado (Marco)</span>
+
+                                <span class="option" data-value="letra_l">Letra L</span>
+                                <span class="option" data-value="l_invertida">L Invertida</span>
+                                <span class="option" data-value="letra_x">Letra X (Aspa)</span>
+                                <span class="option" data-value="cruz_mas">Cruz (+)</span>
+
+                                <span class="option" data-value="diagonal_backslash">Diagonal (\)</span>
+                                <span class="option" data-value="diagonal_slash">Diagonal Invertida (/)</span>
+
+                                <span class="option" data-value="columna_b">Columna B</span>
+                                <span class="option" data-value="columna_i">Columna I</span>
+                                <span class="option" data-value="columna_n">Columna N</span>
+                                <span class="option" data-value="columna_g">Columna G</span>
+                                <span class="option" data-value="columna_o">Columna O</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="apuesta-container">
+                    <span class="label-apuesta">APUESTA S/.</span>
+                    <input type="number" id="inputMontoApuesta" class="input-apuesta" value="1.00" step="0.50" min="0">
+                </div>
+
+                <div style="width: 100%; max-width: 300px; margin: 0 auto; text-align: center;">
+                    <button id="btnCambiarCartonHost" class="btn-borde"
+                        style="border-color: rgba(255,255,255,0.5); font-size: 14px; padding: 10px 20px; width: 100%; margin-bottom: 15px;">
+                        🔄 Cambiar mi Cartón
+                    </button>
+                    <button id="btnCargarCartonHost" class="btn-cargar-carton">
+                        📂 Cargar Cartón
+                    </button>
+                </div>
+
+                <button id="btnEmpezarPartida">¡COMENZAR JUEGO!</button>
+            </div>
+
+            <div id="lobby-vista-jugador" style="width: 100%; text-align: center;">
+                <p>Esperando al anfitrión... <br> ¡Prepara tus cartones!</p>
+
+                <div style="width: 100%; max-width: 300px; margin: 0 auto;">
+                    <button id="btnCambiarCarton" class="btn-borde"
+                        style="border-color: rgba(255,255,255,0.5); font-size: 14px; padding: 10px 20px; width: 100%; margin-bottom: 15px;">
+                        🔄 Cambiar mi Cartón
+                    </button>
+                    <div id="mensajeCambioCarton"
+                        style="font-size: 12px; color: #f1c40f; margin-top: -5px; min-height: 20px; text-align: center;">
+                    </div>
+
+                    <button id="btnCargarCartonJugador" class="btn-cargar-carton">
+                        📂 Cargar Cartón
+                    </button>
+                </div>
+            </div>
+
+            <div class="lista-jugadores-container">
+                <h3>RANKING DE SESIÓN</h3>
+
+                <div class="ranking-header">
+                    <div>#</div>
+                    <div style="text-align: left;">Jugador</div>
+                    <div style="text-align: center;">🏆</div>
+                    <div style="text-align: right;">S/.</div>
+                </div>
+
+                <div id="lobbyListaJugadores">
+                </div>
+            </div>
+
+            <div class="chat-contenedor">
+                <div id="chatLogLobby" class="chat-log" style="height: 200px;"></div>
+                <div class="chat-input-area">
+                    <input type="text" id="chatInputLobby" placeholder="Escribe un mensaje...">
+                    <button id="btnMicLobby" class="btn-mic" title="Audio">🎤</button>
+                    <button id="btnEnviarLobby" class="btn-chat-enviar">Enviar</button>
+                </div>
+            </div>
+        </section>
 
         <!-- PANTALLA 3: ANFITRIÓN -->
         <section id="pantalla-juego-anfitrion" class="pantalla" style="padding:0;">
-            
+
             <div class="header-jugador header-anfitrion-estilo">
                 <div class="perfil-usuario">
-                    <div class="avatar-img anfitrion-avatar"></div> 
+                    <div class="avatar-img anfitrion-avatar"></div>
                     <div class="datos-usuario">
                         <span class="nombre-usuario" id="nombreAnfitrionDisplay">Anfitrión</span>
                         <span class="puntos-usuario">Anfitrión</span>
@@ -214,7 +224,7 @@
                         <span id="displaySaldoAnfitrion" class="badge-saldo">S/. 0.00</span>
                     </div>
                 </div>
-                
+
                 <div class="header-derecha">
                     <div class="codigo-sala-badge" title="Código de Sala">
                         🔑 <span id="displayClaveAnfitrion">---</span>
@@ -222,32 +232,42 @@
 
                     <button id="btnAjustesAnfitrion" class="btn-ajustes">⚙️
                         <div id="menuAjustesAnfitrion" class="ajustes-menu">
-                            <div class="ajuste-item">🎨 Color Mesa <input type="color" id="inputColorTemaAnfitrion" value="#2ecc71"></div>
-                            
+                            <div class="ajuste-item">🎨 Color Mesa <input type="color" id="inputColorTemaAnfitrion"
+                                    value="#2ecc71"></div>
+
                             <div class="ajuste-item">
                                 <span>🗣️ Voz Narrador</span>
                                 <label class="switch-label">
-                                    <input type="checkbox" id="checkVozAnfitrion" checked> 
+                                    <input type="checkbox" id="checkVozAnfitrion" checked>
                                     <span class="slider"></span>
                                 </label>
                             </div>
                             <div class="ajuste-item">
                                 <span>🎵 Efectos Sonido</span>
                                 <label class="switch-label">
-                                    <input type="checkbox" id="checkEfectosAnfitrion" checked> 
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
-                            
-                            <div class="ajuste-item">
-                                <span>⭐ Guardar Favorito</span>
-                                <label class="switch-label">
-                                    <input type="checkbox" id="checkGuardarFavoritoHost"> 
+                                    <input type="checkbox" id="checkEfectosAnfitrion" checked>
                                     <span class="slider"></span>
                                 </label>
                             </div>
 
-                            <div class="ajuste-item" id="btnSalirPartidaHost" style="cursor:pointer; color: #e74c3c; font-weight: 900; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
+                            <div class="ajuste-item">
+                                <span>📻 Auto-Audio Chat</span>
+                                <label class="switch-label">
+                                    <input type="checkbox" id="checkAutoPlayAnfitrion" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="ajuste-item">
+                                <span>⭐ Guardar Favorito</span>
+                                <label class="switch-label">
+                                    <input type="checkbox" id="checkGuardarFavoritoHost">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="ajuste-item" id="btnSalirPartidaHost"
+                                style="cursor:pointer; color: #e74c3c; font-weight: 900; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
                                 🚪 Cerrar Sala (Terminar)
                             </div>
                         </div>
@@ -257,15 +277,21 @@
 
             <div class="area-sorteo-anfitrion">
                 <div class="contenedor-bolas-grandes">
-                    <div class="bola-wrapper"><span class="label-bola">ANTERIOR</span><div id="fichaAnterior" class="bolilla-mediana">--</div></div>
-                    <div class="bola-wrapper"><span class="label-bola">ACTUAL</span><div id="fichaActual" class="bolilla-gigante">--</div></div>
+                    <div class="bola-wrapper"><span class="label-bola">ANTERIOR</span>
+                        <div id="fichaAnterior" class="bolilla-mediana">--</div>
+                    </div>
+                    <div class="bola-wrapper"><span class="label-bola">ACTUAL</span>
+                        <div id="fichaActual" class="bolilla-gigante">--</div>
+                    </div>
                 </div>
                 <button id="btnSortearFicha" class="btn-sortear">SACAR BOLILLA</button>
-                
+
                 <div class="controles-top-anfitrion">
-                    <label class="switch-label"><input type="checkbox" id="checkAutomatico"> <span class="slider"></span></label>
+                    <label class="switch-label"><input type="checkbox" id="checkAutomatico"> <span
+                            class="slider"></span></label>
                     <span style="color:white; font-weight:bold; font-size:14px;">Auto</span>
-                    <input type="number" id="inputIntervalo" class="input-mini" min="3" max="30" value="7"> <span style="color:white; font-size:12px; margin-right:5px;">seg</span>
+                    <input type="number" id="inputIntervalo" class="input-mini" min="3" max="30" value="7"> <span
+                        style="color:white; font-size:12px; margin-right:5px;">seg</span>
                 </div>
             </div>
 
@@ -278,11 +304,13 @@
                         <span id="hostPatronTexto">---</span>
                     </div>
                     <div id="cartillaHostContainer"></div>
-                    <button id="btnCantarBingoHost" class="btn-bingo-3d" style="margin: 10px 0; font-size:16px; padding:10px;">¡CANTAR BINGO!</button>
+                    <button id="btnCantarBingoHost" class="btn-bingo-3d"
+                        style="margin: 10px 0; font-size:16px; padding:10px;">¡CANTAR BINGO!</button>
                     <div class="chat-contenedor">
                         <div id="chatLogHost" class="chat-log" style="height: 200px;"></div>
                         <div class="chat-input-area">
                             <input type="text" id="chatInputHost" placeholder="Escribe un mensaje...">
+                            <button id="btnMicHost" class="btn-mic" title="Audio">🎤</button>
                             <button id="btnEnviarHost" class="btn-chat-enviar">Enviar</button>
                         </div>
                     </div>
@@ -291,7 +319,11 @@
 
             <div class="contenedor-tablero-control">
                 <div class="header-tablero-control">
-                    <div class="col-header bg-b">B</div><div class="col-header bg-i">I</div><div class="col-header bg-n">N</div><div class="col-header bg-g">G</div><div class="col-header bg-o">O</div>
+                    <div class="col-header bg-b">B</div>
+                    <div class="col-header bg-i">I</div>
+                    <div class="col-header bg-n">N</div>
+                    <div class="col-header bg-g">G</div>
+                    <div class="col-header bg-o">O</div>
                 </div>
                 <div id="grid75" class="grid-75"></div>
             </div>
@@ -301,7 +333,7 @@
         <section id="pantalla-juego-jugador" class="pantalla" style="padding:0;">
             <div class="header-jugador">
                 <div class="perfil-usuario">
-                    <div class="avatar-img"></div> 
+                    <div class="avatar-img"></div>
                     <div class="datos-usuario">
                         <span class="nombre-usuario" id="nombreJugadorDisplay">Jugador</span>
                         <span class="puntos-usuario">Jugador</span>
@@ -316,42 +348,53 @@
                     </div>
                     <button id="btnAjustes" class="btn-ajustes">⚙️
                         <div id="menuAjustes" class="ajustes-menu">
-                            <div class="ajuste-item">🎨 Color Mesa <input type="color" id="inputColorTema" value="#2ecc71"></div>
-                            
+                            <div class="ajuste-item">🎨 Color Mesa <input type="color" id="inputColorTema"
+                                    value="#2ecc71"></div>
+
                             <div class="ajuste-item">
                                 <span>🗣️ Voz Narrador</span>
                                 <label class="switch-label">
-                                    <input type="checkbox" id="checkVozJugador" checked> 
+                                    <input type="checkbox" id="checkVozJugador" checked>
                                     <span class="slider"></span>
                                 </label>
                             </div>
                             <div class="ajuste-item">
                                 <span>🎵 Efectos Sonido</span>
                                 <label class="switch-label">
-                                    <input type="checkbox" id="checkEfectosJugador" checked> 
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
-                            
-                            
-                            
-                            <div class="ajuste-item">
-                                <span>⭐ Cartón Favorito</span>
-                                <label class="switch-label">
-                                    <input type="checkbox" id="checkGuardarFavorito"> 
+                                    <input type="checkbox" id="checkEfectosJugador" checked>
                                     <span class="slider"></span>
                                 </label>
                             </div>
 
-                           
-                            <div class="ajuste-item" id="btnSalirPartidaJugador" style="cursor:pointer; color: #e74c3c; font-weight: 900;">
+                            <div class="ajuste-item">
+                                <span>📻 Auto-Audio Chat</span>
+                                <label class="switch-label">
+                                    <input type="checkbox" id="checkAutoPlayJugador" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+
+
+                            <div class="ajuste-item">
+                                <span>⭐ Cartón Favorito</span>
+                                <label class="switch-label">
+                                    <input type="checkbox" id="checkGuardarFavorito">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+
+                            <div class="ajuste-item" id="btnSalirPartidaJugador"
+                                style="cursor:pointer; color: #e74c3c; font-weight: 900;">
                                 🚪 Salir de la Partida
                             </div>
                         </div>
                     </button>
                 </div>
             </div>
-            <div id="historialContenedor" class="historial-bolillas"><span style="color: white;">Esperando bolillas...</span></div>
+            <div id="historialContenedor" class="historial-bolillas"><span style="color: white;">Esperando
+                    bolillas...</span></div>
             <div style="text-align:center; color:white; font-weight:bold; margin-bottom:5px;">
                 Jugando por: <span id="jugadorPatron">---</span>
             </div>
@@ -361,6 +404,7 @@
                 <div id="chatLogJugador" class="chat-log" style="height: 200px;"></div>
                 <div class="chat-input-area">
                     <input type="text" id="chatInputJugador" placeholder="Escribe un mensaje...">
+                    <button id="btnMicJugador" class="btn-mic" title="Audio">🎤</button>
                     <button id="btnEnviarJugador" class="btn-chat-enviar">Enviar</button>
                 </div>
             </div>
@@ -376,43 +420,46 @@
     <script src="card-manager-logic.js"></script>
     <script src="client.js" defer></script>
 
-<!-- MODAL FIN (REDISEÑADO CON ESTILO CELEBRACIÓN) -->
-<div id="modalFinJuego" class="modal-overlay">
-    <div class="modal-card">
-        <div class="icono-trofeo">🏆</div>
-        <h2 class="modal-titulo">¡BINGO!</h2>
-        <p class="modal-subtitulo">El ganador es:</p>
-        
-        <div id="contenedorListaGanadores" class="lista-ganadores-scroll">
+    <!-- MODAL FIN (REDISEÑADO CON ESTILO CELEBRACIÓN) -->
+    <div id="modalFinJuego" class="modal-overlay">
+        <div class="modal-card">
+            <div class="icono-trofeo">🏆</div>
+            <h2 class="modal-titulo">¡BINGO!</h2>
+            <p class="modal-subtitulo">El ganador es:</p>
+
+            <div id="contenedorListaGanadores" class="lista-ganadores-scroll">
+            </div>
+
+            <div id="contenedorCartillaGanadora" class="cartilla-ganadora-container oculto">
+            </div>
+            <button id="btnNuevaRondaHost" class="btn-modal"
+                style="background-color: #f1c40f; color: #2d3436; margin-bottom: 15px; display: none; box-shadow: 0 10px 20px rgba(241, 196, 15, 0.4);">
+                👑 Nueva Ronda (Todos)
+            </button>
+
+            <button id="btnVolverAlLobby" class="btn-modal">Volver al Lobby</button>
         </div>
-
-        <div id="contenedorCartillaGanadora" class="cartilla-ganadora-container oculto">
-            </div>
-        <button id="btnNuevaRondaHost" class="btn-modal" style="background-color: #f1c40f; color: #2d3436; margin-bottom: 15px; display: none; box-shadow: 0 10px 20px rgba(241, 196, 15, 0.4);">
-            👑 Nueva Ronda (Todos)
-        </button>
-
-        <button id="btnVolverAlLobby" class="btn-modal">Volver al Lobby</button>
     </div>
-</div>
 
 
-<div id="modalGestorCartones" class="modal-overlay">
-    <div class="modal-contenido" style="max-width: 600px; width: 95%;">
-        <h2>📂 Mis Cartones</h2>
-        <p style="font-size: 14px; color: #666; margin-bottom: 10px;">Selecciona un cartón para usarlo permanentemente.</p>
-        
-        <div id="gridCartonesGuardados" class="grid-cartones-guardados">
+    <div id="modalGestorCartones" class="modal-overlay">
+        <div class="modal-contenido" style="max-width: 600px; width: 95%;">
+            <h2>📂 Mis Cartones</h2>
+            <p style="font-size: 14px; color: #666; margin-bottom: 10px;">Selecciona un cartón para usarlo
+                permanentemente.</p>
+
+            <div id="gridCartonesGuardados" class="grid-cartones-guardados">
             </div>
 
-        <button id="btnCerrarGestor" class="btn-modal" style="margin-top: 20px; background: #95a5a6;">Cerrar</button>
+            <button id="btnCerrarGestor" class="btn-modal"
+                style="margin-top: 20px; background: #95a5a6;">Cerrar</button>
+        </div>
     </div>
-</div>
 
 
-<div id="avisoCuentaRegresiva">¡ÚLTIMA OPORTUNIDAD! <span id="segundosRestantes">10</span>s</div>
+    <div id="avisoCuentaRegresiva">¡ÚLTIMA OPORTUNIDAD! <span id="segundosRestantes">10</span>s</div>
 
-<script>
+    <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/service-worker.js')
@@ -423,4 +470,5 @@
     </script>
 
 </body>
+
 </html>

@@ -42,10 +42,10 @@ const NOMBRES_PATRONES = {
     cuadrado: "Cuadrado (Marco)",
     letra_l: "Letra L",
     l_invertida: "L Invertida",
-    
+
     letra_x: "Letra X (Aspa)",       // NUEVO
     cruz_mas: "Cruz (+)",            // NUEVO
-    
+
     diagonal_backslash: "Diagonal (\\)",
     diagonal_slash: "Diagonal (/)",
     columna_b: "Columna B",
@@ -86,7 +86,7 @@ function actualizarLobby(clave) {
             victorias: j.victorias || 0, // Evita undefined
             saldo: j.saldo || 0.00       // Evita undefined
         }));
-        
+
         io.to(clave).emit('actualizarLobby', { jugadores: listaData });
     }
 }
@@ -120,7 +120,7 @@ function generarNumeroColumna(columna, numerosUsados) {
 
 function generarCartilla() {
     let cartilla = Array(5).fill(null).map(() => Array(5).fill(0));
-    let numerosUsados = new Set(); 
+    let numerosUsados = new Set();
 
     for (let col = 0; col < 5; col++) {
         for (let fila = 0; fila < 5; fila++) {
@@ -151,7 +151,7 @@ function generarBombo() {
             bombo.push({ letra: letra, numero: i, ficha: `${letra}${i}` });
         }
     });
-    
+
     for (let i = bombo.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [bombo[i], bombo[j]] = [bombo[j], bombo[i]];
@@ -167,10 +167,10 @@ function checkCelda(numeroDeCartilla, fichasSet) {
 
 // --- VERIFICACIÓN DE BINGO MEJORADA (TODOS LOS PATRONES) ---
 function verificarBingo(cartilla, patron, fichasSet) {
-    
+
     // Helpers
-    const getFilaCoords = (f) => Array.from({length:5}, (_, c) => ({r:f, c:c}));
-    const getColCoords = (c) => Array.from({length:5}, (_, r) => ({r:r, c:c}));
+    const getFilaCoords = (f) => Array.from({ length: 5 }, (_, c) => ({ r: f, c: c }));
+    const getColCoords = (c) => Array.from({ length: 5 }, (_, r) => ({ r: r, c: c }));
     const checkCoords = (coords) => {
         const completo = coords.every(pos => {
             const val = cartilla[pos.r][pos.c];
@@ -181,7 +181,7 @@ function verificarBingo(cartilla, patron, fichasSet) {
 
     switch (patron) {
         // --- A. CLÁSICOS ---
-        case 'linea': 
+        case 'linea':
             // Opción "Cualquier Línea": Gana con Horizontal, Vertical o Diagonal
             // 1. Chequear Filas (Horizontal)
             for (let f = 0; f < 5; f++) {
@@ -194,28 +194,28 @@ function verificarBingo(cartilla, patron, fichasSet) {
                 if (win) return win;
             }
             // 3. Chequear Diagonal 1 (\)
-            const d1 = Array.from({length:5}, (_, i) => ({r:i, c:i}));
+            const d1 = Array.from({ length: 5 }, (_, i) => ({ r: i, c: i }));
             const winD1 = checkCoords(d1);
             if (winD1) return winD1;
             // 4. Chequear Diagonal 2 (/)
-            const d2 = Array.from({length:5}, (_, i) => ({r:i, c:4-i}));
+            const d2 = Array.from({ length: 5 }, (_, i) => ({ r: i, c: 4 - i }));
             const winD2 = checkCoords(d2);
             if (winD2) return winD2;
-            
+
             return null;
 
         case 'carton_lleno':
             const todas = [];
-            for(let r=0; r<5; r++) for(let c=0; c<5; c++) todas.push({r, c});
+            for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) todas.push({ r, c });
             return checkCoords(todas);
 
         case 'cuadrado': // Borde exterior
             const coordsBordes = [];
             coordsBordes.push(...getFilaCoords(0)); // Fila arriba
             coordsBordes.push(...getFilaCoords(4)); // Fila abajo
-            for(let i=1; i<4; i++) {
-                coordsBordes.push({r:i, c:0}); // Lado izq
-                coordsBordes.push({r:i, c:4}); // Lado der
+            for (let i = 1; i < 4; i++) {
+                coordsBordes.push({ r: i, c: 0 }); // Lado izq
+                coordsBordes.push({ r: i, c: 4 }); // Lado der
             }
             return checkCoords(coordsBordes);
 
@@ -231,12 +231,12 @@ function verificarBingo(cartilla, patron, fichasSet) {
             const li_col4 = getColCoords(4);
             const li_fila4 = getFilaCoords(4);
             // Unir y quitar duplicado esquina (4,4)
-            const coordsLInv = [...li_col4, ...li_fila4.filter(p => p.c !== 4)]; 
+            const coordsLInv = [...li_col4, ...li_fila4.filter(p => p.c !== 4)];
             return checkCoords(coordsLInv);
 
         case 'letra_x': // Aspa ( X ) - Dos diagonales
-            const d1_x = Array.from({length:5}, (_, i) => ({r:i, c:i}));
-            const d2_x = Array.from({length:5}, (_, i) => ({r:i, c:4-i}));
+            const d1_x = Array.from({ length: 5 }, (_, i) => ({ r: i, c: i }));
+            const d2_x = Array.from({ length: 5 }, (_, i) => ({ r: i, c: 4 - i }));
             // Unir y quitar duplicado centro (2,2)
             const coordsX = [...d1_x, ...d2_x.filter(p => p.r !== 2)];
             return checkCoords(coordsX);
@@ -250,11 +250,11 @@ function verificarBingo(cartilla, patron, fichasSet) {
 
         // --- C. DIAGONALES ESPECÍFICAS ---
         case 'diagonal_backslash': // De Arriba-Izq a Abajo-Der (\)
-            const dBack = Array.from({length:5}, (_, i) => ({r:i, c:i}));
+            const dBack = Array.from({ length: 5 }, (_, i) => ({ r: i, c: i }));
             return checkCoords(dBack);
 
         case 'diagonal_slash': // De Abajo-Izq a Arriba-Der (/)
-            const dSlash = Array.from({length:5}, (_, i) => ({r:i, c:4-i}));
+            const dSlash = Array.from({ length: 5 }, (_, i) => ({ r: i, c: 4 - i }));
             return checkCoords(dSlash);
 
         // --- D. VERTICALES ESPECÍFICAS ---
@@ -281,10 +281,10 @@ function terminarJuego(clave) {
     const cantidadJugadoresTotal = partida.jugadores.length; // Todos los que están en la sala
     const cantidadGanadores = partida.ganadoresTemp.length;
     const apuestaPorPersona = partida.montoApuesta || 0;
-    
+
     // Pozo Bruto Total (Todo el dinero en la mesa)
     const pozoTotal = apuestaPorPersona * cantidadJugadoresTotal;
-    
+
     // Lo que recibe cada ganador en total (Bruto)
     // Ej: Si hay 6 soles y 2 ganadores, cada uno recibe 3 soles.
     const premioBrutoPorGanador = cantidadGanadores > 0 ? (pozoTotal / cantidadGanadores) : 0;
@@ -292,7 +292,7 @@ function terminarJuego(clave) {
     // 2. CALCULAR NETO (GANANCIA REAL O PÉRDIDA)
     // Ganador: Recibe su premio bruto MENOS lo que puso de su bolsillo.
     const gananciaNetaGanador = premioBrutoPorGanador - apuestaPorPersona;
-    
+
     // Perdedor: Pierde exactamente lo que apostó.
     const perdidaPerdedor = apuestaPorPersona;
 
@@ -304,7 +304,7 @@ function terminarJuego(clave) {
         if (esGanador) {
             // --- ES GANADOR ---
             jugador.victorias += 1;
-            jugador.saldo += gananciaNetaGanador; 
+            jugador.saldo += gananciaNetaGanador;
             // Nota: Si son muchos ganadores, la "gananciaNeta" podría ser negativa matemáticamente,
             // pero en Bingo lo normal es que ganen pocos.
         } else {
@@ -321,9 +321,9 @@ function terminarJuego(clave) {
     io.to(clave).emit('juegoTerminado', {
         listaGanadores: partida.ganadoresTemp,
         numerosSorteados: numerosSorteados,
-        
+
         // Enviamos datos informativos para mostrar en el modal si quisieras
-        premioGanado: gananciaNetaGanador, 
+        premioGanado: gananciaNetaGanador,
         montoPerdido: perdidaPerdedor
     });
 
@@ -334,7 +334,7 @@ function terminarJuego(clave) {
     partida.bombo = [];
     partida.fichasSorteadasSet.clear();
     partida.fichasHistorial = [];
-    
+
     // Actualizamos el Lobby para que se vean los nuevos saldos y ranking
     actualizarLobby(clave);
 }
@@ -356,9 +356,9 @@ io.on('connection', (socket) => {
         // 2. Respuesta al cliente
         if (usuarioEncontrado) {
             // Éxito: Enviar el nombre y playerId persistente
-            socket.emit('loginExitoso', { 
-                nombre: usuarioEncontrado.nombre, 
-                playerId: usuarioEncontrado.playerId 
+            socket.emit('loginExitoso', {
+                nombre: usuarioEncontrado.nombre,
+                playerId: usuarioEncontrado.playerId
             });
             console.log(`[AUTH] Login exitoso para ${usuarioEncontrado.nombre}`);
 
@@ -369,13 +369,13 @@ io.on('connection', (socket) => {
         }
     });
 
-// -- Evento: Crear Partida --
+    // -- Evento: Crear Partida --
     socket.on('crearPartida', (datos) => {
         const nombreAnfitrion = datos.nombre;
-        
+
         // 1. Verificamos si el cliente mandó una cartilla favorita (datos.cartilla)
         // Si es null, generamos una aleatoria.
-        const cartillaInicial = datos.cartilla || generarCartilla(); 
+        const cartillaInicial = datos.cartilla || generarCartilla();
 
         const clave = generarClave();
         const playerId = generarPlayerId();
@@ -389,7 +389,7 @@ io.on('connection', (socket) => {
             bombo: [],
             fichasSorteadasSet: new Set(),
             fichasHistorial: [],
-            montoApuesta: 0 
+            montoApuesta: 0
         };
 
         const anfitrion = {
@@ -398,8 +398,8 @@ io.on('connection', (socket) => {
             nombre: nombreAnfitrion,
             esAnfitrion: true,
             // USAMOS LA CARTILLA QUE LLEGÓ (FAVORITA) O LA GENERADA
-            cartilla: cartillaInicial, 
-            
+            cartilla: cartillaInicial,
+
             victorias: 0,
             saldo: 0.00
         };
@@ -413,10 +413,10 @@ io.on('connection', (socket) => {
         enviarMensajeSistema(clave, `${nombreAnfitrion} ha creado la partida. ¡Bienvenido!`, 'evento');
     });
 
-// -- Evento: Unirse a Partida (MODIFICADO: Permite entrada tardía + Stats) --
+    // -- Evento: Unirse a Partida (MODIFICADO: Permite entrada tardía + Stats) --
     socket.on('unirsePartida', (datos) => {
         const { nombre, clave } = datos;
-        
+
         if (!partidas[clave]) {
             socket.emit('errorUnion', 'Error: Esa clave de partida no existe.');
             return;
@@ -429,7 +429,7 @@ io.on('connection', (socket) => {
             nombre: nombre,
             esAnfitrion: false,
             cartilla: generarCartilla(),
-            
+
             // ¡IMPORTANTE: INICIALIZAR ESTADÍSTICAS!
             victorias: 0,
             saldo: 0.00
@@ -437,7 +437,7 @@ io.on('connection', (socket) => {
         partidas[clave].jugadores.push(nuevoJugador);
 
         socket.join(clave);
-        
+
         socket.emit('unionExitosa', { clave: clave, playerId: playerId });
         actualizarLobby(clave);
         console.log(`Jugador ${nombre} (${socket.id}) se unió a la partida ${clave}`);
@@ -445,12 +445,12 @@ io.on('connection', (socket) => {
 
         if (partidas[clave].juegoIniciado) {
             console.log(`Jugador ${nombre} entró tarde. Sincronizando...`);
-            
+
             socket.emit('partidaIniciada', {
                 patronTexto: NOMBRES_PATRONES[partidas[clave].patronJuego],
                 cartilla: nuevoJugador.cartilla,
                 saldoActual: nuevoJugador.saldo, // Enviamos su saldo
-                esUnionTardia: true 
+                esUnionTardia: true
             });
 
             partidas[clave].fichasHistorial.forEach(ficha => {
@@ -460,7 +460,7 @@ io.on('connection', (socket) => {
     });
 
 
-// -- Evento: Jugador pide cambiar su cartilla (Reroll) --
+    // -- Evento: Jugador pide cambiar su cartilla (Reroll) --
     socket.on('pedirNuevoCarton', () => {
         let clavePartida = null;
         let jugador = null;
@@ -476,7 +476,7 @@ io.on('connection', (socket) => {
         }
 
         if (!jugador || !partidas[clavePartida]) return;
-        
+
         // No permitir cambio si el juego ya corre
         if (partidas[clavePartida].juegoIniciado) {
             socket.emit('errorJuego', 'No puedes cambiar cartón con la partida iniciada.');
@@ -488,7 +488,7 @@ io.on('connection', (socket) => {
         console.log(`Jugador ${jugador.nombre} ha cambiado su cartón.`);
 
         // Enviar la nueva cartilla al cliente para que actualice su UI
-        socket.emit('cartonCambiado', jugador.cartilla); 
+        socket.emit('cartonCambiado', jugador.cartilla);
     });
 
     // -- NUEVO EVENTO: Jugador carga su cartón favorito --
@@ -507,14 +507,14 @@ io.on('connection', (socket) => {
 
         // 3. Asignar la cartilla que nos mandó el cliente
         jugador.cartilla = cartillaCliente;
-        
+
         console.log(`Jugador ${jugador.nombre} cargó su cartón favorito.`);
-        
+
         // 4. Confirmamos y devolvemos la cartilla para sincronizar
         socket.emit('cartonCambiado', jugador.cartilla);
     });
 
-// -- Evento: Reconexión (Host y Jugador) --
+    // -- Evento: Reconexión (Host y Jugador) --
     socket.on('quieroReconectar', (datos) => {
         const { playerId } = datos;
         if (!playerId) return;
@@ -539,7 +539,7 @@ io.on('connection', (socket) => {
 
         if (jugadorEncontrado) {
             console.log(`Jugador ${jugadorEncontrado.nombre} reconectado.`);
-            
+
             // 1. Actualizar ID de socket
             jugadorEncontrado.id = socket.id;
 
@@ -548,7 +548,7 @@ io.on('connection', (socket) => {
                 partidaEncontrada.anfitrionId = socket.id;
                 console.log(`Control de anfitrión restaurado para ${jugadorEncontrado.nombre}`);
             }
-            
+
             socket.join(claveEncontrada);
             enviarMensajeSistema(claveEncontrada, `${jugadorEncontrado.nombre} ha vuelto a la partida.`, 'evento');
 
@@ -561,10 +561,10 @@ io.on('connection', (socket) => {
                 juegoIniciado: partidaEncontrada.juegoIniciado,
                 clave: claveEncontrada,
                 saldo: jugadorEncontrado.saldo,
-                
+
                 // ¡AQUÍ ESTÁ LA CORRECCIÓN!
                 // Enviamos la cartilla A TODOS (incluido el host para que pueda ver "Mi Cartón")
-                cartilla: jugadorEncontrado.cartilla 
+                cartilla: jugadorEncontrado.cartilla
             };
 
             // Datos extra exclusivos para Anfitrión (Bolas previas para el tablero visual)
@@ -576,14 +576,14 @@ io.on('connection', (socket) => {
                     }
                 }
             }
-            
+
             socket.emit('reconexionExitosa', datosReconexion);
             actualizarLobby(claveEncontrada);
 
         } else {
             // Si no se encuentra (ej: reinicio de servidor), limpiar cliente
             console.log(`PlayerId ${playerId} no encontrado. Forzando limpieza.`);
-            socket.emit('forzarLimpieza'); 
+            socket.emit('forzarLimpieza');
         }
     });
 
@@ -591,7 +591,7 @@ io.on('connection', (socket) => {
     socket.on('empezarPartida', (datos) => {
         const { patron, montoApuesta } = datos; // Recibimos el monto
         const clave = Array.from(socket.rooms)[1];
-        
+
         if (!partidas[clave] || partidas[clave].anfitrionId !== socket.id) return;
 
         // Guardamos la apuesta en la partida
@@ -600,13 +600,13 @@ io.on('connection', (socket) => {
 
         console.log(`Partida ${clave} inicia. Patrón: ${patron}. Apuesta: S/. ${apuesta.toFixed(2)}`);
         enviarMensajeSistema(clave, `Juego iniciado. Patrón: ${NOMBRES_PATRONES[patron]}. Pozo por jugador: S/. ${apuesta.toFixed(2)}`, 'evento');
-        
+
         const partida = partidas[clave];
         partida.juegoIniciado = true;
         partida.patronJuego = patron;
         partida.bombo = generarBombo();
         partida.fichasSorteadasSet.clear();
-        partida.fichasHistorial = []; 
+        partida.fichasHistorial = [];
 
         partida.jugadores.forEach(jugador => {
             const socketJugador = io.sockets.sockets.get(jugador.id);
@@ -617,7 +617,7 @@ io.on('connection', (socket) => {
                 cartilla: jugador.cartilla,
                 saldoActual: jugador.saldo // Enviamos saldo actualizado
             };
-            
+
             socketJugador.emit('partidaIniciada', datosPartida);
         });
     });
@@ -628,14 +628,14 @@ io.on('connection', (socket) => {
         const partida = partidas[clave];
 
         if (!partida || partida.anfitrionId !== socket.id || !partida.juegoIniciado) return;
-        
+
         if (partida.bombo.length === 0) {
             socket.emit('errorJuego', '¡Se acabaron las fichas del bombo!');
             return;
         }
-        
+
         const ficha = partida.bombo.pop();
-        
+
         partida.fichasSorteadasSet.add(ficha.numero);
         partida.fichasHistorial.push(ficha); // ¡NUEVO! Guardamos la ficha completa
 
@@ -644,72 +644,72 @@ io.on('connection', (socket) => {
     });
 
     // -- Evento: Cantar Bingo (Con corrección de seguridad) --
-socket.on('cantarBingo', () => {
-    // 1. Buscar partida y jugador (Igual que antes)
-    let clave = null;
-    for (const k in partidas) {
-        if (partidas[k].jugadores.find(j => j.id === socket.id)) {
-            clave = k;
-            break;
+    socket.on('cantarBingo', () => {
+        // 1. Buscar partida y jugador (Igual que antes)
+        let clave = null;
+        for (const k in partidas) {
+            if (partidas[k].jugadores.find(j => j.id === socket.id)) {
+                clave = k;
+                break;
+            }
         }
-    }
 
-    if (!clave) return socket.emit('bingoFalso');
-    const partida = partidas[clave];
-    const jugador = partida.jugadores.find(j => j.id === socket.id);
+        if (!clave) return socket.emit('bingoFalso');
+        const partida = partidas[clave];
+        const jugador = partida.jugadores.find(j => j.id === socket.id);
 
-    // 2. Validaciones básicas
-    if (!jugador || !partida.juegoIniciado) return socket.emit('bingoFalso');
+        // 2. Validaciones básicas
+        if (!jugador || !partida.juegoIniciado) return socket.emit('bingoFalso');
 
-    // Evitar que el mismo jugador cante dos veces
-    if (partida.ganadoresTemp && partida.ganadoresTemp.find(g => g.id === jugador.id)) {
-        return; // Ya estás en la lista, tranquilo.
-    }
+        // Evitar que el mismo jugador cante dos veces
+        if (partida.ganadoresTemp && partida.ganadoresTemp.find(g => g.id === jugador.id)) {
+            return; // Ya estás en la lista, tranquilo.
+        }
 
-    console.log(`Jugador ${jugador.nombre} canta BINGO. Verificando...`);
+        console.log(`Jugador ${jugador.nombre} canta BINGO. Verificando...`);
 
-    // 3. Verificar Cartón
-    const celdasGanadoras = verificarBingo(jugador.cartilla, partida.patronJuego, partida.fichasSorteadasSet);
+        // 3. Verificar Cartón
+        const celdasGanadoras = verificarBingo(jugador.cartilla, partida.patronJuego, partida.fichasSorteadasSet);
 
-    if (celdasGanadoras) {
-        enviarMensajeSistema(clave, `¡ALERTA! ${jugador.nombre} cantó BINGO. Verificando...`, 'alerta');
-        console.log(`¡BINGO VÁLIDO para ${jugador.nombre}!`);
+        if (celdasGanadoras) {
+            enviarMensajeSistema(clave, `¡ALERTA! ${jugador.nombre} cantó BINGO. Verificando...`, 'alerta');
+            console.log(`¡BINGO VÁLIDO para ${jugador.nombre}!`);
 
-        // --- LÓGICA DE VENTANA DE 10 SEGUNDOS ---
-        
-        // Si es el PRIMER ganador detectado
-        if (!partida.cierreEnCurso) {
-            partida.cierreEnCurso = true; // Activamos modo "Cierre"
-            partida.ganadoresTemp = [];   // Iniciamos lista vacía
-            
-            // Avisamos a todos que empezó la cuenta regresiva
-            io.to(clave).emit('avisoCierreBingo', { 
-                primerGanador: jugador.nombre,
-                segundos: 10 
+            // --- LÓGICA DE VENTANA DE 10 SEGUNDOS ---
+
+            // Si es el PRIMER ganador detectado
+            if (!partida.cierreEnCurso) {
+                partida.cierreEnCurso = true; // Activamos modo "Cierre"
+                partida.ganadoresTemp = [];   // Iniciamos lista vacía
+
+                // Avisamos a todos que empezó la cuenta regresiva
+                io.to(clave).emit('avisoCierreBingo', {
+                    primerGanador: jugador.nombre,
+                    segundos: 10
+                });
+
+                // Iniciamos el Temporizador del Servidor (10 seg)
+                setTimeout(() => {
+                    terminarJuego(clave); // Función que definiremos abajo
+                }, 10000);
+            }
+
+            // Agregamos a ESTE ganador a la lista temporal
+            partida.ganadoresTemp.push({
+                nombre: jugador.nombre,
+                id: jugador.id, // Guardamos ID para evitar duplicados
+                cartilla: jugador.cartilla,
+                celdasGanadoras: celdasGanadoras // Sus coordenadas ganadoras
             });
 
-            // Iniciamos el Temporizador del Servidor (10 seg)
-            setTimeout(() => {
-                terminarJuego(clave); // Función que definiremos abajo
-            }, 10000);
+            // Le avisamos solo a él que su Bingo fue registrado
+            socket.emit('bingoRegistrado');
+
+        } else {
+            socket.emit('bingoFalso');
+            enviarMensajeSistema(clave, `Bingo Falso de ${jugador.nombre}.`, 'alerta');
         }
-
-        // Agregamos a ESTE ganador a la lista temporal
-        partida.ganadoresTemp.push({
-            nombre: jugador.nombre,
-            id: jugador.id, // Guardamos ID para evitar duplicados
-            cartilla: jugador.cartilla,
-            celdasGanadoras: celdasGanadoras // Sus coordenadas ganadoras
-        });
-
-        // Le avisamos solo a él que su Bingo fue registrado
-        socket.emit('bingoRegistrado');
-
-    } else {
-        socket.emit('bingoFalso');
-        enviarMensajeSistema(clave, `Bingo Falso de ${jugador.nombre}.`, 'alerta');
-    }
-});
+    });
 
 
     // -- NUEVO: Salir voluntariamente (Botón Salir) --
@@ -721,7 +721,7 @@ socket.on('cantarBingo', () => {
 
             if (indice !== -1) {
                 const jugador = partida.jugadores[indice];
-                
+
                 // Si es anfitrión, cerramos la sala (igual que antes)
                 if (jugador.esAnfitrion) {
                     enviarMensajeSistema(clave, `¡El anfitrión (${jugador.nombre}) ha cerrado la sala!`, 'alerta');
@@ -752,7 +752,7 @@ socket.on('cantarBingo', () => {
 
         if (clave) {
             console.log(`Anfitrión reinicia sala ${clave} al lobby.`);
-            
+
             // 2. Asegurar que el estado de juego sea falso
             if (partidas[clave]) partidas[clave].juegoIniciado = false;
 
@@ -761,11 +761,11 @@ socket.on('cantarBingo', () => {
         }
     });
 
-// server.js (Evento disconnect MODIFICADO para persistencia del Host)
+    // server.js (Evento disconnect MODIFICADO para persistencia del Host)
 
     socket.on('disconnect', () => {
         console.log(`Cliente desconectado (pérdida de señal/minimizado): ${socket.id}`);
-        
+
         for (const clave in partidas) {
             const partida = partidas[clave];
             const jugador = partida.jugadores.find(j => j.id === socket.id);
@@ -774,11 +774,11 @@ socket.on('cantarBingo', () => {
                 // CASO A: Es Anfitrión
                 if (jugador.esAnfitrion) {
                     console.log(`Anfitrión desconectado momentáneamente de sala ${clave}. Esperando reconexión...`);
-                    
+
                     // AVISO SUAVE: No cerramos la sala, solo avisamos.
                     // No enviamos 'errorJuego' porque eso recarga la página de los jugadores.
                     enviarMensajeSistema(clave, `⚠️ El anfitrión perdió conexión. Esperando a que vuelva...`, 'alerta');
-                } 
+                }
                 // CASO B: Es Jugador Normal
                 else {
                     enviarMensajeSistema(clave, `${jugador.nombre} perdió la conexión.`, 'alerta');
@@ -801,7 +801,22 @@ socket.on('cantarBingo', () => {
             });
         }
     });
-    
+
+    // -- Evento: Audio de Usuario (Chat de Voz) --
+    socket.on('sendAudio', (datos) => {
+        const { audioData, clave, nombre } = datos;
+
+        // Simplemente retransmitimos a la sala.
+        // No guardamos en disco (memoria efímera de Socket.io).
+        if (partidas[clave]) {
+            io.to(clave).emit('systemLog', {
+                audioData: audioData,
+                type: 'audio',
+                nombre: nombre
+            });
+        }
+    });
+
 });
 
 

@@ -36,14 +36,18 @@ const btnLogout = document.getElementById('btnLogout');
 // --- VOZ Y SONIDO (Variables Globales) ---
 let vozMuteada = false;
 let efectosMuteados = false;
+let autoPlayAudio = true; // NUEVO: Por defecto Activado
 let vozSeleccionada = null;
 const synth = window.speechSynthesis;
 
 // Elementos Checkbox Sonido
 const checkVozJugador = document.getElementById('checkVozJugador');
 const checkEfectosJugador = document.getElementById('checkEfectosJugador');
+const checkAutoPlayJugador = document.getElementById('checkAutoPlayJugador'); // NUEVO
+
 const checkVozAnfitrion = document.getElementById('checkVozAnfitrion');
 const checkEfectosAnfitrion = document.getElementById('checkEfectosAnfitrion');
+const checkAutoPlayAnfitrion = document.getElementById('checkAutoPlayAnfitrion'); // NUEVO
 
 // --- ELEMENTOS DOM ---
 const pantallaBienvenida = document.getElementById('pantalla-bienvenida');
@@ -68,7 +72,7 @@ const btnSalirPartidaHost = document.getElementById('btnSalirPartidaHost');
 const btnSortearFicha = document.getElementById('btnSortearFicha');
 const fichaActual = document.getElementById('fichaActual');
 const fichaAnterior = document.getElementById('fichaAnterior');
-const tableroControlAnfitrion = document.getElementById('grid75'); 
+const tableroControlAnfitrion = document.getElementById('grid75');
 const nombreAnfitrionDisplay = document.getElementById('nombreAnfitrionDisplay');
 const displayClaveAnfitrion = document.getElementById('displayClaveAnfitrion'); // ¡NUEVO!
 const displayClaveJugador = document.getElementById('displayClaveJugador');
@@ -114,14 +118,17 @@ const btnCerrarGestor = document.getElementById('btnCerrarGestor');
 const chatLogLobby = document.getElementById('chatLogLobby');
 const chatInputLobby = document.getElementById('chatInputLobby');
 const btnEnviarLobby = document.getElementById('btnEnviarLobby');
+const btnMicLobby = document.getElementById('btnMicLobby'); // NUEVO
 
 const chatLogJugador = document.getElementById('chatLogJugador');
 const chatInputJugador = document.getElementById('chatInputJugador');
 const btnEnviarJugador = document.getElementById('btnEnviarJugador');
+const btnMicJugador = document.getElementById('btnMicJugador'); // NUEVO
 
 const chatLogHost = document.getElementById('chatLogHost');
 const chatInputHost = document.getElementById('chatInputHost');
 const btnEnviarHost = document.getElementById('btnEnviarHost');
+const btnMicHost = document.getElementById('btnMicHost'); // NUEVO
 
 const inputMontoApuesta = document.getElementById('inputMontoApuesta');
 const displaySaldoJugador = document.getElementById('displaySaldoJugador');
@@ -137,13 +144,24 @@ function mostrarMensajeChat(logElement, data) {
     const div = document.createElement('div');
     const now = new Date();
     const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-    
+
     let html = `<span style="opacity:0.6;">[${time}] </span>`;
 
     if (data.type === 'usuario') {
         html += `<span class="msg-usuario">${data.nombre}:</span> <span class="msg-texto">${data.msg}</span>`;
     } else if (data.type === 'evento') {
         html += `<span class="msg-evento">${data.msg}</span>`;
+    } else if (data.type === 'audio') {
+        // LÓGICA DE AUDIO OCULTO Y AUTO-PLAY
+        // Mostramos solo un indicador visual
+        html += `<span class="msg-usuario" style="color:#e74c3c; display:flex; align-items:center; gap:5px;">
+                    🎤 Audio de ${data.nombre} <span style="font-size:10px; opacity:0.7;">(Auto-Play)</span>
+                 </span>`;
+
+        // Elemento de audio oculto (pero funcional)
+        // Nota: 'autoplay' a veces se bloquea si no hubo interacción previa, pero en un juego de clic es probable que funcione.
+        html += `<audio src="${data.audioData}" style="display:none;" class="audio-oculto"></audio>`;
+
     } else if (data.type === 'alerta') {
         html += `<span class="msg-sistema">${data.msg}</span>`;
     } else {
@@ -152,9 +170,27 @@ function mostrarMensajeChat(logElement, data) {
 
     div.innerHTML = html;
     logElement.appendChild(div);
-    
+
     // Auto-scroll al final
     logElement.scrollTop = logElement.scrollHeight;
+
+    // --- LÓGICA DE AUTO-PLAY ---
+    if (data.type === 'audio' && autoPlayAudio) {
+        // Solo reproducir si NO soy yo quien lo envió (para evitar eco o redundancia)
+        if (data.nombre !== miNombre) {
+            const audioEl = div.querySelector('audio');
+            if (audioEl) {
+                // Forzamos reproducción con un pequeño delay
+                setTimeout(() => {
+                    audioEl.play().catch(err => {
+                        console.warn("Auto-play bloqueado por el navegador:", err);
+                        // Si falla (ej: contexto bloqueado), podríamos mostrar un botón de "Play" de respaldo
+                        // Pero por ahora cumplimos el requerimiento de "oculto".
+                    });
+                }, 100);
+            }
+        }
+    }
 }
 
 // Abrir Modal
@@ -170,7 +206,7 @@ if (btnCargarCartonJugador) {
     });
 }
 // Cerrar Modal
-if(btnCerrarGestor) {
+if (btnCerrarGestor) {
     btnCerrarGestor.addEventListener('click', () => {
         CardManager.cerrarModal();
     });
@@ -180,21 +216,21 @@ if(btnCerrarGestor) {
 function recibirCartonDesdeGestor(nuevaCartilla) {
     // 1. Asignar globalmente
     miCartilla = nuevaCartilla;
-    
+
     // 2. Avisar al servidor (para sincronizar persistencia del lado servidor si la hubiera)
     // Usamos el evento existente 'usarCartonFavorito' que ya tenías
     socket.emit('usarCartonFavorito', nuevaCartilla);
-    
+
     // 3. Sincronizar el Toggle (Como elegí uno guardado, el toggle debe estar ON)
-    if(checkGuardarFavorito) checkGuardarFavorito.checked = true;
-    
+    if (checkGuardarFavorito) checkGuardarFavorito.checked = true;
+
     hablar("Cartón cargado exitosamente.");
 }
 
 function sincronizarToggleFavorito() {
     // 1. Verificamos si tenemos cartilla cargada
     if (!miCartilla) return;
-    
+
     // 2. Consultamos al Manager si hay un ID Activo seleccionado
     const idActivo = CardManager.obtenerIdActivo();
     let debeEstarPrendido = false;
@@ -207,7 +243,7 @@ function sincronizarToggleFavorito() {
 
     // 3. Actualizamos visualmente el botón del Jugador
     if (checkGuardarFavorito) checkGuardarFavorito.checked = debeEstarPrendido;
-    
+
     // 4. Actualizamos visualmente el botón del Anfitrión
     if (checkGuardarFavoritoHost) checkGuardarFavoritoHost.checked = debeEstarPrendido;
 }
@@ -218,12 +254,12 @@ function salirDelJuegoTotalmente() {
     if (confirm("¿Seguro que quieres salir?")) {
         // 1. Avisar al servidor para que me borre de la lista
         socket.emit('abandonarPartida');
-        
+
         // 2. Borrar mis credenciales locales
         localStorage.removeItem(PLAYER_ID_KEY);
         // Opcional: Borrar también marcas y favoritos si quieres limpieza total
         // localStorage.removeItem('bingoCartonFavorito'); 
-        
+
         // 3. Recargar página para ir al inicio
         location.reload();
     }
@@ -251,13 +287,13 @@ if (btnSalirPartidaHost) {
 
         // 2. Confirmación de seguridad
         if (confirm("⚠️ ¿Estás seguro de cerrar la sala?\n\nEsto terminará la partida para TODOS los jugadores.")) {
-            
+
             // 3. Avisar al servidor (El server borrará la sala y sacará a todos)
             socket.emit('abandonarPartida');
-            
+
             // 4. Limpieza local
             localStorage.removeItem(PLAYER_ID_KEY);
-            
+
             // 5. Recargar para volver al inicio
             location.reload();
         }
@@ -273,13 +309,13 @@ function cambiarPantalla(idSiguientePantalla) {
 
 function cargarVoz() {
     const voces = synth.getVoices();
-    
+
     // 1. Buscamos Español Estados Unidos (Preferido en Android Latam)
     vozSeleccionada = voces.find(v => v.lang === 'es-US' || v.lang === 'es_US');
-    
+
     // 2. Si no, Español España
     if (!vozSeleccionada) vozSeleccionada = voces.find(v => v.lang === 'es-ES' || v.lang === 'es_ES');
-    
+
     // 3. Si no, cualquier español
     if (!vozSeleccionada) vozSeleccionada = voces.find(v => v.lang.startsWith('es'));
 
@@ -294,10 +330,10 @@ function hablar(texto) {
     // CAMBIO: Quitamos "!vozSeleccionada" del bloqueo.
     // Ahora permitimos que hable aunque no haya encontrado una voz específica.
     if (vozMuteada || !synth) return;
-    
-    synth.cancel(); 
+
+    synth.cancel();
     const anuncio = new SpeechSynthesisUtterance(texto);
-    
+
     if (vozSeleccionada) {
         // ESCENARIO IDEAL: Encontramos la voz perfecta (US o ES)
         anuncio.voice = vozSeleccionada;
@@ -306,7 +342,7 @@ function hablar(texto) {
         // ESCENARIO PLAN B: No encontramos la voz en la lista,
         // pero forzamos al navegador a hablar en Español Estándar.
         // Esto usará la configuración por defecto de tu Android (que ya pusiste en Español).
-        anuncio.lang = 'es-ES'; 
+        anuncio.lang = 'es-ES';
     }
 
     anuncio.rate = 0.95;
@@ -338,11 +374,13 @@ function cargarPreferenciasSonido() {
     const vozActivada = !vozMuteada;
     const fxActivado = !efectosMuteados;
 
-    if(checkVozJugador) checkVozJugador.checked = vozActivada;
-    if(checkEfectosJugador) checkEfectosJugador.checked = fxActivado;
-    
-    if(checkVozAnfitrion) checkVozAnfitrion.checked = vozActivada;
-    if(checkEfectosAnfitrion) checkEfectosAnfitrion.checked = fxActivado;
+    if (checkVozJugador) checkVozJugador.checked = vozActivada;
+    if (checkEfectosJugador) checkEfectosJugador.checked = fxActivado;
+    if (checkAutoPlayJugador) checkAutoPlayJugador.checked = autoPlayAudio;
+
+    if (checkVozAnfitrion) checkVozAnfitrion.checked = vozActivada;
+    if (checkEfectosAnfitrion) checkEfectosAnfitrion.checked = fxActivado;
+    if (checkAutoPlayAnfitrion) checkAutoPlayAnfitrion.checked = autoPlayAudio;
 }
 
 // Guardar cambios
@@ -350,20 +388,22 @@ function actualizarPreferencias(tipo, estadoActivado) {
     if (tipo === 'voz') {
         vozMuteada = !estadoActivado;
         localStorage.setItem('bingoVozMute', vozMuteada);
-        // Sincronizar el otro checkbox gemelo
-        if(checkVozJugador) checkVozJugador.checked = estadoActivado;
-        if(checkVozAnfitrion) checkVozAnfitrion.checked = estadoActivado;
-        // Cancelar voz actual si se silencia
-        if(vozMuteada) synth.cancel();
-    } 
+        if (checkVozJugador) checkVozJugador.checked = estadoActivado;
+        if (checkVozAnfitrion) checkVozAnfitrion.checked = estadoActivado;
+        if (vozMuteada) synth.cancel();
+    }
     else if (tipo === 'fx') {
         efectosMuteados = !estadoActivado;
         localStorage.setItem('bingoFXMute', efectosMuteados);
         if (typeof SoundFX !== 'undefined') SoundFX.setMute(efectosMuteados);
-        
-        // Sincronizar el otro checkbox gemelo
-        if(checkEfectosJugador) checkEfectosJugador.checked = estadoActivado;
-        if(checkEfectosAnfitrion) checkEfectosAnfitrion.checked = estadoActivado;
+        if (checkEfectosJugador) checkEfectosJugador.checked = estadoActivado;
+        if (checkEfectosAnfitrion) checkEfectosAnfitrion.checked = estadoActivado;
+    }
+    else if (tipo === 'autoplay') { // NUEVO
+        autoPlayAudio = estadoActivado;
+        // Sincronizar UI
+        if (checkAutoPlayJugador) checkAutoPlayJugador.checked = autoPlayAudio;
+        if (checkAutoPlayAnfitrion) checkAutoPlayAnfitrion.checked = autoPlayAudio;
     }
 }
 
@@ -376,18 +416,18 @@ cargarPreferenciasSonido();
 // client.js - Listener btnCrearPartida
 
 btnCrearPartida.addEventListener('click', () => {
-    
+
     // 1. Validaciones de nombre
     const nombreAUsar = usuarioLogueadoNombre || inputNombre.value.trim();
 
-    if (nombreAUsar.length < 2) { 
+    if (nombreAUsar.length < 2) {
         mostrarErrorFlotante(errorFlotanteInvitado || mensajeError, 'Debes ingresar un nombre para crear la partida.');
-        return; 
+        return;
     }
-    
+
     if (errorFlotanteInvitado) mostrarErrorFlotante(errorFlotanteInvitado, '', true);
 
-    miNombre = nombreAUsar; 
+    miNombre = nombreAUsar;
 
     // 2. LÓGICA DE CARTÓN FAVORITO PARA ANFITRION
     // Antes de crear, verificamos si el usuario tiene un cartón activo seleccionado en el Gestor
@@ -404,7 +444,7 @@ btnCrearPartida.addEventListener('click', () => {
     }
 
     // 3. Emitir con la cartilla (si existe)
-    socket.emit('crearPartida', { 
+    socket.emit('crearPartida', {
         nombre: miNombre,
         cartilla: cartillaParaEnviar // Si es null, el server genera uno random
     });
@@ -412,30 +452,30 @@ btnCrearPartida.addEventListener('click', () => {
 
 // --- Evento: UNIRSE A LA PARTIDA (MODIFICADO para soportar Login) ---
 btnUnirsePartida.addEventListener('click', () => {
-    
+
     // Habilitar temporalmente los campos por si estaban desactivados
     btnUnirsePartida.disabled = false;
-    inputClave.disabled = false; 
+    inputClave.disabled = false;
 
     // 1. Lógica de selección de nombre 
     const nombreAUsar = usuarioLogueadoNombre || inputNombre.value.trim();
     const clave = inputClave.value.trim().toUpperCase();
 
     // Resetear el error
-    if(errorFlotanteInvitado) mostrarErrorFlotante(errorFlotanteInvitado, '', true);
+    if (errorFlotanteInvitado) mostrarErrorFlotante(errorFlotanteInvitado, '', true);
 
     // 2. Validación de Campos
     if (nombreAUsar.length < 2) {
-        if(errorFlotanteInvitado) {
-             mostrarErrorFlotante(errorFlotanteInvitado, 'Ingresa un nombre válido (mín. 2 letras).');
+        if (errorFlotanteInvitado) {
+            mostrarErrorFlotante(errorFlotanteInvitado, 'Ingresa un nombre válido (mín. 2 letras).');
         } else {
-             // Fallback si errorFlotanteInvitado no existe (para evitar que se bloquee)
-             alert('Ingresa un nombre válido (mín. 2 letras).'); 
+            // Fallback si errorFlotanteInvitado no existe (para evitar que se bloquee)
+            alert('Ingresa un nombre válido (mín. 2 letras).');
         }
         return;
     }
     if (clave.length !== 4) {
-        if(errorFlotanteInvitado) {
+        if (errorFlotanteInvitado) {
             mostrarErrorFlotante(errorFlotanteInvitado, 'La clave de la sala debe ser de 4 letras.');
         } else {
             alert('La clave de la sala debe ser de 4 letras.');
@@ -444,42 +484,48 @@ btnUnirsePartida.addEventListener('click', () => {
     }
 
     // 3. Establecer el nombre global y obtener o generar el PlayerId
-    miNombre = nombreAUsar; 
+    miNombre = nombreAUsar;
     let playerId = localStorage.getItem(PLAYER_ID_KEY);
-    
+
     // Generar un ID si es invitado nuevo
     if (!playerId) {
         playerId = Date.now().toString(36) + Math.random().toString(36).substring(2, 5);
         localStorage.setItem(PLAYER_ID_KEY, playerId);
     }
-    
+
 
     // 4. Emitir el evento de unión
     socket.emit('unirsePartida', { // <--- CORRECCIÓN IMPORTANTE: el server.js espera 'unirsePartida' o 'unirseSala'?
-                                  // Según server.js, espera 'unirsePartida'
+        // Según server.js, espera 'unirsePartida'
         nombre: miNombre,
         clave: clave,
         playerId: playerId
     });
-    
+
     // 5. Bloquear UI mientras se conecta
     btnUnirsePartida.disabled = true;
     inputClave.disabled = true;
-    
+
 });
 
 // --- EVENTOS DE SONIDO (NUEVO) ---
-if(checkVozJugador) {
+if (checkVozJugador) {
     checkVozJugador.addEventListener('change', (e) => actualizarPreferencias('voz', e.target.checked));
 }
-if(checkEfectosJugador) {
+if (checkEfectosJugador) {
     checkEfectosJugador.addEventListener('change', (e) => actualizarPreferencias('fx', e.target.checked));
 }
-if(checkVozAnfitrion) {
+if (checkVozAnfitrion) {
     checkVozAnfitrion.addEventListener('change', (e) => actualizarPreferencias('voz', e.target.checked));
 }
-if(checkEfectosAnfitrion) {
+if (checkEfectosAnfitrion) {
     checkEfectosAnfitrion.addEventListener('change', (e) => actualizarPreferencias('fx', e.target.checked));
+}
+if (checkAutoPlayJugador) {
+    checkAutoPlayJugador.addEventListener('change', (e) => actualizarPreferencias('autoplay', e.target.checked));
+}
+if (checkAutoPlayAnfitrion) {
+    checkAutoPlayAnfitrion.addEventListener('change', (e) => actualizarPreferencias('autoplay', e.target.checked));
 }
 
 // Lógica Selector Patrones (Dropdown)
@@ -495,7 +541,7 @@ if (dropdown) {
             opciones.forEach(op => op.classList.remove('selected'));
             opcion.classList.add('selected');
             patronSeleccionado = opcion.dataset.value;
-            if(textoTrigger) textoTrigger.textContent = opcion.textContent;
+            if (textoTrigger) textoTrigger.textContent = opcion.textContent;
             dropdown.classList.remove('open');
         });
     });
@@ -506,9 +552,9 @@ if (dropdown) {
 
 btnEmpezarPartida.addEventListener('click', () => {
     const monto = inputMontoApuesta ? inputMontoApuesta.value : 0;
-    socket.emit('empezarPartida', { 
+    socket.emit('empezarPartida', {
         patron: patronSeleccionado,
-        montoApuesta: monto 
+        montoApuesta: monto
     });
 });
 
@@ -527,7 +573,7 @@ if (checkGuardarFavoritoHost) {
             CardManager.eliminarActivoDeColeccion();
             hablar("Cartón ya no es favorito.");
         }
-        
+
         // Sincronizar visualmente el toggle del jugador por si el anfitrión cambia de rol
         if (typeof sincronizarToggleFavorito === 'function') sincronizarToggleFavorito();
     });
@@ -547,7 +593,7 @@ function enviarMensaje(inputElement, logElement) {
         nombre: miNombre
     });
     inputElement.value = '';
-    
+
     // Inicializar AudioContext en el primer click (por política del navegador)
     if (typeof SoundFX !== 'undefined') SoundFX.init();
 }
@@ -580,18 +626,110 @@ if (btnCantarBingoHost) {
 
 // Sorteo
 btnSortearFicha.addEventListener('click', () => {
-    if (checkAutomatico.checked) return; 
+    if (checkAutomatico.checked) return;
     btnSortearFicha.disabled = true;
     socket.emit('sortearFicha');
 });
 
+// --- NUEVO: LÓGICA DE GRABACIÓN DE AUDIO ---
+
+function setupAudioRecording(btnElement, getClave) {
+    if (!btnElement) return;
+
+    let mediaRecorder;
+    let audioChunks = [];
+    let isRecording = false;
+    let maxTimeTimeout;
+
+    btnElement.addEventListener('click', async () => {
+        // Toggle Grabación
+        if (!isRecording) {
+            // INICIAR GRABACIÓN
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                // Mejora del mensaje de error para móviles
+                if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                    alert("⚠️ ¡Atención!\n\nLa grabación de voz requiere una conexión segura (HTTPS).\n\nComo estás entrando por IP local (HTTP), el navegador bloquea el micrófono por seguridad.\n\nPrueba subiendo el proyecto a Render (HTTPS) o usa 'ngrok' para testear.");
+                } else {
+                    alert("Tu navegador no soporta grabación de audio o bloqueó el permiso.");
+                }
+                console.error("MediaDevices API no disponible. (¿Contexto inseguro?)");
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+
+                audioChunks = [];
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    // Detener tracks
+                    stream.getTracks().forEach(track => track.stop());
+
+                    // Crear Blob y convertir a Base64
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    const reader = new FileReader();
+                    reader.readAsDataURL(audioBlob);
+                    reader.onloadend = () => {
+                        const base64Audio = reader.result;
+                        const clave = getClave();
+
+                        if (clave && clave !== '---') {
+                            socket.emit('sendAudio', {
+                                audioData: base64Audio,
+                                clave: clave,
+                                nombre: miNombre
+                            });
+                        }
+                    };
+
+                    // Reset UI
+                    btnElement.classList.remove('recording');
+                    isRecording = false;
+                };
+
+                // Iniciar
+                mediaRecorder.start();
+                isRecording = true;
+                btnElement.classList.add('recording');
+
+                // Límite de 10 segundos
+                maxTimeTimeout = setTimeout(() => {
+                    if (isRecording) {
+                        mediaRecorder.stop();
+                        // alert("Máximo 10 segundos alcanzado. Enviando...");
+                    }
+                }, 10000);
+
+            } catch (err) {
+                console.error("Error al acceder al micrófono:", err);
+                alert("Permiso de micrófono denegado.");
+            }
+        } else {
+            // DETENER GRABACIÓN MANUALMENTE
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                clearTimeout(maxTimeTimeout);
+            }
+        }
+    });
+}
+
+// Inicializar los botones de audio
+setupAudioRecording(btnMicLobby, () => lobbyClave.textContent);
+setupAudioRecording(btnMicHost, () => lobbyClave.textContent);
+setupAudioRecording(btnMicJugador, () => lobbyClave.textContent);
+
 checkAutomatico.addEventListener('change', () => {
     if (checkAutomatico.checked) {
         let intervalo = parseInt(inputIntervalo.value, 10);
-        if (isNaN(intervalo) || intervalo < 3) intervalo = 5; 
+        if (isNaN(intervalo) || intervalo < 3) intervalo = 5;
         inputIntervalo.value = intervalo;
         inputIntervalo.disabled = true;
-        
+
         const cicloAutomatico = () => {
             if (!btnSortearFicha.disabled) {
                 btnSortearFicha.disabled = true;
@@ -616,7 +754,7 @@ function manejarClickCartilla(e) {
     if (celda && celda.dataset.numero) {
         if (celda.dataset.numero === 'GRATIS') return;
         celda.classList.toggle('marcada');
-        
+
         const numero = parseInt(celda.dataset.numero);
         if (celda.classList.contains('marcada')) {
             SoundFX.playPop(); // <--- AQUÍ
@@ -624,7 +762,7 @@ function manejarClickCartilla(e) {
         } else {
             misMarcas = misMarcas.filter(n => n !== numero);
         }
-        
+
         const playerId = localStorage.getItem(PLAYER_ID_KEY);
         if (playerId) localStorage.setItem(`bingoMarks-${playerId}`, JSON.stringify(misMarcas));
     }
@@ -645,11 +783,11 @@ if (btnCantarBingo) {
 // (Listener Botón Cambiar Cartón JUGADOR)
 btnCambiarCarton.addEventListener('click', () => {
     // 1. Limpiar la persistencia (ID Activo = null)
-    CardManager.fijarIdActivo(null); 
-    
+    CardManager.fijarIdActivo(null);
+
     // 2. APAGAR EL TOGGLE VISUALMENTE (Crucial)
-    if(checkGuardarFavorito) checkGuardarFavorito.checked = false;
-    
+    if (checkGuardarFavorito) checkGuardarFavorito.checked = false;
+
     // 3. Visual y Socket
     btnCambiarCarton.disabled = true;
     btnCambiarCarton.textContent = "🔄 Generando...";
@@ -657,14 +795,14 @@ btnCambiarCarton.addEventListener('click', () => {
 });
 
 // (Listener Botón Cambiar Cartón HOST)
-if(btnCambiarCartonHost) {
+if (btnCambiarCartonHost) {
     btnCambiarCartonHost.addEventListener('click', () => {
         // 1. Limpiar persistencia
-        CardManager.fijarIdActivo(null); 
-        
+        CardManager.fijarIdActivo(null);
+
         // 2. Apagar toggles
-        if(checkGuardarFavoritoHost) checkGuardarFavoritoHost.checked = false; 
-        if(checkGuardarFavorito) checkGuardarFavorito.checked = false; 
+        if (checkGuardarFavoritoHost) checkGuardarFavoritoHost.checked = false;
+        if (checkGuardarFavorito) checkGuardarFavorito.checked = false;
 
         btnCambiarCartonHost.disabled = true;
         btnCambiarCartonHost.textContent = "🔄 Generando...";
@@ -688,7 +826,7 @@ if (checkGuardarFavorito) {
             CardManager.eliminarActivoDeColeccion();
             hablar("Cartón ya no es favorito.");
         }
-        
+
         // Opcional: Sincronizar visualmente si tuvieras ambos menús abiertos (raro, pero posible)
         if (typeof sincronizarToggleFavorito === 'function') sincronizarToggleFavorito();
     });
@@ -707,7 +845,7 @@ function mostrarErrorFlotante(elementoError, mensaje, limpiar = false) {
         elementoError.classList.add('oculto');
         return;
     }
-    
+
     elementoError.textContent = mensaje;
     elementoError.classList.remove('oculto');
 
@@ -724,34 +862,34 @@ function mostrarErrorFlotante(elementoError, mensaje, limpiar = false) {
 function cambiarModoLogin(modo) {
     const inputClaveEl = document.getElementById('inputClave');
     const btnUnirseEl = document.getElementById('btnUnirsePartida');
-    
+
     if (modo === 'invitado') {
         formInvitado.classList.remove('oculto');
         formUsuario.classList.add('oculto');
         tabInvitado.classList.add('activo');
         tabUsuario.classList.remove('activo');
-        if(errorFlotanteUsuario) mostrarErrorFlotante(errorFlotanteUsuario, '', true);
-        
+        if (errorFlotanteUsuario) mostrarErrorFlotante(errorFlotanteUsuario, '', true);
+
         // MOSTRAR CAMPOS DE JUEGO
-        if(inputClaveEl) inputClaveEl.classList.remove('oculto');
-        if(btnUnirseEl) btnUnirseEl.classList.remove('oculto');
-        
+        if (inputClaveEl) inputClaveEl.classList.remove('oculto');
+        if (btnUnirseEl) btnUnirseEl.classList.remove('oculto');
+
     } else {
         formInvitado.classList.add('oculto');
         formUsuario.classList.remove('oculto');
         tabInvitado.classList.remove('activo');
         tabUsuario.classList.add('activo');
-        if(errorFlotanteInvitado) mostrarErrorFlotante(errorFlotanteInvitado, '', true);
+        if (errorFlotanteInvitado) mostrarErrorFlotante(errorFlotanteInvitado, '', true);
 
         // OCULTAR CAMPOS DE JUEGO (Mientras se loguea)
-        if(inputClaveEl) inputClaveEl.classList.add('oculto');
-        if(btnUnirseEl) btnUnirseEl.classList.add('oculto');
+        if (inputClaveEl) inputClaveEl.classList.add('oculto');
+        if (btnUnirseEl) btnUnirseEl.classList.add('oculto');
     }
-    
+
     // Resetear UI
-    if(mensajeBienvenida) mensajeBienvenida.classList.add('oculto');
-    if(inputNombre) inputNombre.classList.remove('oculto'); 
-    if(tabsContainer) tabsContainer.classList.remove('oculto');
+    if (mensajeBienvenida) mensajeBienvenida.classList.add('oculto');
+    if (inputNombre) inputNombre.classList.remove('oculto');
+    if (tabsContainer) tabsContainer.classList.remove('oculto');
 }
 
 
@@ -761,29 +899,29 @@ function cambiarModoLogin(modo) {
  */
 function transformarAPostLogin(nombre) {
     // 1. OCULTAR ELEMENTOS DE AUTENTICACIÓN
-    if(tabsContainer) tabsContainer.classList.add('oculto');
-    if(formInvitado) formInvitado.classList.add('oculto');
-    if(formUsuario) formUsuario.classList.add('oculto');
+    if (tabsContainer) tabsContainer.classList.add('oculto');
+    if (formInvitado) formInvitado.classList.add('oculto');
+    if (formUsuario) formUsuario.classList.add('oculto');
 
     // 2. MOSTRAR EL MENSAJE DE BIENVENIDA
-    if(mensajeBienvenida) {
+    if (mensajeBienvenida) {
         mensajeBienvenida.classList.remove('oculto');
         bienvenidaNombre.textContent = `¡Bienvenido de vuelta, ${nombre}! 👋`;
     }
-    
+
     // 3. MOSTRAR INPUT DE SALA Y BOTÓN DE UNIRSE
     const inputClaveEl = document.getElementById('inputClave');
     const btnUnirseEl = document.getElementById('btnUnirsePartida');
-    
-    if(inputClaveEl) { inputClaveEl.classList.remove('oculto'); inputClaveEl.disabled = false; }
-    if(btnUnirseEl) { btnUnirseEl.classList.remove('oculto'); btnUnirseEl.disabled = false; }
+
+    if (inputClaveEl) { inputClaveEl.classList.remove('oculto'); inputClaveEl.disabled = false; }
+    if (btnUnirseEl) { btnUnirseEl.classList.remove('oculto'); btnUnirseEl.disabled = false; }
 
     // 4. CONTROL DE BOTONES INFERIORES
-    if(btnCrearPartida) btnCrearPartida.style.display = 'block'; 
-    if(btnConexionFavorito) btnConexionFavorito.style.display = 'block';
+    if (btnCrearPartida) btnCrearPartida.style.display = 'block';
+    if (btnConexionFavorito) btnConexionFavorito.style.display = 'block';
 
     // 5. NUEVO: MOSTRAR BOTÓN DE LOGOUT
-    if(btnLogout) btnLogout.classList.remove('oculto');
+    if (btnLogout) btnLogout.classList.remove('oculto');
 }
 
 
@@ -796,9 +934,9 @@ if (btnConexionFavorito) {
         if (playerId) {
             console.log("Reconexión manual forzada.");
             // Usamos la misma lógica del on('connect')
-            if(formInvitado) formInvitado.classList.add('oculto');
-            if(tabsContainer) tabsContainer.classList.add('oculto');
-            if(mensajeBienvenida) {
+            if (formInvitado) formInvitado.classList.add('oculto');
+            if (tabsContainer) tabsContainer.classList.add('oculto');
+            if (mensajeBienvenida) {
                 mensajeBienvenida.classList.remove('oculto');
                 bienvenidaNombre.textContent = "Intentando reconexión...";
             }
@@ -854,12 +992,12 @@ if (btnLogout) {
         // Opcional: localStorage.removeItem(PLAYER_ID_KEY); 
 
         // 2. Ocultar elementos de usuario logueado
-        if(mensajeBienvenida) mensajeBienvenida.classList.add('oculto');
+        if (mensajeBienvenida) mensajeBienvenida.classList.add('oculto');
         btnLogout.classList.add('oculto');
 
         // 3. Restaurar la vista de pestañas
-        if(tabsContainer) tabsContainer.classList.remove('oculto');
-        
+        if (tabsContainer) tabsContainer.classList.remove('oculto');
+
         // 4. Forzar vista de invitado
         cambiarModoLogin('invitado');
     });
@@ -889,9 +1027,9 @@ if (btnNuevaRondaHost) {
 socket.on('reiniciarLobby', () => {
     // Cerrar modal
     modalFinJuego.classList.remove('visible');
-    
+
     // Restaurar botón del host para la próxima
-    if(btnNuevaRondaHost) {
+    if (btnNuevaRondaHost) {
         btnNuevaRondaHost.disabled = false;
         btnNuevaRondaHost.textContent = "👑 Nueva Ronda (Todos)";
     }
@@ -899,7 +1037,7 @@ socket.on('reiniciarLobby', () => {
     // Limpieza y cambio de pantalla
     datosGanadorTemp = null;
     limpiarJuegoLocal();
-    
+
     // Si soy anfitrión, restauro mi vista
     if (soyAnfitrion) {
         lobbyVistaAnfitrion.style.display = 'flex';
@@ -909,7 +1047,7 @@ socket.on('reiniciarLobby', () => {
         lobbyVistaAnfitrion.style.display = 'none';
         lobbyVistaJugador.style.display = 'block';
     }
-    
+
     cambiarPantalla('pantalla-lobby');
     hablar("Volviendo al lobby.");
 });
@@ -922,11 +1060,11 @@ socket.on('loginExitoso', (datos) => {
     btnLoginUsuario.textContent = 'Iniciar Sesión';
 
     // B. Almacenar el nombre y el playerId
-    miNombre = datos.nombre; 
+    miNombre = datos.nombre;
     usuarioLogueadoNombre = datos.nombre; // Guardamos el nombre autenticado
 
     // --- NUEVO: GUARDAR PERSISTENCIA DE SESIÓN ---
-    localStorage.setItem('bingoUsuarioNombre', datos.nombre); 
+    localStorage.setItem('bingoUsuarioNombre', datos.nombre);
     localStorage.setItem(PLAYER_ID_KEY, datos.playerId);
 
     // C. Transformar la UI
@@ -949,16 +1087,16 @@ socket.on('loginError', (mensaje) => {
 
 function limpiarJuegoLocal(borrarMemoria = true) {
     // Limpiar visuales
-    if(cartillaJugador) cartillaJugador.innerHTML = '';
-    if(cartillaHostContainer) cartillaHostContainer.innerHTML = '';
-    if(tableroControlAnfitrion) tableroControlAnfitrion.innerHTML = '';
-    if(historialContenedor) historialContenedor.innerHTML = '<span>Esperando...</span>';
-    
+    if (cartillaJugador) cartillaJugador.innerHTML = '';
+    if (cartillaHostContainer) cartillaHostContainer.innerHTML = '';
+    if (tableroControlAnfitrion) tableroControlAnfitrion.innerHTML = '';
+    if (historialContenedor) historialContenedor.innerHTML = '<span>Esperando...</span>';
+
     // --- NUEVO: LIMPIAR LOGS DE CHAT ---
-    if(chatLogLobby) chatLogLobby.innerHTML = '';
-    if(chatLogJugador) chatLogJugador.innerHTML = '';
-    if(chatLogHost) chatLogHost.innerHTML = '';
-    
+    if (chatLogLobby) chatLogLobby.innerHTML = '';
+    if (chatLogJugador) chatLogJugador.innerHTML = '';
+    if (chatLogHost) chatLogHost.innerHTML = '';
+
     // Memorias y Timers
     if (borrarMemoria) {
         const playerId = localStorage.getItem(PLAYER_ID_KEY);
@@ -969,15 +1107,15 @@ function limpiarJuegoLocal(borrarMemoria = true) {
     if (temporizadorSorteo) { clearInterval(temporizadorSorteo); temporizadorSorteo = null; }
     if (checkAutomatico) checkAutomatico.checked = false;
     if (inputIntervalo) inputIntervalo.disabled = false;
-    
+
     // Restaurar botones
-    if(btnCantarBingo) { btnCantarBingo.disabled = false; btnCantarBingo.textContent = '¡CANTAR BINGO!'; }
-    if(btnCantarBingoHost) { btnCantarBingoHost.disabled = false; btnCantarBingoHost.textContent = '¡CANTAR BINGO!'; }
-    if(btnSortearFicha) btnSortearFicha.disabled = false;
-    
+    if (btnCantarBingo) { btnCantarBingo.disabled = false; btnCantarBingo.textContent = '¡CANTAR BINGO!'; }
+    if (btnCantarBingoHost) { btnCantarBingoHost.disabled = false; btnCantarBingoHost.textContent = '¡CANTAR BINGO!'; }
+    if (btnSortearFicha) btnSortearFicha.disabled = false;
+
     // Resetear Panel Host
     if (panelCartillaHost) panelCartillaHost.classList.remove('abierto');
-    
+
     if (typeof HostUI !== 'undefined' && HostUI.resetearInterfaz) {
         HostUI.resetearInterfaz();
     }
@@ -996,41 +1134,41 @@ socket.on('connect', () => {
     // ESCENARIO A: El usuario ya estaba logueado (tiene nombre guardado)
     if (nombreGuardado) {
         console.log(`Sesión restaurada para: ${nombreGuardado}`);
-        
+
         // 1. Restaurar variables globales
         miNombre = nombreGuardado;
         usuarioLogueadoNombre = nombreGuardado;
 
         // 2. Restaurar la interfaz de usuario logueado INMEDIATAMENTE
         transformarAPostLogin(nombreGuardado);
-        
+
         // 3. Si además tiene playerId, intentamos reconectar SILENCIOSAMENTE a una partida
         // (por si estaba jugando y dio F5).
         if (playerId) {
             socket.emit('quieroReconectar', { playerId: playerId });
         }
-    } 
+    }
     // ESCENARIO B: No estaba logueado, pero tiene un ID de invitado (Posible reconexión de invitado)
     else if (playerId) {
         console.log(`Invitado detectado con ID: ${playerId}. Intentando reconectar...`);
-        
+
         // Aquí sí ocultamos todo porque no sabemos el nombre aún
-        if(formInvitado) formInvitado.classList.add('oculto');
-        if(formUsuario) formUsuario.classList.add('oculto');
-        if(tabsContainer) tabsContainer.classList.add('oculto');
-        
+        if (formInvitado) formInvitado.classList.add('oculto');
+        if (formUsuario) formUsuario.classList.add('oculto');
+        if (tabsContainer) tabsContainer.classList.add('oculto');
+
         socket.emit('quieroReconectar', { playerId: playerId });
-        
-        if(mensajeBienvenida) {
+
+        if (mensajeBienvenida) {
             mensajeBienvenida.classList.remove('oculto');
             bienvenidaNombre.textContent = "Reconectando...";
         }
-    } 
+    }
     // ESCENARIO C: Usuario nuevo o limpio
     else {
         // Aseguramos que se vea el formulario de invitado
-        if(formInvitado) formInvitado.classList.remove('oculto');
-        if(tabsContainer) tabsContainer.classList.remove('oculto');
+        if (formInvitado) formInvitado.classList.remove('oculto');
+        if (tabsContainer) tabsContainer.classList.remove('oculto');
     }
 });
 
@@ -1060,15 +1198,15 @@ socket.on('partidaCreada', (datos) => {
     soyAnfitrion = true;
     localStorage.setItem(PLAYER_ID_KEY, datos.playerId);
     lobbyClave.textContent = datos.clave;
-    
-    // Actualizar código en la nueva cabecera Host
-    if(displayClaveAnfitrion) displayClaveAnfitrion.textContent = datos.clave;
 
-    lobbyVistaAnfitrion.style.display = 'flex'; 
+    // Actualizar código en la nueva cabecera Host
+    if (displayClaveAnfitrion) displayClaveAnfitrion.textContent = datos.clave;
+
+    lobbyVistaAnfitrion.style.display = 'flex';
     lobbyVistaAnfitrion.style.flexDirection = 'column';
     lobbyVistaJugador.style.display = 'none';
-    
-    if(nombreAnfitrionDisplay) nombreAnfitrionDisplay.textContent = miNombre || "Anfitrión";
+
+    if (nombreAnfitrionDisplay) nombreAnfitrionDisplay.textContent = miNombre || "Anfitrión";
     cambiarPantalla('pantalla-lobby');
 });
 
@@ -1076,7 +1214,7 @@ socket.on('unionExitosa', (datos) => {
     soyAnfitrion = false;
     localStorage.setItem(PLAYER_ID_KEY, datos.playerId);
     lobbyClave.textContent = datos.clave;
-    
+
     // Configurar vista de Lobby para Jugador
     lobbyVistaAnfitrion.style.display = 'none';
     lobbyVistaJugador.style.display = 'block';
@@ -1085,28 +1223,28 @@ socket.on('unionExitosa', (datos) => {
     // --- NUEVA LÓGICA DE CARGA INICIAL (COLECCIÓN) ---
     // Verificamos si el usuario dejó un cartón seleccionado previamente
     const idActivo = CardManager.obtenerIdActivo();
-    
+
     if (idActivo) {
         // Buscamos el cartón en la colección usando el ID
         const coleccion = CardManager.obtenerColeccion();
         const cartonGuardado = coleccion.find(c => c.id === idActivo);
-        
+
         if (cartonGuardado) {
             esperandoCargaFavorito = true;
             // Enviamos al servidor este cartón para que lo use en la partida
             socket.emit('usarCartonFavorito', cartonGuardado.cartilla);
-            
+
             // Visualmente prendemos el toggle porque es un favorito guardado
-            if(checkGuardarFavorito) checkGuardarFavorito.checked = true;
+            if (checkGuardarFavorito) checkGuardarFavorito.checked = true;
         } else {
             // El ID existía en memoria pero el cartón ya no está en la colección (quizás se borró).
             // Limpiamos el puntero para evitar errores futuros.
             CardManager.fijarIdActivo(null);
-            if(checkGuardarFavorito) checkGuardarFavorito.checked = false;
+            if (checkGuardarFavorito) checkGuardarFavorito.checked = false;
         }
     } else {
         // No hay favorito activo seleccionado, el toggle empieza apagado.
-        if(checkGuardarFavorito) checkGuardarFavorito.checked = false;
+        if (checkGuardarFavorito) checkGuardarFavorito.checked = false;
     }
 });
 
@@ -1115,13 +1253,13 @@ socket.on('errorUnion', (msg) => mensajeError.textContent = msg);
 socket.on('actualizarLobby', (datos) => {
     SoundFX.playChime();
     lobbyListaJugadores.innerHTML = '';
-    
+
     datos.jugadores.forEach((j, index) => {
         const div = document.createElement('div');
         div.className = 'fila-ranking';
-        
+
         // Icono (Corona o nada) + Nombre
-        const icono = j.esAnfitrion ? '👑' : '🧑'; 
+        const icono = j.esAnfitrion ? '👑' : '🧑';
         const claseNombre = j.esAnfitrion ? 'color:#f1c40f;' : '';
 
         // PROTECCIÓN: Usamos (j.saldo || 0) para evitar el crash si es undefined
@@ -1141,20 +1279,20 @@ socket.on('cartonCambiado', (nuevaCartilla) => {
 
     // Restaurar botones
     setTimeout(() => {
-        if(btnCambiarCarton) { 
-            btnCambiarCarton.disabled = false; 
-            btnCambiarCarton.textContent = "🔄 Cambiar mi Cartón"; 
+        if (btnCambiarCarton) {
+            btnCambiarCarton.disabled = false;
+            btnCambiarCarton.textContent = "🔄 Cambiar mi Cartón";
         }
-        if(btnCambiarCartonHost) { 
-            btnCambiarCartonHost.disabled = false; 
-            btnCambiarCartonHost.textContent = "🔄 Cambiar mi Cartón"; 
+        if (btnCambiarCartonHost) {
+            btnCambiarCartonHost.disabled = false;
+            btnCambiarCartonHost.textContent = "🔄 Cambiar mi Cartón";
         }
     }, 500); // Un poco más rápido
 
     // LÓGICA DE MENSAJES Y TOGGLE
     if (esperandoCargaFavorito) {
         // Caso: Venimos de seleccionar un favorito en el Modal
-        if(mensajeCambioCarton) {
+        if (mensajeCambioCarton) {
             mensajeCambioCarton.textContent = "¡Favorito cargado!";
             mensajeCambioCarton.style.opacity = 1;
             mensajeCambioCarton.style.color = "#2ecc71";
@@ -1162,43 +1300,43 @@ socket.on('cartonCambiado', (nuevaCartilla) => {
         hablar("Cartón cargado.");
         esperandoCargaFavorito = false;
         // Aquí SI sincronizamos (se prenderá)
-        sincronizarToggleFavorito(); 
+        sincronizarToggleFavorito();
     } else {
         // Caso: Venimos de "Cambiar Cartón" (Aleatorio)
-        if(mensajeCambioCarton) {
+        if (mensajeCambioCarton) {
             mensajeCambioCarton.textContent = "¡Nuevo cartón listo!";
             mensajeCambioCarton.style.opacity = 1;
             mensajeCambioCarton.style.color = "#f1c40f";
         }
         hablar("Cartón cambiado.");
-        
+
         // FORZAR APAGADO DEL TOGGLE (Porque es nuevo y aleatorio)
-        if(checkGuardarFavorito) checkGuardarFavorito.checked = false;
-        if(checkGuardarFavoritoHost) checkGuardarFavoritoHost.checked = false;
+        if (checkGuardarFavorito) checkGuardarFavorito.checked = false;
+        if (checkGuardarFavoritoHost) checkGuardarFavoritoHost.checked = false;
     }
-    
-    if(mensajeCambioCarton) setTimeout(() => mensajeCambioCarton.style.opacity = 0, 3000);
+
+    if (mensajeCambioCarton) setTimeout(() => mensajeCambioCarton.style.opacity = 0, 3000);
 });
 
 
 // --- INICIO DE JUEGO (HÍBRIDO) ---
 socket.on('partidaIniciada', (datos) => {
     limpiarJuegoLocal();
-    
+
     // 1. Guardar datos comunes
-    miCartilla = datos.cartilla; 
-    
+    miCartilla = datos.cartilla;
+
     // 2. Actualizar VISUALMENTE el Saldo
     const saldoTexto = `S/. ${parseFloat(datos.saldoActual || 0).toFixed(2)}`;
-    if(displaySaldoJugador) displaySaldoJugador.textContent = saldoTexto;
-    if(displaySaldoAnfitrion) displaySaldoAnfitrion.textContent = saldoTexto;
+    if (displaySaldoJugador) displaySaldoJugador.textContent = saldoTexto;
+    if (displaySaldoAnfitrion) displaySaldoAnfitrion.textContent = saldoTexto;
 
     // 3. Configurar Pantalla según Rol
     if (soyAnfitrion) {
         // --- ANFITRION ---
         if (typeof HostUI !== 'undefined') HostUI.renderizarTableroVacio();
-        if(hostPatronTexto) hostPatronTexto.textContent = "Jugando por: " + datos.patronTexto;
-        
+        if (hostPatronTexto) hostPatronTexto.textContent = "Jugando por: " + datos.patronTexto;
+
         if (miCartilla && typeof dibujarCartillaModerna === 'function') {
             dibujarCartillaModerna(miCartilla, cartillaHostContainer);
         }
@@ -1207,8 +1345,8 @@ socket.on('partidaIniciada', (datos) => {
     } else {
         // --- JUGADOR NORMAL ---
         jugadorPatron.textContent = datos.patronTexto;
-        if(nombreJugadorDisplay) nombreJugadorDisplay.textContent = miNombre || "Jugador";
-        if(displayClaveJugador) displayClaveJugador.textContent = lobbyClave.textContent;
+        if (nombreJugadorDisplay) nombreJugadorDisplay.textContent = miNombre || "Jugador";
+        if (displayClaveJugador) displayClaveJugador.textContent = lobbyClave.textContent;
 
         if (typeof dibujarCartillaModerna === 'function') {
             dibujarCartillaModerna(miCartilla, cartillaJugador);
@@ -1221,7 +1359,7 @@ socket.on('partidaIniciada', (datos) => {
     sincronizarToggleFavorito();
 
     // 5. Narración de inicio
-    if(!datos.esUnionTardia) {
+    if (!datos.esUnionTardia) {
         setTimeout(() => hablar(`Iniciando juego. ${datos.patronTexto}`), 1000);
     }
 });
@@ -1231,7 +1369,7 @@ socket.on('partidaIniciada', (datos) => {
 socket.on('fichaAnunciada', (datos) => {
     SoundFX.playNewBall(); // <--- AQUÍ, al principio
     const { ficha } = datos;
-    
+
     // A. Común: Historial
     if (typeof agregarBolillaHistorial === 'function') {
         agregarBolillaHistorial(ficha, historialContenedor);
@@ -1241,19 +1379,19 @@ socket.on('fichaAnunciada', (datos) => {
     if (soyAnfitrion) {
         const fichaActualTexto = fichaActual.textContent;
         let fichaPreviaObj = null;
-        if(fichaActualTexto !== '--') {
+        if (fichaActualTexto !== '--') {
             const numPrevio = parseInt(fichaActual.querySelector('.numero-grande')?.textContent || fichaActual.textContent);
             if (!isNaN(numPrevio)) {
-                 fichaPreviaObj = { numero: numPrevio, letra: getLetraDeNumero(numPrevio) };
+                fichaPreviaObj = { numero: numPrevio, letra: getLetraDeNumero(numPrevio) };
             }
         }
         if (typeof HostUI !== 'undefined') {
             HostUI.marcarFicha(ficha, fichaPreviaObj);
         }
         btnSortearFicha.disabled = false;
-        
+
         // VOZ: El anfitrión habla
-        const letra = ficha.letra.split('').join(' '); 
+        const letra = ficha.letra.split('').join(' ');
         hablar(`${letra} ${ficha.numero}`);
 
         // MARCA VISUAL EN CARTILLA HOST (Si la tiene abierta)
@@ -1265,12 +1403,12 @@ socket.on('fichaAnunciada', (datos) => {
 
     } else {
         // C. Rol Jugador Normal
-        const letra = ficha.letra.split('').join(' '); 
+        const letra = ficha.letra.split('').join(' ');
         hablar(`${letra} ${ficha.numero}`);
-        
+
         const miCelda = cartillaJugador.querySelector(`.celda-3d[data-numero="${String(ficha.numero)}"]`);
         if (miCelda) {
-            miCelda.classList.add('llamada'); 
+            miCelda.classList.add('llamada');
             if (navigator.vibrate) navigator.vibrate(200);
             setTimeout(() => miCelda.classList.remove('llamada'), 3000);
         }
@@ -1278,10 +1416,10 @@ socket.on('fichaAnunciada', (datos) => {
 });
 
 function getLetraDeNumero(num) {
-    if(num <= 15) return 'B';
-    if(num <= 30) return 'I';
-    if(num <= 45) return 'N';
-    if(num <= 60) return 'G';
+    if (num <= 15) return 'B';
+    if (num <= 30) return 'I';
+    if (num <= 45) return 'N';
+    if (num <= 60) return 'G';
     return 'O';
 }
 
@@ -1290,11 +1428,11 @@ function getLetraDeNumero(num) {
 socket.on('bingoFalso', () => {
     SoundFX.playError(); // <--- AQUÍ
     hablar('Bingo Falso');
-    
+
     // Feedback en ambos botones por si acaso
     const botones = [btnCantarBingo, btnCantarBingoHost];
     botones.forEach(btn => {
-        if(btn) {
+        if (btn) {
             btn.classList.add('bingo-falso');
             btn.textContent = '¡BINGO FALSO!';
             setTimeout(() => {
@@ -1323,16 +1461,16 @@ socket.on('forzarLimpieza', () => {
 socket.on('reconexionExitosa', (datos) => {
     // 1. Restaurar datos básicos (Nombre y Rol)
     if (datos.nombre) {
-        miNombre = datos.nombre; 
-        if(nombreJugadorDisplay) nombreJugadorDisplay.textContent = datos.nombre; 
-        if(nombreAnfitrionDisplay) nombreAnfitrionDisplay.textContent = datos.nombre;
+        miNombre = datos.nombre;
+        if (nombreJugadorDisplay) nombreJugadorDisplay.textContent = datos.nombre;
+        if (nombreAnfitrionDisplay) nombreAnfitrionDisplay.textContent = datos.nombre;
     }
     soyAnfitrion = datos.esAnfitrion;
-    
+
     // 2. Actualizar el Saldo recuperado
     const saldoTexto = `S/. ${parseFloat(datos.saldo || 0).toFixed(2)}`;
-    if(displaySaldoJugador) displaySaldoJugador.textContent = saldoTexto;
-    if(displaySaldoAnfitrion) displaySaldoAnfitrion.textContent = saldoTexto;
+    if (displaySaldoJugador) displaySaldoJugador.textContent = saldoTexto;
+    if (displaySaldoAnfitrion) displaySaldoAnfitrion.textContent = saldoTexto;
 
     // 3. Limpieza previa (sin borrar memoria de marcas)
     limpiarJuegoLocal(false);
@@ -1340,10 +1478,10 @@ socket.on('reconexionExitosa', (datos) => {
     // 4. DECISIÓN CRÍTICA: ¿LOBBY O JUEGO?
     if (!datos.juegoIniciado) {
         // --- CASO A: Estamos en el Lobby (Aún no empieza) ---
-        
+
         const codigoSala = datos.clave || "---";
-        if(lobbyClave) lobbyClave.textContent = codigoSala;
-        
+        if (lobbyClave) lobbyClave.textContent = codigoSala;
+
         if (soyAnfitrion) {
             lobbyVistaAnfitrion.style.display = 'flex';
             lobbyVistaJugador.style.display = 'none';
@@ -1351,12 +1489,12 @@ socket.on('reconexionExitosa', (datos) => {
             lobbyVistaAnfitrion.style.display = 'none';
             lobbyVistaJugador.style.display = 'block';
         }
-        
+
         // ¡IMPORTANTE! Sincronizar el toggle AQUI también para el lobby
-        sincronizarToggleFavorito(); 
-        
+        sincronizarToggleFavorito();
+
         cambiarPantalla('pantalla-lobby');
-        return; 
+        return;
     }
 
     // --- CASO B: El juego YA EMPEZÓ (Restaurar estado de juego) ---
@@ -1378,18 +1516,18 @@ socket.on('reconexionExitosa', (datos) => {
     // --- RESTAURAR CARTILLA Y ROL ---
     // La cartilla ahora está en datos.cartilla (se envía a todos)
     miCartilla = datos.cartilla;
-    
+
     if (soyAnfitrion) {
         // --- RESTAURAR ANFITRION ---
         if (typeof HostUI !== 'undefined') {
             HostUI.renderizarTableroVacio();
             datos.fichasHistorial.forEach(ficha => HostUI.marcarFicha(ficha));
-            
+
             if (datos.ultimaFicha) HostUI.actualizarBolaVisual(fichaActual, datos.ultimaFicha, false);
             if (datos.anteriorFicha) HostUI.actualizarBolaVisual(fichaAnterior, datos.anteriorFicha, false);
         }
-        if(checkAutomatico) checkAutomatico.checked = false;
-        if(displayClaveAnfitrion) displayClaveAnfitrion.textContent = datos.clave;
+        if (checkAutomatico) checkAutomatico.checked = false;
+        if (displayClaveAnfitrion) displayClaveAnfitrion.textContent = datos.clave;
 
         if (datos.cartilla && typeof dibujarCartillaModerna === 'function') {
             dibujarCartillaModerna(miCartilla, cartillaHostContainer);
@@ -1405,7 +1543,7 @@ socket.on('reconexionExitosa', (datos) => {
     } else {
         // --- RESTAURAR JUGADOR ---
         jugadorPatron.textContent = datos.patronTexto;
-        if(displayClaveJugador) displayClaveJugador.textContent = datos.clave;
+        if (displayClaveJugador) displayClaveJugador.textContent = datos.clave;
 
         if (typeof dibujarCartillaModerna === 'function') {
             dibujarCartillaModerna(miCartilla, cartillaJugador);
@@ -1418,10 +1556,10 @@ socket.on('reconexionExitosa', (datos) => {
         }
         cambiarPantalla('pantalla-juego-jugador');
     }
-    
+
     // 5. LLAMADA CRÍTICA: Sincronizar el estado del Toggle
-    sincronizarToggleFavorito(); 
-    
+    sincronizarToggleFavorito();
+
     setTimeout(() => hablar(`Bienvenido de vuelta ${miNombre}`), 1000);
 });
 
@@ -1432,15 +1570,15 @@ socket.on('reconexionExitosa', (datos) => {
 socket.on('avisoCierreBingo', (datos) => {
     const soyElGanador = (miNombre === datos.primerGanador);
     avisoCuentaRegresiva.style.display = 'block';
-    
+
     if (soyElGanador) {
         hablar("Bingo registrado. Esperando a otros jugadores.");
-        avisoCuentaRegresiva.style.backgroundColor = "#f1c40f"; 
-        avisoCuentaRegresiva.style.color = "#2d3436"; 
+        avisoCuentaRegresiva.style.backgroundColor = "#f1c40f";
+        avisoCuentaRegresiva.style.color = "#2d3436";
         avisoCuentaRegresiva.innerHTML = `¡BINGO REGISTRADO! ESPERANDO... <span id="segundosRestantes">${datos.segundos}</span>s`;
     } else {
         hablar(`¡Atención! ${datos.primerGanador} cantó Bingo. Tienes 10 segundos.`);
-        avisoCuentaRegresiva.style.backgroundColor = "#e74c3c"; 
+        avisoCuentaRegresiva.style.backgroundColor = "#e74c3c";
         avisoCuentaRegresiva.style.color = "white";
         avisoCuentaRegresiva.innerHTML = `¡${datos.primerGanador} GANÓ! CIERRE EN: <span id="segundosRestantes">${datos.segundos}</span>s`;
     }
@@ -1451,7 +1589,7 @@ socket.on('avisoCierreBingo', (datos) => {
     if (intervaloCuenta) clearInterval(intervaloCuenta);
     intervaloCuenta = setInterval(() => {
         quedan--;
-        if(spanContador) spanContador.textContent = quedan; 
+        if (spanContador) spanContador.textContent = quedan;
         if (quedan <= 0) {
             clearInterval(intervaloCuenta);
             avisoCuentaRegresiva.style.display = 'none';
@@ -1466,9 +1604,9 @@ socket.on('avisoCierreBingo', (datos) => {
 socket.on('bingoRegistrado', () => {
     const botones = [btnCantarBingo, btnCantarBingoHost];
     botones.forEach(btn => {
-        if(btn) {
+        if (btn) {
             btn.textContent = "¡REGISTRADO!";
-            btn.style.backgroundColor = "#f1c40f"; 
+            btn.style.backgroundColor = "#f1c40f";
             btn.disabled = true;
         }
     });
@@ -1487,8 +1625,8 @@ socket.on('juegoTerminado', (datos) => {
     const numerosSorteados = datos.numerosSorteados;
 
     // 3. Limpiar y preparar la lista visual
-    contenedorListaGanadores.innerHTML = ''; 
-    
+    contenedorListaGanadores.innerHTML = '';
+
     // Título dinámico (Singular/Plural)
     const titulo = listaGanadoresFinal.length > 1 ? '¡GANADORES!' : '¡GANADOR!';
     const subtitulo = document.querySelector('.modal-subtitulo');
@@ -1498,7 +1636,7 @@ socket.on('juegoTerminado', (datos) => {
     listaGanadoresFinal.forEach((ganador, index) => {
         const fila = document.createElement('div');
         fila.className = 'fila-ganador';
-        
+
         // Medalla estética
         const medalla = index === 0 ? '🥇' : (index === 1 ? '🥈' : '🏅');
 
@@ -1524,7 +1662,7 @@ socket.on('juegoTerminado', (datos) => {
                 botonClickeado.classList.add('activo');
                 const index = botonClickeado.dataset.index;
                 const datosEsteGanador = listaGanadoresFinal[index];
-                
+
                 // Mostrar y dibujar
                 contenedorCartillaGanadora.classList.remove('oculto');
                 dibujarCartillaGanadora(
@@ -1540,7 +1678,7 @@ socket.on('juegoTerminado', (datos) => {
     // 6. Narración de voz
     if (listaGanadoresFinal.length > 1) {
         hablar(`Juego terminado. Hubo ${listaGanadoresFinal.length} ganadores.`);
-    } else if(listaGanadoresFinal[0]) {
+    } else if (listaGanadoresFinal[0]) {
         hablar(`¡Bingo! Ganador ${listaGanadoresFinal[0].nombre}`);
     }
 
@@ -1555,7 +1693,7 @@ socket.on('juegoTerminado', (datos) => {
 
     // 8. Mostrar Modal y bloquear botones de juego
     modalFinJuego.classList.add('visible');
-    
-    if(btnCantarBingo) btnCantarBingo.disabled = true;
-    if(btnCantarBingoHost) btnCantarBingoHost.disabled = true;
+
+    if (btnCantarBingo) btnCantarBingo.disabled = true;
+    if (btnCantarBingoHost) btnCantarBingoHost.disabled = true;
 });
