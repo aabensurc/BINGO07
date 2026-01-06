@@ -14,6 +14,34 @@ let temporizadorSorteo = null;
 let miNombre = "";
 const PLAYER_ID_KEY = 'bingoPlayerId';
 
+// --- COLA DE AUDIO (Audio Queue) ---
+let audioQueue = [];
+let isPlayingQueue = false;
+
+function processAudioQueue() {
+    if (isPlayingQueue || audioQueue.length === 0) return;
+
+    isPlayingQueue = true;
+    const nextAudioEl = audioQueue.shift();
+
+    console.log("Reproduciendo audio de cola...");
+
+    // Configurar evento de fin para el siguiente
+    nextAudioEl.onended = () => {
+        console.log("Audio terminado via onended.");
+        isPlayingQueue = false;
+        processAudioQueue();
+    };
+
+    // Intentar reproducir
+    nextAudioEl.play().catch(err => {
+        console.warn("Error al reproducir audio de cola:", err);
+        // Si falla, marcamos como libre y seguimos con el siguiente
+        isPlayingQueue = false;
+        processAudioQueue();
+    });
+}
+
 // NUEVA VARIABLE DE ESTADO GLOBAL PARA EL NOMBRE AUTENTICADO
 let usuarioLogueadoNombre = "";
 
@@ -174,20 +202,15 @@ function mostrarMensajeChat(logElement, data) {
     // Auto-scroll al final
     logElement.scrollTop = logElement.scrollHeight;
 
-    // --- LÓGICA DE AUTO-PLAY ---
+    // --- LÓGICA DE AUTO-PLAY CON COLA ---
     if (data.type === 'audio' && autoPlayAudio) {
         // Solo reproducir si NO soy yo quien lo envió (para evitar eco o redundancia)
         if (data.nombre !== miNombre) {
             const audioEl = div.querySelector('audio');
             if (audioEl) {
-                // Forzamos reproducción con un pequeño delay
-                setTimeout(() => {
-                    audioEl.play().catch(err => {
-                        console.warn("Auto-play bloqueado por el navegador:", err);
-                        // Si falla (ej: contexto bloqueado), podríamos mostrar un botón de "Play" de respaldo
-                        // Pero por ahora cumplimos el requerimiento de "oculto".
-                    });
-                }, 100);
+                // Encolar en lugar de reproducir inmediatamente
+                audioQueue.push(audioEl);
+                processAudioQueue();
             }
         }
     }
