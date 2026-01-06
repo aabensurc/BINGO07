@@ -1,0 +1,5 @@
+node_modules/
+android-app/
+.env
+.DS_Store
+Thumbs.db

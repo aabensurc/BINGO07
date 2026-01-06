@@ -13,23 +13,24 @@
     margin: 15px auto;
     border-radius: 12px;
     background: var(--chat-fondo-oscuro);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     overflow: hidden;
 }
 
 /* Área de los Mensajes (Log) */
 .chat-log {
     flex-grow: 1;
-    height: 150px; /* Altura fija para visualización móvil */
+    height: 150px;
+    /* Altura fija para visualización móvil */
     padding: 10px;
     overflow-y: auto;
     color: white;
     font-size: 13px;
     line-height: 1.4;
-    
+
     /* Efecto "Glass" en la parte superior */
     background: var(--chat-fondo-oscuro);
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 
     text-align: left;
 }
@@ -37,8 +38,9 @@
 .chat-log::-webkit-scrollbar {
     width: 6px;
 }
+
 .chat-log::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.3);
+    background: rgba(255, 255, 255, 0.3);
     border-radius: 3px;
 }
 
@@ -47,61 +49,71 @@
     display: flex;
     padding: 8px;
     background: var(--chat-fondo-oscuro);
-    align-items: center; /* Alineación vertical */
+    align-items: center;
+    /* Alineación vertical */
 }
 
-/* Campo de texto */
+/* Campo de texto (Más ancho) */
 .chat-input-area input[type="text"] {
-    flex-grow: 1 !important;
+    flex: 4 !important;
+    /* Proporción 4 */
+    width: 0 !important;
+    /* Necesario para que flex funcione bien */
     padding: 10px !important;
     border: none !important;
-    background: rgba(255, 255, 255, 0.1) !important; /* Ligeramente más claro que el fondo */
+    background: rgba(255, 255, 255, 0.1) !important;
     color: white !important;
     border-radius: 6px !important;
     margin-right: 8px !important;
     font-size: 14px !important;
-
     margin-bottom: 0px !important;
 }
+
 .chat-input-area input[type="text"]::placeholder {
     color: rgba(255, 255, 255, 0.5);
 }
 
-/* Botón de envío (Color dinámico) */
+/* Botón de envío (Más angosto) */
 .btn-chat-enviar {
-    background-color: var(--tema-principal); /* Utiliza el color de la tuerca */
+    flex: 1.5;
+    /* Proporción 1.5 */
+    background-color: var(--tema-principal);
     color: white;
     border: none;
     border-radius: 6px;
-    padding: 0 15px;
+    padding: 0;
+    /* Sin padding, el texto se centra solo */
     font-weight: bold;
     cursor: pointer;
     transition: background-color 0.2s;
     height: 38px;
-
-    /* width: 40% !important;  <-- QUITADO para dar espacio al mic */
+    min-width: 0;
+    /* Permitir que se encoja si es necesario */
 }
 
-/* --- NUEVO: BOTÓN DE MICRÓFONO --- */
+/* --- NUEVO: BOTÓN DE MICRÓFONO (1/6 del espacio) --- */
 .btn-mic {
+    flex: 1;
+    /* Proporción 1 */
     background-color: transparent;
     border: 1px solid rgba(255, 255, 255, 0.3);
     color: white;
     border-radius: 6px;
     padding: 0;
-    margin-right: 5px;
+    margin-right: 8px;
     cursor: pointer;
     font-size: 18px;
     transition: all 0.2s;
-    width: 40px;
+    /* width: 40px;  <-- Ya no es fijo, es flex */
     height: 38px;
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-shrink: 0;
 }
 
 .btn-mic:hover {
-    background-color: rgba(255,255,255,0.1);
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 .btn-mic.recording {
@@ -111,9 +123,17 @@
 }
 
 @keyframes pulso {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
 }
 
 /* Estilo para el reproductor de Audio */
@@ -124,13 +144,32 @@
     border-radius: 16px;
     outline: none;
 }
+
 /* Audio Webkit (Chrome) */
 .chat-log audio::-webkit-media-controls-panel {
     background-color: rgba(255, 255, 255, 0.9);
 }
 
 /* Estilos de mensajes */
-.msg-usuario { color: #f1c40f; /* Amarillo para el nombre */ }
-.msg-texto { color: white; }
-.msg-evento { color: #55efc4; font-style: italic; font-weight: bold; } /* Cian para eventos */
-.msg-sistema { color: #74b9ff; font-weight: bold; } /* Azul para sistema */
+.msg-usuario {
+    color: #f1c40f;
+    /* Amarillo para el nombre */
+}
+
+.msg-texto {
+    color: white;
+}
+
+.msg-evento {
+    color: #55efc4;
+    font-style: italic;
+    font-weight: bold;
+}
+
+/* Cian para eventos */
+.msg-sistema {
+    color: #74b9ff;
+    font-weight: bold;
+}
+
+/* Azul para sistema */
