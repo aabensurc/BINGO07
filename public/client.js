@@ -17,12 +17,14 @@ const PLAYER_ID_KEY = 'bingoPlayerId';
 // --- COLA DE AUDIO (Audio Queue) ---
 let audioQueue = [];
 let isPlayingQueue = false;
+let currentAudioPlaying = null; // Trackeamos el audio actual
 
 function processAudioQueue() {
     if (isPlayingQueue || audioQueue.length === 0) return;
 
     isPlayingQueue = true;
     const nextAudioEl = audioQueue.shift();
+    currentAudioPlaying = nextAudioEl; // Guardamos referencia global
 
     console.log("Reproduciendo audio de cola...");
 
@@ -30,6 +32,7 @@ function processAudioQueue() {
     nextAudioEl.onended = () => {
         console.log("Audio terminado via onended.");
         isPlayingQueue = false;
+        currentAudioPlaying = null; // Limpiamos referencia
         processAudioQueue();
     };
 
@@ -38,6 +41,7 @@ function processAudioQueue() {
         console.warn("Error al reproducir audio de cola:", err);
         // Si falla, marcamos como libre y seguimos con el siguiente
         isPlayingQueue = false;
+        currentAudioPlaying = null;
         processAudioQueue();
     });
 }
@@ -680,6 +684,12 @@ function setupAudioRecording(btnElement, getClave) {
             }
 
             try {
+                // PRIMERO: MUTEAMOS LO QUE SUENA (Si hay algo)
+                if (currentAudioPlaying && !currentAudioPlaying.paused) {
+                    console.log("Silenciando audio entrante para grabar...");
+                    currentAudioPlaying.pause();
+                }
+
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 mediaRecorder = new MediaRecorder(stream);
 
@@ -712,6 +722,12 @@ function setupAudioRecording(btnElement, getClave) {
                     // Reset UI
                     btnElement.classList.remove('recording');
                     isRecording = false;
+
+                    // RESTAURAR AUDIO PREVIO (Si lo pausamos y no ha terminado)
+                    if (currentAudioPlaying && currentAudioPlaying.paused && !currentAudioPlaying.ended) {
+                        console.log("Restaurando audio pausado...");
+                        currentAudioPlaying.play().catch(e => console.log("No se pudo restaurar audio:", e));
+                    }
                 };
 
                 // Iniciar
