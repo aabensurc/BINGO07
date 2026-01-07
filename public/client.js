@@ -1487,9 +1487,9 @@ socket.on('bingoFalso', () => {
 });
 
 socket.on('errorJuego', (msg) => {
-    localStorage.removeItem(PLAYER_ID_KEY);
+    // FIX: Ya no recargamos la página, solo avisamos.
     alert(msg);
-    location.reload();
+    hablar(msg);
 });
 
 socket.on('forzarLimpieza', () => {
@@ -1692,22 +1692,28 @@ socket.on('juegoTerminado', (datos) => {
 
         // Medalla estética
         const medalla = index === 0 ? '🥇' : (index === 1 ? '🥈' : '🏅');
+        const iconoTipo = ganador.esAnfitrion ? '👑' : '👤';
 
         fila.innerHTML = `
-            <div class="nombre-ganador-lista"><span class="medalla">${medalla}</span> ${ganador.nombre}</div>
+            <div class="nombre-ganador-lista">
+                <span class="medalla">${medalla}</span> 
+                <span style="font-size:18px; margin-right:5px;">${iconoTipo}</span>
+                ${ganador.nombre}
+            </div>
             <button class="btn-ojo-mini" data-index="${index}">👁️</button>
         `;
         contenedorListaGanadores.appendChild(fila);
     });
 
-    // 5. Lógica de botones "OJO" (Ver cartones)
+    // 5. Lógica de botones "OJO" (Ver cartones de ganadores)
     contenedorListaGanadores.querySelectorAll('.btn-ojo-mini').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const botonClickeado = e.currentTarget;
             const estabaActivo = botonClickeado.classList.contains('activo');
 
-            // Primero cerramos todo
+            // Primero cerramos todo (incluyendo los de la otra lista si los hubiera)
             document.querySelectorAll('.btn-ojo-mini').forEach(b => b.classList.remove('activo'));
+            document.querySelectorAll('.fila-no-ganador').forEach(f => f.classList.remove('viendo-carton')); // Limpiar fila verde
             contenedorCartillaGanadora.classList.add('oculto');
 
             // Si no estaba activo, abrimos este
@@ -1727,6 +1733,104 @@ socket.on('juegoTerminado', (datos) => {
             }
         });
     });
+
+    // ---------------------------------------------------------
+    // 5-B. NUEVO: Lógica para "Otros Jugadores" (No Ganadores)
+    // ---------------------------------------------------------
+    const btnTabGanadores = document.getElementById('tabGanadores');
+    const btnTabOtros = document.getElementById('tabOtros');
+    const contenedorGanadores = document.getElementById('contenedorListaGanadores');
+    const contenedorNoGanadores = document.getElementById('contenedorListaNoGanadores');
+
+    // Reset Visual de Tabs
+    if (btnTabGanadores) {
+        btnTabGanadores.classList.add('activo');
+        btnTabOtros.classList.remove('activo');
+        contenedorGanadores.classList.remove('oculto');
+        contenedorNoGanadores.classList.add('oculto');
+        contenedorCartillaGanadora.classList.add('oculto'); // Ocultar cartilla
+    }
+
+    // Llenar lista de Otros
+    contenedorNoGanadores.innerHTML = '';
+    if (datos.listaNoGanadores && datos.listaNoGanadores.length > 0) {
+        datos.listaNoGanadores.forEach((jugador) => {
+            const div = document.createElement('div');
+            div.className = 'fila-no-ganador';
+
+            const iconoTipo = jugador.esAnfitrion ? '👑' : '👤';
+
+            div.innerHTML = `
+                <span class="nombre-no-ganador">
+                    <span style="font-size:16px; margin-right:5px;">${iconoTipo}</span>
+                    ${jugador.nombre}
+                </span>
+                <button class="btn-ojo-mini" title="Ver Cartón">👁️</button>
+            `;
+
+            // Evento Click en el Ojo de NO GANADOR
+            const btnOjo = div.querySelector('.btn-ojo-mini');
+            btnOjo.onclick = () => {
+                const estabaActivo = btnOjo.classList.contains('activo');
+
+                // Limpiar todo (ganadores y no ganadores)
+                document.querySelectorAll('.btn-ojo-mini').forEach(b => b.classList.remove('activo'));
+                document.querySelectorAll('.fila-no-ganador').forEach(f => f.classList.remove('viendo-carton'));
+                contenedorCartillaGanadora.classList.add('oculto');
+
+                if (!estabaActivo) {
+                    btnOjo.classList.add('activo');
+                    div.classList.add('viendo-carton'); // Poner fila verde
+
+                    // CORRECCIÓN: Asegurar que se quite 'oculto'
+                    contenedorCartillaGanadora.classList.remove('oculto');
+
+                    // console.log("Mostrando cartón de no ganador:", jugador.nombre);
+
+                    // Usamos la función de dibujo. IMPORTANTE: 
+                    // El 3er argumento es 'celdasGanadoras'. Si es null, no debe fallar.
+                    dibujarCartillaGanadora(
+                        jugador.cartilla,
+                        numerosSorteados,
+                        null,
+                        contenedorCartillaGanadora
+                    );
+
+                    // Scroll para asegurar visibilidad si la pantalla es chica
+                    contenedorCartillaGanadora.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            };
+            contenedorNoGanadores.appendChild(div);
+        });
+    } else {
+        contenedorNoGanadores.innerHTML = '<div style="padding:20px; color:#999;">Todos ganaron o no hay más jugadores.</div>';
+    }
+
+    // Eventos de los Tabs
+    if (btnTabGanadores && btnTabOtros) {
+        btnTabGanadores.onclick = () => {
+            btnTabGanadores.classList.add('activo');
+            btnTabOtros.classList.remove('activo');
+            contenedorGanadores.classList.remove('oculto');
+            contenedorNoGanadores.classList.add('oculto');
+            contenedorCartillaGanadora.classList.add('oculto');
+            // Limpiar selecciones
+            document.querySelectorAll('.btn-ojo-mini').forEach(b => b.classList.remove('activo'));
+            document.querySelectorAll('.fila-no-ganador').forEach(f => f.classList.remove('viendo-carton'));
+        };
+
+        btnTabOtros.onclick = () => {
+            btnTabOtros.classList.add('activo');
+            btnTabGanadores.classList.remove('activo');
+            contenedorNoGanadores.classList.remove('oculto');
+            contenedorGanadores.classList.add('oculto');
+            contenedorCartillaGanadora.classList.add('oculto');
+            // Limpiar selecciones
+            document.querySelectorAll('.btn-ojo-mini').forEach(b => b.classList.remove('activo'));
+            document.querySelectorAll('.fila-no-ganador').forEach(f => f.classList.remove('viendo-carton'));
+        };
+    }
+
 
     // 6. Narración de voz
     if (listaGanadoresFinal.length > 1) {

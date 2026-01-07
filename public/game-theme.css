@@ -200,7 +200,8 @@
     display: none;
     flex-direction: column;
     gap: 10px;
-    z-index: 100;
+    z-index: 3500;
+    /* FIX: Valor alto para estar encima de todo */
     width: 250px;
     color: #333;
     /* Asegurar texto legible */

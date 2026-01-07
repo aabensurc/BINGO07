@@ -446,7 +446,17 @@
             <h2 class="modal-titulo">¡BINGO!</h2>
             <p class="modal-subtitulo">El ganador es:</p>
 
+            <!-- NUEVO: TABS para cambiar entre Ganadores y Otros -->
+            <div class="modal-tabs">
+                <button class="tab-modal activo" id="tabGanadores">🏆 Ganadores</button>
+                <button class="tab-modal" id="tabOtros">👥 Otros Jugadores</button>
+            </div>
+
             <div id="contenedorListaGanadores" class="lista-ganadores-scroll">
+            </div>
+
+            <div id="contenedorListaNoGanadores" class="lista-ganadores-scroll oculto">
+                <!-- Aquí se llenarán los perdedores -->
             </div>
 
             <div id="contenedorCartillaGanadora" class="cartilla-ganadora-container oculto">

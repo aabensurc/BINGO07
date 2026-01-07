@@ -16,7 +16,7 @@ function dibujarCartillaModerna(cartilla, contenedor) {
     // 1. Crear Headers (B I N G O) con colores
     const letras = ['B', 'I', 'N', 'G', 'O'];
     const colores = ['bg-b', 'bg-i', 'bg-n', 'bg-g', 'bg-o'];
-    
+
     const grid = document.createElement('div');
     grid.className = 'cartilla-grid';
 
@@ -34,7 +34,7 @@ function dibujarCartillaModerna(cartilla, contenedor) {
             const numero = cartilla[fila][col];
             const div = document.createElement('div');
             div.className = 'celda-3d'; // Clase base
-            
+
             // Guardar datos para la lógica del juego
             div.dataset.numero = String(numero);
             div.dataset.col = col; // 0=B, 1=I...
@@ -67,11 +67,11 @@ function agregarBolillaHistorial(ficha, contenedor) {
     // Crear bolilla
     const div = document.createElement('div');
     div.className = 'bolilla ultima'; // Empieza grande (animación visual)
-    
+
     // Asignar color según la letra
     const letraLower = ficha.letra.toLowerCase();
     div.classList.add(`${letraLower}-color`); // ej: b-color, g-color
-    
+
     // --- CAMBIO AQUÍ: HTML para Letra y Número apilados ---
     div.innerHTML = `
         <span class="letra-historial">${ficha.letra}</span>
@@ -96,16 +96,16 @@ function iniciarCronometro() {
     if (intervaloTiempo) clearInterval(intervaloTiempo);
     tiempoInicio = Date.now();
     const display = document.getElementById('tiempoJuego');
-    
+
     intervaloTiempo = setInterval(() => {
         const delta = Date.now() - tiempoInicio;
         const segundos = Math.floor((delta / 1000) % 60);
         const minutos = Math.floor((delta / (1000 * 60)) % 60);
-        
+
         const segTexto = segundos < 10 ? `0${segundos}` : segundos;
         const minTexto = minutos < 10 ? `0${minutos}` : minutos;
-        
-        if(display) display.textContent = `${minTexto}:${segTexto}`;
+
+        if (display) display.textContent = `${minTexto}:${segTexto}`;
     }, 1000);
 }
 
@@ -120,9 +120,9 @@ function configurarBotonesAjustes() {
     const btnAjustes = document.getElementById('btnAjustes');
     const menu = document.getElementById('menuAjustes');
     const inputColor = document.getElementById('inputColorTema');
-    
+
     // Toggle Menú
-    if(btnAjustes) {
+    if (btnAjustes) {
         btnAjustes.addEventListener('click', (e) => {
             e.stopPropagation();
             menu.classList.toggle('visible');
@@ -131,22 +131,22 @@ function configurarBotonesAjustes() {
 
     // Cerrar menú al hacer clic fuera
     document.addEventListener('click', () => {
-        if(menu) menu.classList.remove('visible');
+        if (menu) menu.classList.remove('visible');
     });
-    if(menu) {
+    if (menu) {
         menu.addEventListener('click', (e) => e.stopPropagation());
     }
 
     // Cambiar Color del Tema
-    if(inputColor) {
+    if (inputColor) {
         inputColor.addEventListener('input', (e) => {
             const color = e.target.value;
-            
+
             // Cambiamos la variable CSS global.
             document.documentElement.style.setProperty('--tema-principal', color);
-            
+
             // También actualizamos el color oscuro para bordes y sombras de la cartilla
-            document.documentElement.style.setProperty('--tema-oscuro', color); 
+            document.documentElement.style.setProperty('--tema-oscuro', color);
         });
     }
 }
@@ -163,7 +163,7 @@ function configurarBotonesAjustes() {
 // ¡AQUÍ FALTABA celdasGanadoras!
 function dibujarCartillaGanadora(cartilla, numerosSorteados, celdasGanadoras, contenedor) {
     contenedor.innerHTML = '';
-    
+
     // Reutilizamos estructura de grid
     const grid = document.createElement('div');
     grid.className = 'cartilla-grid'; // Usa el mismo grid CSS
@@ -171,7 +171,7 @@ function dibujarCartillaGanadora(cartilla, numerosSorteados, celdasGanadoras, co
     // Headers (B I N G O) - Más pequeños por CSS
     const letras = ['B', 'I', 'N', 'G', 'O'];
     const colores = ['bg-b', 'bg-i', 'bg-n', 'bg-g', 'bg-o'];
-    
+
     letras.forEach((letra, index) => {
         const div = document.createElement('div');
         div.className = `header-letra ${colores[index]}`;
@@ -179,12 +179,12 @@ function dibujarCartillaGanadora(cartilla, numerosSorteados, celdasGanadoras, co
         grid.appendChild(div);
     });
 
-// Dibujar Celdas
+    // Dibujar Celdas
     for (let fila = 0; fila < 5; fila++) {
         for (let col = 0; col < 5; col++) {
             const numero = cartilla[fila][col];
             const div = document.createElement('div');
-            div.className = 'celda-3d'; 
+            div.className = 'celda-3d';
 
             // Texto o Estrella
             if (numero === 'GRATIS') {
@@ -194,18 +194,29 @@ function dibujarCartillaGanadora(cartilla, numerosSorteados, celdasGanadoras, co
                 div.textContent = numero;
             }
 
-            // 1. VERIFICAR SI SALIÓ (Marcado normal - Amarillo)
-            const salio = (numero === 'GRATIS' || numerosSorteados.includes(numero));
-            if (salio) {
-                div.classList.add('celda-ganadora'); // Amarillo (base)
-            }
+            // 1. VERIFICAR SI SALIÓ
+            // Fix: Asegurar comparación robusta (String vs String) por si vienen tipos distintos
+            const salio = (numero === 'GRATIS' || numerosSorteados.some(n => String(n) === String(numero)));
 
             // 2. VERIFICAR SI ES PARTE DEL TRAZO GANADOR (Rojo)
-            // Buscamos si esta coordenada (fila, col) está en el array celdasGanadoras
-            const esParteDelTrazo = celdasGanadoras.some(coord => coord.r === fila && coord.c === col);
-            
+            // FIX: Validar si celdasGanadoras existe (para no ganadores es null)
+            const esParteDelTrazo = celdasGanadoras && celdasGanadoras.some(coord => coord.r === fila && coord.c === col);
+
+            // LÓGICA DE COLOR:
+            // CASO A: Es el ganador -> Solo rojo si es parte del trazo, el resto amarillo.
+            // CASO B: Es perdedor (celdasGanadoras es null) -> Si salió, lo pintamos rojo para ver "qué acertó".
+
             if (esParteDelTrazo) {
-                div.classList.add('celda-trazo-win'); // ¡Clase Nueva!
+                // Ganador: Parte de la línea -> ROJO
+                div.classList.add('celda-trazo-win');
+            } else if (salio) {
+                if (!celdasGanadoras) {
+                    // Perdedor: Todo lo que salió -> ROJO (Petición usuario)
+                    div.classList.add('celda-trazo-win');
+                } else {
+                    // Ganador: Lo que salió pero no es línea -> AMARILLO (Normal)
+                    div.classList.add('celda-ganadora');
+                }
             }
 
             grid.appendChild(div);

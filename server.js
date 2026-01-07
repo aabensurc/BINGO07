@@ -297,6 +297,9 @@ function terminarJuego(clave) {
     const perdidaPerdedor = apuestaPorPersona;
 
     // 3. APLICAR SALDOS A TODOS LOS JUGADORES (Ganadores y Perdedores)
+    //    Y PREPARAR LISTAS PARA EL CLIENTE
+    const listaNoGanadores = [];
+
     partida.jugadores.forEach(jugador => {
         // Verificamos si este jugador está en la lista de ganadores temporales
         const esGanador = partida.ganadoresTemp.some(g => g.id === jugador.id);
@@ -305,12 +308,16 @@ function terminarJuego(clave) {
             // --- ES GANADOR ---
             jugador.victorias += 1;
             jugador.saldo += gananciaNetaGanador;
-            // Nota: Si son muchos ganadores, la "gananciaNeta" podría ser negativa matemáticamente,
-            // pero en Bingo lo normal es que ganen pocos.
         } else {
             // --- ES PERDEDOR ---
-            // Aquí es donde hacemos que el saldo baje (y pueda ser negativo)
             jugador.saldo -= perdidaPerdedor;
+
+            // Agregamos a la lista de "No Ganadores" para enviar al cliente
+            listaNoGanadores.push({
+                nombre: jugador.nombre,
+                cartilla: jugador.cartilla, // ENVIAMOS LA CARTILLA PARA QUE SE PUEDA VER
+                esAnfitrion: jugador.esAnfitrion
+            });
         }
     });
 
@@ -320,6 +327,7 @@ function terminarJuego(clave) {
     // Enviamos resultados
     io.to(clave).emit('juegoTerminado', {
         listaGanadores: partida.ganadoresTemp,
+        listaNoGanadores: listaNoGanadores, // NUEVO: Enviamos los que perdieron
         numerosSorteados: numerosSorteados,
 
         // Enviamos datos informativos para mostrar en el modal si quisieras
@@ -702,11 +710,15 @@ io.on('connection', (socket) => {
                 nombre: jugador.nombre,
                 id: jugador.id, // Guardamos ID para evitar duplicados
                 cartilla: jugador.cartilla,
-                celdasGanadoras: celdasGanadoras // Sus coordenadas ganadoras
+                celdasGanadoras: celdasGanadoras, // Sus coordenadas ganadoras
+                esAnfitrion: partida.anfitrionId === socket.id // NUEVO: Flag de Anfitrión
             });
 
             // Le avisamos solo a él que su Bingo fue registrado
-            socket.emit('bingoRegistrado');
+            socket.emit('bingoRegistrado', {
+                nombre: jugador.nombre,
+                esYo: true
+            });
 
         } else {
             socket.emit('bingoFalso');
