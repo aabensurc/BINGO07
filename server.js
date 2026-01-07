@@ -629,6 +629,9 @@ io.on('connection', (socket) => {
 
         if (!partida || partida.anfitrionId !== socket.id || !partida.juegoIniciado) return;
 
+        // PROTECCIÓN: Si ya hay un Bingo (cierreEnCurso), NO dejar sacar más fichas.
+        if (partida.cierreEnCurso) return;
+
         if (partida.bombo.length === 0) {
             socket.emit('errorJuego', '¡Se acabaron las fichas del bombo!');
             return;

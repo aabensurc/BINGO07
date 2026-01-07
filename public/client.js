@@ -1362,6 +1362,9 @@ socket.on('cartonCambiado', (nuevaCartilla) => {
 socket.on('partidaIniciada', (datos) => {
     limpiarJuegoLocal();
 
+    // CORRECCIÓN: Asegurar que el modal de ganadores se cierre si estaba abierto
+    if (modalFinJuego) modalFinJuego.classList.remove('visible');
+
     // 1. Guardar datos comunes
     miCartilla = datos.cartilla;
 
@@ -1533,6 +1536,8 @@ socket.on('reconexionExitosa', (datos) => {
         sincronizarToggleFavorito();
 
         cambiarPantalla('pantalla-lobby');
+        // Asegurarse de cerrar modal si reconecta al lobby
+        if (modalFinJuego) modalFinJuego.classList.remove('visible');
         return;
     }
 
@@ -1610,6 +1615,18 @@ socket.on('avisoCierreBingo', (datos) => {
     const soyElGanador = (miNombre === datos.primerGanador);
     avisoCuentaRegresiva.style.display = 'block';
 
+    // CORRECCIÓN: Deshabilitar controles de sorteo para el Anfitrión
+    if (checkAutomatico) {
+        checkAutomatico.checked = false; // Desmarcar visualmente
+    }
+    if (temporizadorSorteo) {
+        clearInterval(temporizadorSorteo); // Detener loop
+        temporizadorSorteo = null;
+    }
+    // Deshabilitar botón de sacar ficha
+    if (btnSortearFicha) btnSortearFicha.disabled = true;
+
+
     if (soyElGanador) {
         hablar("Bingo registrado. Esperando a otros jugadores.");
         avisoCuentaRegresiva.style.backgroundColor = "#f1c40f";
@@ -1634,9 +1651,6 @@ socket.on('avisoCierreBingo', (datos) => {
             avisoCuentaRegresiva.style.display = 'none';
         }
     }, 1000);
-
-    if (temporizadorSorteo) clearInterval(temporizadorSorteo);
-    btnSortearFicha.disabled = true;
 });
 
 // B) CONFIRMACIÓN INDIVIDUAL
