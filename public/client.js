@@ -1148,8 +1148,20 @@ function limpiarJuegoLocal(borrarMemoria = true) {
     if (inputIntervalo) inputIntervalo.disabled = false;
 
     // Restaurar botones
-    if (btnCantarBingo) { btnCantarBingo.disabled = false; btnCantarBingo.textContent = '¡CANTAR BINGO!'; }
-    if (btnCantarBingoHost) { btnCantarBingoHost.disabled = false; btnCantarBingoHost.textContent = '¡CANTAR BINGO!'; }
+    if (btnCantarBingo) {
+        btnCantarBingo.disabled = false;
+        btnCantarBingo.textContent = '¡CANTAR BINGO!';
+        btnCantarBingo.style.backgroundColor = ''; // Limpiar amarillo de "Registrado"
+        btnCantarBingo.style.color = '';
+        btnCantarBingo.classList.remove('bingo-falso');
+    }
+    if (btnCantarBingoHost) {
+        btnCantarBingoHost.disabled = false;
+        btnCantarBingoHost.textContent = '¡CANTAR BINGO!';
+        btnCantarBingoHost.style.backgroundColor = '';
+        btnCantarBingoHost.style.color = '';
+        btnCantarBingoHost.classList.remove('bingo-falso');
+    }
     if (btnSortearFicha) btnSortearFicha.disabled = false;
 
     // Resetear Panel Host

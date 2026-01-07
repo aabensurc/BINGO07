@@ -433,6 +433,21 @@
     box-shadow: 0 6px 0 rgba(0, 0, 0, 0.1);
     border: none;
     transition: transform 0.1s;
+    /* Evitar selección y toque azul por defecto */
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn-bingo-3d:hover,
+.btn-bingo-3d:focus {
+    background: white;
+    /* Mantener blanco */
+    color: var(--tema-principal);
+    /* Mantener texto del tema */
+    outline: none;
+    /* Quitar borde azul de foco */
+    box-shadow: 0 8px 0 rgba(0, 0, 0, 0.15);
+    /* Feedback sutil de elevación */
+    transform: translateY(-2px);
 }
 
 .btn-bingo-3d:active {
