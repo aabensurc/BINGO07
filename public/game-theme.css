@@ -1,36 +1,38 @@
 /* --- VARIABLES DE COLORES (TEMA) --- */
 :root {
     /* 1. COLOR VERDE PRINCIPAL */
-    --tema-principal: #2ecc71; 
-    
+    --tema-principal: #2ecc71;
+
     /* 2. CORRECCIÓN AQUÍ: */
     /* Antes estaba en gris (#dcdde1). Ahora lo ponemos en el MISMO VERDE.
        Así el borde del avatar nacerá verde automáticamente. */
-    --tema-oscuro: #2ecc71;    
-    
+    --tema-oscuro: #2ecc71;
+
     /* Resto de variables (sin cambios) */
     --celda-fondo: #fdfdfd;
-    --celda-sombra: #dcdde1; /* Esta sombra gris sí la dejamos para las celdas blancas */
+    --celda-sombra: #dcdde1;
+    /* Esta sombra gris sí la dejamos para las celdas blancas */
     --texto-oscuro: #2d3436;
-    
+
     /* Colores Bolillas */
-    --color-b: #ff7675; 
-    --color-i: #fab1a0; 
-    --color-n: #ffeaa7; 
-    --color-g: #55efc4; 
-    --color-o: #74b9ff; 
+    --color-b: #ff7675;
+    --color-i: #fab1a0;
+    --color-n: #ffeaa7;
+    --color-g: #55efc4;
+    --color-o: #74b9ff;
 }
 
 /* 2. EL FONDO GENERAL (Login, Lobby y Fondo de Cartilla) */
 /* Al poner esto aquí, la pantalla de "Ingresa tu Nombre" también será verde */
 .fondo-juego {
-    background-color: #2ecc71; /* Mismo verde que --tema-principal */
+    background-color: #2ecc71;
+    /* Mismo verde que --tema-principal */
     min-height: 100vh;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: var(--texto-oscuro);
-    
+
     /* Esto asegura que en móviles el color cubra hasta el rebote del scroll */
-    overflow-x: hidden; 
+    overflow-x: hidden;
 }
 
 /* 3. PANTALLA JUEGO JUGADOR */
@@ -38,11 +40,11 @@
     /* Usamos la variable. Al inicio será #2ecc71, así que será
        IDÉNTICO al fondo general. No se notará ningún corte abajo. */
     background-color: var(--tema-principal);
-    
-    min-height: 100vh; 
+
+    min-height: 100vh;
     transition: background-color 0.3s ease;
     flex-direction: column;
-    margin: 0; 
+    margin: 0;
 }
 
 /* Aseguramos que se active el flex cuando tenga la clase activa */
@@ -53,18 +55,20 @@
 /* --- CABECERA DEL JUGADOR --- */
 .header-jugador {
     display: flex;
-    justify-content: space-between; /* Separa Izquierda de Derecha al máximo */
+    justify-content: space-between;
+    /* Separa Izquierda de Derecha al máximo */
     align-items: center;
     padding: 15px;
-    background-color: rgba(255,255,255, 0.2); 
-    border-bottom: 1px solid rgba(255,255,255,0.3);
+    background-color: rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 /* Esta es la clase NUEVA para el grupo de la derecha */
 .header-derecha {
     display: flex;
     align-items: center;
-    gap: 10px; /* Espacio entre el reloj y la tuerca */
+    gap: 10px;
+    /* Espacio entre el reloj y la tuerca */
 }
 
 /* Ajuste al contenedor principal para que permita elementos al lado */
@@ -72,12 +76,13 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    background: rgba(255,255,255, 0.9);
-    padding: 5px 15px 5px 5px; /* Padding derecho extra para el badge */
+    background: rgba(255, 255, 255, 0.9);
+    padding: 5px 15px 5px 5px;
+    /* Padding derecho extra para el badge */
     border-radius: 30px;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1);
     /* Aseguramos que no se rompa en líneas */
-    white-space: nowrap; 
+    white-space: nowrap;
 }
 
 /* --- ACTUALIZACIÓN: AVATAR DE JUGADOR CON ICONO --- */
@@ -85,20 +90,21 @@
     width: 35px;
     height: 35px;
     border-radius: 50%;
-    
+
     /* 1. Usamos el color del tema (verde por defecto) para el fondo */
     background-color: var(--tema-principal);
-    
+
     /* 2. Borde blanco para que resalte */
     border: 2px solid #fff;
-    
+
     /* 3. Icono de USUARIO (SVG Blanco incrustado) */
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="white"><path d="M224 256c70.7 0 128-57.3 128-128S294.7 0 224 0S96 57.3 96 128s57.3 128 128 128zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512H418.3c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304H178.3z"/></svg>');
-    background-size: 50%; /* Tamaño del icono */
+    background-size: 50%;
+    /* Tamaño del icono */
     background-repeat: no-repeat;
     background-position: center;
-    
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 /* El bloque de texto (Nombre/Rol) se queda a la izquierda */
@@ -106,7 +112,8 @@
     display: flex;
     flex-direction: column;
     line-height: 1.2;
-    margin-right: 10px; /* Espacio entre el texto y el saldo */
+    margin-right: 10px;
+    /* Espacio entre el texto y el saldo */
 }
 
 .nombre-usuario {
@@ -123,15 +130,18 @@
 .timer-container {
     background-color: rgba(0, 0, 0, 0.2);
     color: white;
-    padding: 5px 12px; /* Un poco menos de padding */
+    padding: 5px 12px;
+    /* Un poco menos de padding */
     border-radius: 20px;
     font-weight: bold;
     display: flex;
     align-items: center;
     gap: 5px;
-    font-size: 13px; /* Letra un poco más fina */
-    border: 1px solid rgba(255,255,255,0.3);
-    white-space: nowrap; /* Evita que se rompa en dos líneas */
+    font-size: 13px;
+    /* Letra un poco más fina */
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    white-space: nowrap;
+    /* Evita que se rompa en dos líneas */
 }
 
 /* Estilo de la nueva burbuja de saldo */
@@ -141,8 +151,8 @@
     border-radius: 20px;
     font-size: 13px;
     font-weight: 900;
-    box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
-    border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     display: inline-block;
 }
 
@@ -154,11 +164,28 @@
     border-radius: 50%;
     font-size: 20px;
     cursor: pointer;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1);
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative;
+    /* CORRECCIÓN: Evitar fondo azul al presionar */
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn-ajustes:hover,
+.btn-ajustes:focus {
+    background: white !important;
+    /* Mantiene blanco */
+    color: var(--texto-oscuro);
+    /* O el color que tenía */
+    transform: scale(1.05);
+    /* Pequeño zoom */
+}
+
+.btn-ajustes:active {
+    background: #f0f0f0 !important;
+    transform: scale(0.95);
 }
 
 /* --- MENÚ DE AJUSTES --- */
@@ -169,13 +196,14 @@
     background: white;
     padding: 15px;
     border-radius: 12px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-    display: none; 
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    display: none;
     flex-direction: column;
     gap: 10px;
     z-index: 100;
     width: 250px;
-    color: #333; /* Asegurar texto legible */
+    color: #333;
+    /* Asegurar texto legible */
 }
 
 .ajustes-menu.visible {
@@ -193,13 +221,13 @@
 /* --- BOLILLAS (HISTORIAL - MODIFICADO) --- */
 .historial-bolillas {
     display: flex;
-    flex-direction: row; 
+    flex-direction: row;
     align-items: center;
     gap: 10px;
     padding: 15px 10px;
-    overflow-x: auto; 
+    overflow-x: auto;
     scrollbar-width: none;
-    -ms-overflow-style: none; 
+    -ms-overflow-style: none;
 }
 
 .historial-bolillas::-webkit-scrollbar {
@@ -210,18 +238,18 @@
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    
+
     /* CAMBIO: Flex column para apilar Letra y Número */
     display: flex;
-    flex-direction: column; 
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     line-height: 1;
 
     background: white;
-    border: 4px solid #ccc; 
-    box-shadow: 0 4px 0 rgba(0,0,0,0.2);
-    flex-shrink: 0; 
+    border: 4px solid #ccc;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+    flex-shrink: 0;
     color: #555;
 }
 
@@ -243,44 +271,69 @@
 .bolilla.ultima {
     transform: scale(1.2);
     margin: 0 10px;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 0 4px 0 rgba(0,0,0,0.2);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 0 4px 0 rgba(0, 0, 0, 0.2);
     border-width: 5px;
 }
 
 /* Ajuste de tamaño para la bolilla grande (última) */
-.bolilla.ultima .letra-historial { font-size: 11px; }
-.bolilla.ultima .numero-historial { font-size: 20px; }
+.bolilla.ultima .letra-historial {
+    font-size: 11px;
+}
+
+.bolilla.ultima .numero-historial {
+    font-size: 20px;
+}
 
 
 /* Colores de bolillas */
-.b-color { border-color: var(--color-b); color: var(--texto-oscuro); }
-.i-color { border-color: var(--color-i); color: var(--texto-oscuro); }
-.n-color { border-color: var(--color-n); color: var(--texto-oscuro); }
-.g-color { border-color: var(--color-g); color: var(--texto-oscuro); }
-.o-color { border-color: var(--color-o); color: var(--texto-oscuro); }
+.b-color {
+    border-color: var(--color-b);
+    color: var(--texto-oscuro);
+}
+
+.i-color {
+    border-color: var(--color-i);
+    color: var(--texto-oscuro);
+}
+
+.n-color {
+    border-color: var(--color-n);
+    color: var(--texto-oscuro);
+}
+
+.g-color {
+    border-color: var(--color-g);
+    color: var(--texto-oscuro);
+}
+
+.o-color {
+    border-color: var(--color-o);
+    color: var(--texto-oscuro);
+}
 
 
 /* 3. CONTENEDOR CARTILLA (Efecto "Mismo color pero más opaco/claro") */
 .contenedor-cartilla-3d {
     /* Usamos blanco con transparencia. 
        Al estar sobre el fondo de color, se verá como un tono más claro del mismo color */
-    background-color: rgba(255, 255, 255, 0.25); 
-    
+    background-color: rgba(255, 255, 255, 0.25);
+
     padding: 10px;
     border-radius: 20px;
     margin: 5px;
     margin-bottom: 6px;
-    
+
     /* Sombra suave para separar del fondo */
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    backdrop-filter: blur(5px); /* Opcional: efecto vidrio moderno */
-    border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(5px);
+    /* Opcional: efecto vidrio moderno */
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .cartilla-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 8px; 
+    gap: 8px;
 }
 
 /* Encabezados de letras */
@@ -292,16 +345,30 @@
     color: white;
     font-weight: 900;
     border-radius: 8px 8px 0 0;
-    text-shadow: 1px 1px 0 rgba(0,0,0,0.2);
-    box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.2);
+    box-shadow: 0 3px 0 rgba(0, 0, 0, 0.2);
     margin-bottom: 5px;
 }
 
-.bg-b { background-color: var(--color-b); }
-.bg-i { background-color: var(--color-i); }
-.bg-n { background-color: var(--color-n); }
-.bg-g { background-color: var(--color-g); }
-.bg-o { background-color: var(--color-o); }
+.bg-b {
+    background-color: var(--color-b);
+}
+
+.bg-i {
+    background-color: var(--color-i);
+}
+
+.bg-n {
+    background-color: var(--color-n);
+}
+
+.bg-g {
+    background-color: var(--color-g);
+}
+
+.bg-o {
+    background-color: var(--color-o);
+}
 
 /* Celdas de números */
 .celda-3d {
@@ -328,14 +395,15 @@
 /* 4. ESTADO MARCADO (AQUÍ APLICAMOS EL COLOR SELECCIONADO) */
 .celda-3d.marcada {
     /* Usamos la variable del tema principal */
-    background-color: var(--tema-principal) !important; 
-    
-    color: white; /* Texto blanco para contraste */
-    
+    background-color: var(--tema-principal) !important;
+
+    color: white;
+    /* Texto blanco para contraste */
+
     /* Borde blanco para que resalte y efecto hundido */
-    border: 2px solid rgba(255,255,255,0.5);
-    box-shadow: inset 0 3px 5px rgba(0,0,0,0.2); 
-    
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.2);
+
     transform: translateY(2px);
 }
 
@@ -343,15 +411,16 @@
 .icono-estrella {
     width: 30px;
     height: 30px;
-    fill: #f1c40f; 
-    filter: drop-shadow(0 2px 0 rgba(0,0,0,0.2));
+    fill: #f1c40f;
+    filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.2));
 }
 
 /* --- BOTÓN BINGO --- */
 /* Lo hacemos blanco o de un color neutro para que destaque sobre el fondo de color */
 .btn-bingo-3d {
     background: white;
-    color: var(--tema-principal); /* Texto del color del tema */
+    color: var(--tema-principal);
+    /* Texto del color del tema */
     font-weight: 900;
     font-size: 20px;
     text-transform: uppercase;
@@ -360,14 +429,14 @@
     padding: 15px;
     margin: 20px;
     width: calc(100% - 40px);
-    box-shadow: 0 6px 0 rgba(0,0,0,0.1);
+    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.1);
     border: none;
     transition: transform 0.1s;
 }
 
 .btn-bingo-3d:active {
     transform: translateY(6px);
-    box-shadow: 0 0 0 rgba(0,0,0,0.1);
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0.1);
 }
 
 
@@ -376,22 +445,28 @@
 /* Esta clase se agregará con JS momentáneamente cuando salga la ficha */
 .celda-3d.llamada {
     animation: parpadeoAviso 2s ease-in-out infinite;
-    z-index: 10; /* Que resalte sobre las otras */
+    z-index: 10;
+    /* Que resalte sobre las otras */
 }
 
 @keyframes parpadeoAviso {
-    0% { 
-        background-color: var(--celda-fondo); 
+    0% {
+        background-color: var(--celda-fondo);
         transform: scale(1);
     }
-    50% { 
-        background-color: #ffeaa7; /* Un amarillo suave de aviso */
-        transform: scale(1.1);      /* Crece un poquito */
-        box-shadow: 0 0 15px rgba(255, 255, 0, 0.6); /* Resplandor */
+
+    50% {
+        background-color: #ffeaa7;
+        /* Un amarillo suave de aviso */
+        transform: scale(1.1);
+        /* Crece un poquito */
+        box-shadow: 0 0 15px rgba(255, 255, 0, 0.6);
+        /* Resplandor */
         border-color: #fdcb6e;
     }
-    100% { 
-        background-color: var(--celda-fondo); 
+
+    100% {
+        background-color: var(--celda-fondo);
         transform: scale(1);
     }
 }
@@ -401,7 +476,17 @@
 .celda-3d.marcada.llamada {
     animation: parpadeoMarcada 1s ease-in-out;
 }
+
 @keyframes parpadeoMarcada {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.15); } /* Solo hace un 'pop' si ya estaba marcada */
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.15);
+    }
+
+    /* Solo hace un 'pop' si ya estaba marcada */
 }

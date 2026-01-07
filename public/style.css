@@ -24,6 +24,8 @@ body {
 /* Regla base para cajas */
 * {
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    /* Quita el destello azul al tocar en móvil */
 }
 
 /* Contenedor de la App */
@@ -42,23 +44,34 @@ body {
  * 2. Mostramos solo la que tenga la clase ".activa"
  */
 .pantalla {
-    display: none; /* Oculta por defecto */
+    display: none;
+    /* Oculta por defecto */
     padding: 25px 30px;
     animation: fadeIn 0.3s ease-out;
 }
 
 .pantalla.activa {
-    display: block; /* Muestra la pantalla activa */
+    display: block;
+    /* Muestra la pantalla activa */
 }
 
 /* Animación simple de fundido */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Estilos de elementos comunes */
-h1, h2, h3 {
+h1,
+h2,
+h3 {
     text-align: center;
     color: var(--color-primario);
     margin-top: 0;
@@ -86,7 +99,8 @@ button {
     transition: background-color 0.2s;
 }
 
-button:hover, button:focus {
+button:hover,
+button:focus {
     background-color: var(--color-primario-hover);
     outline: none;
 }
@@ -116,15 +130,18 @@ hr {
 /* --- Estilos del Lobby --- */
 .selector-patrones {
     display: flex;
-    flex-wrap: wrap; /* Para que pasen abajo en móviles */
-    gap: 10px; /* Espacio entre botones */
+    flex-wrap: wrap;
+    /* Para que pasen abajo en móviles */
+    gap: 10px;
+    /* Espacio entre botones */
     margin-bottom: 20px;
 }
 
 .selector-patrones .patron {
     /* Sobrescribimos el width: 100% de los botones normales */
-    width: auto; 
-    flex-grow: 1; /* Para que ocupen el espacio */
+    width: auto;
+    flex-grow: 1;
+    /* Para que ocupen el espacio */
     background-color: var(--color-gris);
     color: var(--color-texto);
     font-weight: normal;
@@ -157,15 +174,19 @@ hr {
 
 /* Contenedor para los displays "Actual" y "Anterior" */
 .displays-anfitrion {
-    display: flex; /* Pone los displays uno al lado del otro */
-    gap: 15px; /* Espacio entre ellos */
+    display: flex;
+    /* Pone los displays uno al lado del otro */
+    gap: 15px;
+    /* Espacio entre ellos */
     margin: 20px 0;
 }
 
 /* Estilo individual de cada display */
 .display {
-    flex-grow: 1; /* Ocupan el espacio disponible */
-    flex-basis: 0; /* Parten del mismo tamaño */
+    flex-grow: 1;
+    /* Ocupan el espacio disponible */
+    flex-basis: 0;
+    /* Parten del mismo tamaño */
     padding: 15px;
     background: var(--color-fondo);
     border-radius: 8px;
@@ -192,7 +213,8 @@ hr {
 
 /* Tablero de 75 Fichas (Anfitrión) */
 .tablero-anfitrion {
-    display: flex; /* Pone las 5 columnas (B,I,N,G,O) una al lado de la otra */
+    display: flex;
+    /* Pone las 5 columnas (B,I,N,G,O) una al lado de la otra */
     justify-content: center;
     width: 100%;
     margin-top: 20px;
@@ -200,7 +222,8 @@ hr {
 
 .columna-anfitrion {
     display: flex;
-    flex-direction: column; /* Apila las celdas verticalmente */
+    flex-direction: column;
+    /* Apila las celdas verticalmente */
     flex-grow: 1;
 }
 
@@ -222,7 +245,8 @@ hr {
 
 /* Ficha marcada en el tablero del anfitrión */
 .celda-anfitrion.marcada {
-    background-color: #ffc107; /* Un amarillo para destacar */
+    background-color: #ffc107;
+    /* Un amarillo para destacar */
     color: var(--color-texto);
     font-weight: bold;
 }
@@ -233,7 +257,8 @@ hr {
 /* Info "Jugando por:" y "Última ficha:" */
 .info-jugador {
     display: flex;
-    justify-content: space-between; /* Pone los textos en extremos opuestos */
+    justify-content: space-between;
+    /* Pone los textos en extremos opuestos */
     padding: 10px;
     background: var(--color-fondo);
     border-radius: 8px;
@@ -253,11 +278,14 @@ hr {
 
 /* La Cartilla (La parte más importante) */
 .cartilla {
-    display: grid; /* Usamos CSS Grid, perfecto para esto */
-    grid-template-columns: repeat(5, 1fr); /* 5 columnas de igual tamaño */
+    display: grid;
+    /* Usamos CSS Grid, perfecto para esto */
+    grid-template-columns: repeat(5, 1fr);
+    /* 5 columnas de igual tamaño */
     border: 2px solid var(--color-primario);
     border-radius: 8px;
-    overflow: hidden; /* Para que las esquinas se vean bien */
+    overflow: hidden;
+    /* Para que las esquinas se vean bien */
 }
 
 .celda {
@@ -270,15 +298,20 @@ hr {
     background: var(--color-blanco);
     border-right: 1px solid var(--color-gris);
     border-bottom: 1px solid var(--color-gris);
-    aspect-ratio: 1 / 1; /* Mantiene las celdas cuadradas */
-    user-select: none; /* Evita que el texto se seleccione al hacer clic */
+    aspect-ratio: 1 / 1;
+    /* Mantiene las celdas cuadradas */
+    user-select: none;
+    /* Evita que el texto se seleccione al hacer clic */
 }
 
 /* Quitamos bordes innecesarios para un look más limpio */
-.celda:nth-child(5n) { /* Cada 5ta celda (columna O) */
+.celda:nth-child(5n) {
+    /* Cada 5ta celda (columna O) */
     border-right: none;
 }
-.celda:nth-last-child(-n + 5) { /* Las últimas 5 celdas (fila 5) */
+
+.celda:nth-last-child(-n + 5) {
+    /* Las últimas 5 celdas (fila 5) */
     border-bottom: none;
 }
 
@@ -302,9 +335,11 @@ hr {
 
 /* 1. Celda 'marcada' (El jugador hizo clic) */
 .celda.marcada {
-    background-color: rgba(0, 123, 255, 0.7); /* Azul translúcido */
+    background-color: rgba(0, 123, 255, 0.7);
+    /* Azul translúcido */
     color: white;
 }
+
 .celda.marcada[data-numero="GRATIS"] {
     background-color: rgba(0, 123, 255, 0.7);
 }
@@ -316,14 +351,26 @@ hr {
 }
 
 @keyframes pulsar {
-    0% { transform: scale(1); background-color: #fff29e; }
-    50% { transform: scale(1.1); background-color: #ffc107; }
-    100% { transform: scale(1); background-color: #fff29e; }
+    0% {
+        transform: scale(1);
+        background-color: #fff29e;
+    }
+
+    50% {
+        transform: scale(1.1);
+        background-color: #ffc107;
+    }
+
+    100% {
+        transform: scale(1);
+        background-color: #fff29e;
+    }
 }
 
 /* Queremos que 'marcada' gane sobre 'llamada' */
 .celda.marcada.llamada {
-    animation: none; /* Si ya estaba marcada, no la animamos */
+    animation: none;
+    /* Si ya estaba marcada, no la animamos */
 }
 
 
@@ -337,23 +384,25 @@ hr {
 
 /* El fondo oscuro translúcido */
 .modal-overlay {
-    position: fixed; /* Se superpone a todo */
+    position: fixed;
+    /* Se superpone a todo */
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.6);
-    
+
     /* Centra el contenido del modal */
     display: flex;
     justify-content: center;
     align-items: center;
-    
+
     /* Oculto por defecto */
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s ease;
-    z-index: 1000; /* Asegura que esté por encima de todo */
+    z-index: 1000;
+    /* Asegura que esté por encima de todo */
 }
 
 /* La clase que lo hace visible */
@@ -367,16 +416,17 @@ hr {
     background: var(--color-blanco);
     padding: 30px;
     border-radius: 12px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
     text-align: center;
-    
+
     /* Animación de entrada */
     transform: scale(0.9);
     transition: transform 0.3s ease;
 }
 
 .modal-overlay.visible .modal-contenido {
-    transform: scale(1); /* Escala a tamaño normal cuando es visible */
+    transform: scale(1);
+    /* Escala a tamaño normal cuando es visible */
 }
 
 .modal-contenido h2 {
@@ -392,7 +442,8 @@ hr {
 
 /* El botón "Volver al Lobby" */
 #btnVolverAlLobby {
-    width: auto; /* No ocupa todo el ancho */
+    width: auto;
+    /* No ocupa todo el ancho */
     padding: 12px 25px;
 }
 
@@ -404,17 +455,35 @@ hr {
 
 /* Esta clase la pondremos con JS cuando haya un error */
 button.bingo-falso {
-    background-color: #e74c3c; /* Color rojo de error */
-    animation: shake 0.5s ease-in-out; /* Aplicamos la animación */
+    background-color: #e74c3c;
+    /* Color rojo de error */
+    animation: shake 0.5s ease-in-out;
+    /* Aplicamos la animación */
 }
 
 /* La animación de "temblor" (shake) */
 @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    20% { transform: translateX(-10px); }
-    40% { transform: translateX(10px); }
-    60% { transform: translateX(-10px); }
-    80% { transform: translateX(10px); }
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    20% {
+        transform: translateX(-10px);
+    }
+
+    40% {
+        transform: translateX(10px);
+    }
+
+    60% {
+        transform: translateX(-10px);
+    }
+
+    80% {
+        transform: translateX(10px);
+    }
 }
 
 
@@ -439,18 +508,22 @@ button.bingo-falso {
 
 .historial-scroll {
     width: 100%;
-    max-height: 200px; /* Altura máxima, luego scroll */
-    overflow-y: auto; /* Scroll vertical */
+    max-height: 200px;
+    /* Altura máxima, luego scroll */
+    overflow-y: auto;
+    /* Scroll vertical */
     margin-top: 8px;
     padding: 5px;
     background: #fff;
     border: 1px solid var(--color-gris);
     border-radius: 4px;
-    
+
     /* Para que las fichas se pongan una al lado de la otra */
     display: flex;
-    flex-wrap: wrap; /* Pasan a la siguiente línea si no caben */
-    gap: 5px; /* Espacio entre fichas */
+    flex-wrap: wrap;
+    /* Pasan a la siguiente línea si no caben */
+    gap: 5px;
+    /* Espacio entre fichas */
 }
 
 /* Estilo para cada ficha en el historial */
@@ -501,7 +574,7 @@ button.bingo-falso {
     text-align: center;
     font-size: 16px;
     /* Quitamos el margen inferior que tenían otros inputs */
-    margin-bottom: 0; 
+    margin-bottom: 0;
 }
 
 /* Estilo para el Toggle (Checkbox bonito) */
@@ -516,14 +589,17 @@ button.bingo-falso {
 }
 
 .switch-label input[type="checkbox"] {
-    opacity: 0; /* Ocultamos el checkbox real */
+    opacity: 0;
+    /* Ocultamos el checkbox real */
     width: 0;
     height: 0;
 }
 
 .slider {
-    width: 44px; /* Ancho del toggle */
-    height: 24px; /* Alto del toggle */
+    width: 44px;
+    /* Ancho del toggle */
+    height: 24px;
+    /* Alto del toggle */
     background-color: var(--color-gris);
     border-radius: 34px;
     transition: background-color 0.2s;
@@ -545,11 +621,11 @@ button.bingo-falso {
 }
 
 /* Estilo cuando está ACTIVO */
-.switch-label input:checked + .slider {
+.switch-label input:checked+.slider {
     background-color: var(--color-primario);
 }
 
-.switch-label input:checked + .slider::before {
+.switch-label input:checked+.slider::before {
     transform: translateX(20px);
 }
 
@@ -570,9 +646,11 @@ button.bingo-falso {
 
     margin-top: -5px;
 }
+
 .btn-icono:hover {
     opacity: 1;
 }
+
 /* Estilo para el ícono de "muteado" */
 .btn-icono.muteado {
     opacity: 0.3;
@@ -588,14 +666,17 @@ button.bingo-falso {
     body {
         /* Quitamos el padding y el centrado */
         padding: 0;
-        display: block; /* Deja de ser flex-center */
+        display: block;
+        /* Deja de ser flex-center */
     }
 
     .app-container {
         /* Hacemos que ocupe toda la pantalla */
         width: 100%;
-        max-width: 100%; /* Anula el max-width: 500px */
-        min-height: 100vh; /* Ocupa al menos el 100% del alto */
+        max-width: 100%;
+        /* Anula el max-width: 500px */
+        min-height: 100vh;
+        /* Ocupa al menos el 100% del alto */
 
         /* Quitamos el look de "tarjeta" */
         border-radius: 0;
