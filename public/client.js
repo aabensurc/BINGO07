@@ -13,6 +13,7 @@ let misMarcas = [];
 let temporizadorSorteo = null;
 let miNombre = "";
 const PLAYER_ID_KEY = 'bingoPlayerId';
+let isReconnecting = false; // Flag para silent reconnection
 
 // --- COLA DE AUDIO (Audio Queue) ---
 let audioQueue = [];
@@ -443,6 +444,11 @@ cargarPreferenciasSonido();
 // client.js - Listener btnCrearPartida
 
 btnCrearPartida.addEventListener('click', () => {
+    // PROTECCIÓN DE RECONEXIÓN SILENCIOSA
+    if (isReconnecting) {
+        mostrarErrorFlotante(errorFlotanteInvitado || mensajeError, '⏳ Verificando sesión anterior... espera un momento.');
+        return;
+    }
 
     // 1. Validaciones de nombre
     const nombreAUsar = usuarioLogueadoNombre || inputNombre.value.trim();
@@ -479,6 +485,11 @@ btnCrearPartida.addEventListener('click', () => {
 
 // --- Evento: UNIRSE A LA PARTIDA (MODIFICADO para soportar Login) ---
 btnUnirsePartida.addEventListener('click', () => {
+    // PROTECCIÓN DE RECONEXIÓN SILENCIOSA
+    if (isReconnecting) {
+        if (errorFlotanteInvitado) mostrarErrorFlotante(errorFlotanteInvitado, '⏳ Verificando sesión anterior...', false);
+        return;
+    }
 
     // Habilitar temporalmente los campos por si estaban desactivados
     btnUnirsePartida.disabled = false;
@@ -1179,47 +1190,35 @@ function limpiarJuegoLocal(borrarMemoria = true) {
 
 // client.js - CONEXIÓN INICIAL Y RECONEXIÓN
 socket.on('connect', () => {
-    const playerId = localStorage.getItem(PLAYER_ID_KEY);
-    const nombreGuardado = localStorage.getItem('bingoUsuarioNombre'); // <--- RECUPERAR NOMBRE
+    // 1. SIEMPRE mostrar la pantalla de inicio lista para usar (Sin bloqueo)
+    if (formInvitado) formInvitado.classList.remove('oculto');
+    if (tabsContainer) tabsContainer.classList.remove('oculto');
+    if (mensajeBienvenida) mensajeBienvenida.classList.add('oculto');
 
-    // ESCENARIO A: El usuario ya estaba logueado (tiene nombre guardado)
+    // Restaurar nombre si existe (para UX)
+    const nombreGuardado = localStorage.getItem('bingoUsuarioNombre');
     if (nombreGuardado) {
-        console.log(`Sesión restaurada para: ${nombreGuardado}`);
-
-        // 1. Restaurar variables globales
+        transformarAPostLogin(nombreGuardado);
         miNombre = nombreGuardado;
         usuarioLogueadoNombre = nombreGuardado;
-
-        // 2. Restaurar la interfaz de usuario logueado INMEDIATAMENTE
-        transformarAPostLogin(nombreGuardado);
-
-        // 3. Si además tiene playerId, intentamos reconectar SILENCIOSAMENTE a una partida
-        // (por si estaba jugando y dio F5).
-        if (playerId) {
-            socket.emit('quieroReconectar', { playerId: playerId });
-        }
     }
-    // ESCENARIO B: No estaba logueado, pero tiene un ID de invitado (Posible reconexión de invitado)
-    else if (playerId) {
-        console.log(`Invitado detectado con ID: ${playerId}. Intentando reconectar...`);
 
-        // Aquí sí ocultamos todo porque no sabemos el nombre aún
-        if (formInvitado) formInvitado.classList.add('oculto');
-        if (formUsuario) formUsuario.classList.add('oculto');
-        if (tabsContainer) tabsContainer.classList.add('oculto');
+    // 2. Intentar reconexión SILENCIOSA en segundo plano
+    const playerId = localStorage.getItem(PLAYER_ID_KEY);
 
+    if (playerId) {
+        console.log(`[Silent Refrech] Verificando sesión previa para ID: ${playerId}...`);
+        isReconnecting = true; // Flag global para evitar "race condition"
         socket.emit('quieroReconectar', { playerId: playerId });
 
-        if (mensajeBienvenida) {
-            mensajeBienvenida.classList.remove('oculto');
-            bienvenidaNombre.textContent = "Reconectando...";
-        }
-    }
-    // ESCENARIO C: Usuario nuevo o limpio
-    else {
-        // Aseguramos que se vea el formulario de invitado
-        if (formInvitado) formInvitado.classList.remove('oculto');
-        if (tabsContainer) tabsContainer.classList.remove('oculto');
+        // Timeout de seguridad: Si el server no responde en 2s, asumimos que no hay partida
+        // y liberamos el flag para que el usuario pueda crear una nueva.
+        setTimeout(() => {
+            if (isReconnecting) {
+                console.log("[Silent Refresh] Timeout. Liberando bloqueo de creación.");
+                isReconnecting = false;
+            }
+        }, 2000);
     }
 });
 
@@ -1504,9 +1503,12 @@ socket.on('errorJuego', (msg) => {
     hablar(msg);
 });
 
+// --- RECONEXIÓN SILENCIOSA: RESPUESTAS ---
 socket.on('forzarLimpieza', () => {
+    isReconnecting = false; // Liberamos flag
     localStorage.removeItem(PLAYER_ID_KEY);
-    pantallaBienvenida.querySelector('.form-unirse').style.display = 'block';
+    console.log("[Silent Refresh] Sesión inválida. Limpieza silenciosa completada.");
+    // YA NO RECARGAMOS LA PÁGINA. El usuario sigue en el login sin saber que esto pasó.
 });
 
 
