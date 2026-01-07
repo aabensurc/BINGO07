@@ -15,7 +15,7 @@ const HostUI = {
         inputColor: document.getElementById('inputColorTemaAnfitrion')
     },
 
-    init: function() {
+    init: function () {
         this.setupSettingsMenu();
         this.renderizarTableroVacio();
     },
@@ -23,18 +23,23 @@ const HostUI = {
     /**
      * Configura el menú de ajustes (Color, Sonido)
      */
-    setupSettingsMenu: function() {
+    setupSettingsMenu: function () {
         const { btnAjustes, menuAjustes, inputColor } = this.elements;
 
         if (btnAjustes && menuAjustes) {
             btnAjustes.addEventListener('click', (e) => {
-                e.stopPropagation();
+                e.stopPropagation(); // Evita que se cierre al instante por el click en document
                 menuAjustes.classList.toggle('visible');
             });
 
-            document.addEventListener('click', () => {
-                menuAjustes.classList.remove('visible');
+            // Cerrar si se hace click fuera
+            document.addEventListener('click', (e) => {
+                if (!menuAjustes.contains(e.target) && !btnAjustes.contains(e.target)) {
+                    menuAjustes.classList.remove('visible');
+                }
             });
+
+            // Evitar que se cierre al hacer click DENTRO del menú
             menuAjustes.addEventListener('click', (e) => e.stopPropagation());
         }
 
@@ -51,18 +56,18 @@ const HostUI = {
     /**
      * Renderiza el tablero vacío al iniciar
      */
-    renderizarTableroVacio: function() {
+    renderizarTableroVacio: function () {
         const contenedor = this.elements.tablero;
         if (!contenedor) return;
 
         contenedor.innerHTML = '';
-        
+
         // Definimos los rangos por columna
         const rangos = [
-            { l: 'B', min: 1 }, 
-            { l: 'I', min: 16 }, 
-            { l: 'N', min: 31 }, 
-            { l: 'G', min: 46 }, 
+            { l: 'B', min: 1 },
+            { l: 'I', min: 16 },
+            { l: 'N', min: 31 },
+            { l: 'G', min: 46 },
             { l: 'O', min: 61 }
         ];
 
@@ -76,27 +81,27 @@ const HostUI = {
                 const div = document.createElement('div');
                 div.className = 'celda-control';
                 div.textContent = numero;
-                
+
                 // Data attributes para lógica y estilo
                 div.dataset.ficha = fichaStr;
-                div.dataset.letra = info.l.toLowerCase(); 
-                
+                div.dataset.letra = info.l.toLowerCase();
+
                 contenedor.appendChild(div);
             }
         }
     },
 
-/**
-     * Marca una ficha en el tablero y actualiza las bolas grandes
-     */
-    marcarFicha: function(ficha, fichaPrevia = null) {
+    /**
+         * Marca una ficha en el tablero y actualiza las bolas grandes
+         */
+    marcarFicha: function (ficha, fichaPrevia = null) {
         // 1. Actualizar Tablero Pequeño (Grid)
         const celda = document.querySelector(`.celda-control[data-ficha="${ficha.ficha}"]`);
-        
+
         if (celda) {
             celda.classList.add('marcada');
             celda.classList.add(`bg-${ficha.letra.toLowerCase()}`);
-            
+
             // --- MODIFICACIÓN: Scroll Condicional ---
             // Verificamos si el panel del anfitrión-jugador está abierto
             const panelCartillaHost = document.getElementById('panelCartillaHost');
@@ -106,14 +111,14 @@ const HostUI = {
             // Así no le movemos la pantalla cuando quiere marcar su cartón.
             if (!estaJugando) {
                 if (this.elements.tablero.scrollHeight > this.elements.tablero.clientHeight) {
-                     celda.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    celda.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
             }
         }
 
         // 2. Actualizar Bolas Grandes (Visual)
         this.actualizarBolaVisual(this.elements.fichaActual, ficha, true);
-        
+
         if (fichaPrevia) {
             this.actualizarBolaVisual(this.elements.fichaAnterior, fichaPrevia, false);
         }
@@ -123,18 +128,18 @@ const HostUI = {
      * Actualiza el contenido visual de una bola (Actual o Anterior)
      * Inyecta HTML para mostrar Letra pequeña y Número grande.
      */
-    actualizarBolaVisual: function(el, data, esGigante) {
+    actualizarBolaVisual: function (el, data, esGigante) {
         if (!el || !data) return;
-        
+
         // Construimos el HTML interno: Letra arriba, Número abajo
         el.innerHTML = `
             <span class="letra-mini">${data.letra}</span>
             <span class="numero-grande">${data.numero}</span>
         `;
-        
+
         // Asignamos clase base
         el.className = esGigante ? 'bolilla-gigante' : 'bolilla-mediana';
-        
+
         // Añadimos clase de color para el borde (b-color, i-color...)
         el.classList.add(`${data.letra.toLowerCase()}-color`);
 
@@ -149,19 +154,19 @@ const HostUI = {
     /**
      * Resetea toda la interfaz para una nueva partida
      */
-    resetearInterfaz: function() {
+    resetearInterfaz: function () {
         this.renderizarTableroVacio();
-        
+
         const fA = this.elements.fichaActual;
         const fP = this.elements.fichaAnterior;
-        
+
         // Reseteamos a guiones grandes (manteniendo estructura)
-        fA.innerHTML = '<span class="numero-grande">--</span>'; 
+        fA.innerHTML = '<span class="numero-grande">--</span>';
         fA.className = 'bolilla-gigante';
-        
-        fP.innerHTML = '<span class="numero-grande">--</span>'; 
+
+        fP.innerHTML = '<span class="numero-grande">--</span>';
         fP.className = 'bolilla-mediana';
-        
+
         this.elements.btnSortear.disabled = false;
     }
 };

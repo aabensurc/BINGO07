@@ -189,10 +189,17 @@
 }
 
 /* --- MENÚ DE AJUSTES --- */
+.contenedor-ajustes-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
 .ajustes-menu {
     position: absolute;
-    top: 50px;
-    right: 10px;
+    top: 55px;
+    /* Ajuste para que quede debajo del botón */
+    right: 0;
+    /* Alineado a la derecha del wrapper */
     background: white;
     padding: 15px;
     border-radius: 12px;
@@ -201,10 +208,8 @@
     flex-direction: column;
     gap: 10px;
     z-index: 3500;
-    /* FIX: Valor alto para estar encima de todo */
     width: 250px;
     color: #333;
-    /* Asegurar texto legible */
 }
 
 .ajustes-menu.visible {

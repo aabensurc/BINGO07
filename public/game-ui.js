@@ -122,18 +122,20 @@ function configurarBotonesAjustes() {
     const inputColor = document.getElementById('inputColorTema');
 
     // Toggle Menú
-    if (btnAjustes) {
+    if (btnAjustes && menu) {
         btnAjustes.addEventListener('click', (e) => {
             e.stopPropagation();
             menu.classList.toggle('visible');
         });
-    }
 
-    // Cerrar menú al hacer clic fuera
-    document.addEventListener('click', () => {
-        if (menu) menu.classList.remove('visible');
-    });
-    if (menu) {
+        // Cerrar menú al hacer clic fuera (comprobando que no sea ni el botón ni el menú)
+        document.addEventListener('click', (e) => {
+            if (!menu.contains(e.target) && !btnAjustes.contains(e.target)) {
+                menu.classList.remove('visible');
+            }
+        });
+
+        // Evitar cierre al hacer click dentro
         menu.addEventListener('click', (e) => e.stopPropagation());
     }
 
