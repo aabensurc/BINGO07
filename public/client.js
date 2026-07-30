@@ -1311,16 +1311,30 @@ socket.on('actualizarLobby', (datos) => {
         // Icono (Corona o nada) + Nombre
         const icono = j.esAnfitrion ? '👑' : '🧑';
         const claseNombre = j.esAnfitrion ? 'color:#f1c40f;' : '';
+        const claseEstado = j.estado === 'ausente' ? 'status-rojo' : 'status-verde';
+        
+        let botonExpulsar = '';
+        if (soyAnfitrion && !j.esAnfitrion) {
+            botonExpulsar = `<button class="btn-expulsar" onclick="window.expulsarJugador('${j.playerId}')" title="Expulsar jugador">❌</button>`;
+        }
 
         // PROTECCIÓN: Usamos (j.saldo || 0) para evitar el crash si es undefined
         div.innerHTML = `
             <div class="rank-num">${index + 1}</div>
-            <div class="rank-nombre" style="${claseNombre}">${icono} ${j.nombre}</div>
+            <div class="rank-nombre" style="${claseNombre}">
+                <div class="status-circle ${claseEstado}"></div>
+                ${icono} ${j.nombre} ${botonExpulsar}
+            </div>
             <div class="rank-wins">${j.victorias || 0}</div>
             <div class="rank-saldo">S/. ${(j.saldo || 0).toFixed(2)}</div>
         `;
         lobbyListaJugadores.appendChild(div);
     });
+
+    // Actualizar también la lista del modal de gestión si existe
+    if (typeof actualizarModalGestion === 'function') {
+        actualizarModalGestion(datos.jugadores);
+    }
 });
 
 // --- CAMBIO DE CARTÓN ---
@@ -1868,3 +1882,75 @@ socket.on('juegoTerminado', (datos) => {
     if (btnCantarBingo) btnCantarBingo.disabled = true;
     if (btnCantarBingoHost) btnCantarBingoHost.disabled = true;
 });
+
+// --- NUEVA LÓGICA DE VISIBILIDAD Y ESTADO ---
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        socket.emit('estadoAusente');
+    } else {
+        socket.emit('estadoPresente');
+    }
+});
+
+socket.on('fuisteExpulsado', () => {
+    alert("Has sido expulsado de la sala por el anfitrión.");
+    localStorage.removeItem(PLAYER_ID_KEY);
+    location.reload();
+});
+
+window.expulsarJugador = function(playerId) {
+    if (confirm("¿Estás seguro de expulsar a este jugador?")) {
+        socket.emit('expulsarJugador', { playerId });
+    }
+};
+
+// --- LÓGICA DEL MODAL DE GESTIÓN DE JUGADORES (Host) ---
+const modalGestionJugadores = document.getElementById('modalGestionJugadores');
+const btnCerrarGestionJugadores = document.getElementById('btnCerrarGestionJugadores');
+const btnGestionarJugadoresHost = document.getElementById('btnGestionarJugadoresHost');
+const listaGestionJugadores = document.getElementById('listaGestionJugadores');
+
+if (btnGestionarJugadoresHost && modalGestionJugadores) {
+    btnGestionarJugadoresHost.addEventListener('click', () => {
+        // Cierra el menú de ajustes
+        const menuAjustes = document.getElementById('menuAjustesAnfitrion');
+        if (menuAjustes) menuAjustes.classList.remove('visible');
+        
+        modalGestionJugadores.classList.add('visible');
+    });
+}
+
+if (btnCerrarGestionJugadores && modalGestionJugadores) {
+    btnCerrarGestionJugadores.addEventListener('click', () => {
+        modalGestionJugadores.classList.remove('visible');
+    });
+}
+
+window.actualizarModalGestion = function(jugadores) {
+    if (!listaGestionJugadores) return;
+    listaGestionJugadores.innerHTML = '';
+    
+    jugadores.forEach((j, index) => {
+        const div = document.createElement('div');
+        div.className = 'fila-ranking';
+        
+        const icono = j.esAnfitrion ? '👑' : '🧑';
+        const claseNombre = j.esAnfitrion ? 'color:#f1c40f;' : '';
+        const claseEstado = j.estado === 'ausente' ? 'status-rojo' : 'status-verde';
+        
+        let botonExpulsar = '';
+        if (soyAnfitrion && !j.esAnfitrion) {
+            botonExpulsar = `<button class="btn-expulsar" onclick="window.expulsarJugador('${j.playerId}')" title="Expulsar jugador">❌</button>`;
+        }
+        
+        div.innerHTML = `
+            <div class="rank-num">${index + 1}</div>
+            <div class="rank-nombre" style="${claseNombre}">
+                <div class="status-circle ${claseEstado}"></div>
+                ${icono} ${j.nombre} ${botonExpulsar}
+            </div>
+            <div class="rank-saldo">S/. ${(j.saldo || 0).toFixed(2)}</div>
+        `;
+        listaGestionJugadores.appendChild(div);
+    });
+};

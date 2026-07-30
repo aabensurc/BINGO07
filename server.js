@@ -84,7 +84,9 @@ function actualizarLobby(clave) {
             nombre: j.nombre,
             esAnfitrion: j.esAnfitrion,
             victorias: j.victorias || 0, // Evita undefined
-            saldo: j.saldo || 0.00       // Evita undefined
+            saldo: j.saldo || 0.00,       // Evita undefined
+            estado: j.estado,
+            playerId: j.playerId
         }));
 
         io.to(clave).emit('actualizarLobby', { jugadores: listaData });
@@ -409,7 +411,8 @@ io.on('connection', (socket) => {
             cartilla: cartillaInicial,
 
             victorias: 0,
-            saldo: 0.00
+            saldo: 0.00,
+            estado: 'presente'
         };
         partidas[clave].jugadores.push(anfitrion);
 
@@ -440,7 +443,8 @@ io.on('connection', (socket) => {
 
             // ¡IMPORTANTE: INICIALIZAR ESTADÍSTICAS!
             victorias: 0,
-            saldo: 0.00
+            saldo: 0.00,
+            estado: 'presente'
         };
         partidas[clave].jugadores.push(nuevoJugador);
 
@@ -548,8 +552,9 @@ io.on('connection', (socket) => {
         if (jugadorEncontrado) {
             console.log(`Jugador ${jugadorEncontrado.nombre} reconectado.`);
 
-            // 1. Actualizar ID de socket
+            // 1. Actualizar ID de socket y estado
             jugadorEncontrado.id = socket.id;
+            jugadorEncontrado.estado = 'presente';
 
             // 2. Si es Anfitrión, devolverle el mando
             if (jugadorEncontrado.esAnfitrion) {
@@ -786,6 +791,8 @@ io.on('connection', (socket) => {
             const jugador = partida.jugadores.find(j => j.id === socket.id);
 
             if (jugador) {
+                jugador.estado = 'ausente';
+                
                 // CASO A: Es Anfitrión
                 if (jugador.esAnfitrion) {
                     console.log(`Anfitrión desconectado momentáneamente de sala ${clave}. Esperando reconexión...`);
@@ -798,6 +805,7 @@ io.on('connection', (socket) => {
                 else {
                     enviarMensajeSistema(clave, `${jugador.nombre} perdió la conexión.`, 'alerta');
                 }
+                actualizarLobby(clave);
                 break;
             }
         }
@@ -829,6 +837,49 @@ io.on('connection', (socket) => {
                 type: 'audio',
                 nombre: nombre
             });
+        }
+    });
+
+    // -- NUEVOS EVENTOS DE ESTADO Y EXPULSIÓN --
+    socket.on('estadoAusente', () => {
+        for (const clave in partidas) {
+            const partida = partidas[clave];
+            const jugador = partida.jugadores.find(j => j.id === socket.id);
+            if (jugador && jugador.estado !== 'ausente') {
+                jugador.estado = 'ausente';
+                actualizarLobby(clave);
+                break;
+            }
+        }
+    });
+
+    socket.on('estadoPresente', () => {
+        for (const clave in partidas) {
+            const partida = partidas[clave];
+            const jugador = partida.jugadores.find(j => j.id === socket.id);
+            if (jugador && jugador.estado !== 'presente') {
+                jugador.estado = 'presente';
+                actualizarLobby(clave);
+                break;
+            }
+        }
+    });
+
+    socket.on('expulsarJugador', (datos) => {
+        const { playerId } = datos;
+        for (const clave in partidas) {
+            const partida = partidas[clave];
+            if (partida.anfitrionId === socket.id) {
+                const indice = partida.jugadores.findIndex(j => j.playerId === playerId);
+                if (indice !== -1) {
+                    const jugadorExpulsado = partida.jugadores[indice];
+                    partida.jugadores.splice(indice, 1);
+                    enviarMensajeSistema(clave, `${jugadorExpulsado.nombre} fue expulsado de la sala.`, 'alerta');
+                    io.to(jugadorExpulsado.id).emit('fuisteExpulsado');
+                    actualizarLobby(clave);
+                }
+                break;
+            }
         }
     });
 

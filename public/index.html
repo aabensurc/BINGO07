@@ -273,9 +273,14 @@
                                 </label>
                             </div>
 
+                            <div class="ajuste-item" id="btnGestionarJugadoresHost"
+                                style="cursor:pointer; color: #2ecc71; font-weight: bold; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; margin-top: 5px;">
+                                👥 Gestionar Jugadores
+                            </div>
+
                             <div class="ajuste-item" id="btnSalirPartidaHost"
-                                style="cursor:pointer; color: #e74c3c; font-weight: 900; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
-                                🚪 Cerrar Sala (Terminar)
+                                style="cursor:pointer; color: #e74c3c; font-weight: 900; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; margin-top: 5px;">
+                                🚪 Cerrar Sala (Host)
                             </div>
                         </div>
                     </div>
@@ -484,6 +489,26 @@
 
             <button id="btnCerrarGestor" class="btn-modal"
                 style="margin-top: 20px; background: #95a5a6;">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- NUEVO MODAL: GESTIÓN DE JUGADORES -->
+    <div id="modalGestionJugadores" class="modal-overlay">
+        <div class="modal-contenido" style="max-width: 600px; width: 95%;">
+            <h2 style="color: #2d3436;">👥 Gestión de Jugadores</h2>
+            <p style="font-size: 14px; color: #666; margin-bottom: 10px;">Lista actual de jugadores en sala.</p>
+
+            <div class="ranking-header" style="background:#2d3436; color:white; display:flex; justify-content:space-between; padding:10px; border-radius:5px;">
+                <div style="flex:1;">#</div>
+                <div style="flex:4; text-align: left;">Jugador</div>
+                <div style="flex:2; text-align: right;">S/.</div>
+            </div>
+
+            <div id="listaGestionJugadores" style="max-height: 300px; overflow-y: auto; text-align: left; margin-top: 10px; color: #333;">
+                <!-- Se llena dinámicamente -->
+            </div>
+
+            <button id="btnCerrarGestionJugadores" class="btn-modal" style="margin-top: 20px; background: #95a5a6;">Cerrar</button>
         </div>
     </div>
 

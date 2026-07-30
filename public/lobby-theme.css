@@ -369,3 +369,41 @@
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     border: 1px solid rgba(255,255,255,0.3);
 }
+
+/* --- INDICADORES DE ESTADO (CÍRCULOS) --- */
+.status-circle {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 5px;
+    box-shadow: 0 0 3px rgba(0,0,0,0.3);
+}
+
+.status-verde {
+    background-color: #2ecc71; /* Verde brillante */
+    box-shadow: 0 0 5px #2ecc71;
+}
+
+.status-rojo {
+    background-color: #e74c3c; /* Rojo/Gris para ausente */
+    box-shadow: 0 0 5px #e74c3c;
+}
+
+/* --- BOTÓN EXPULSAR JUGADOR --- */
+.btn-expulsar {
+    background: transparent;
+    border: none;
+    color: #e74c3c;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0 5px;
+    margin-left: 5px;
+    opacity: 0.7;
+    transition: transform 0.2s, opacity 0.2s;
+}
+
+.btn-expulsar:hover {
+    opacity: 1;
+    transform: scale(1.2);
+}
