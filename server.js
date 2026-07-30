@@ -74,7 +74,7 @@ function generarPlayerId() {
     return crypto.randomUUID();
 }
 
-function actualizarLobby(clave) {
+function actualizarLobby(clave, eventoInfo = null) {
     if (partidas[clave]) {
         // Ordenamos por victorias (Descendente: el que más gana arriba)
         const jugadoresOrdenados = [...partidas[clave].jugadores].sort((a, b) => b.victorias - a.victorias);
@@ -89,7 +89,7 @@ function actualizarLobby(clave) {
             playerId: j.playerId
         }));
 
-        io.to(clave).emit('actualizarLobby', { jugadores: listaData });
+        io.to(clave).emit('actualizarLobby', { jugadores: listaData, eventoInfo: eventoInfo });
     }
 }
 
@@ -847,7 +847,8 @@ io.on('connection', (socket) => {
             const jugador = partida.jugadores.find(j => j.id === socket.id);
             if (jugador && jugador.estado !== 'ausente') {
                 jugador.estado = 'ausente';
-                actualizarLobby(clave);
+                enviarMensajeSistema(clave, `⚠️ ${jugador.nombre} perdió conexión o minimizó el juego.`, 'alerta');
+                actualizarLobby(clave, { tipo: 'ausente', jugador: jugador.nombre });
                 break;
             }
         }
@@ -859,7 +860,8 @@ io.on('connection', (socket) => {
             const jugador = partida.jugadores.find(j => j.id === socket.id);
             if (jugador && jugador.estado !== 'presente') {
                 jugador.estado = 'presente';
-                actualizarLobby(clave);
+                enviarMensajeSistema(clave, `🟢 ${jugador.nombre} ha vuelto a la partida.`, 'alerta');
+                actualizarLobby(clave, { tipo: 'presente', jugador: jugador.nombre });
                 break;
             }
         }

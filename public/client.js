@@ -1301,7 +1301,14 @@ socket.on('unionExitosa', (datos) => {
 socket.on('errorUnion', (msg) => mensajeError.textContent = msg);
 
 socket.on('actualizarLobby', (datos) => {
-    SoundFX.playChime();
+    if (datos.eventoInfo && datos.eventoInfo.tipo === 'ausente') {
+        SoundFX.playPop();
+    } else if (datos.eventoInfo && datos.eventoInfo.tipo === 'presente') {
+        SoundFX.playPop();
+    } else {
+        SoundFX.playChime();
+    }
+    
     lobbyListaJugadores.innerHTML = '';
 
     datos.jugadores.forEach((j, index) => {
@@ -1323,10 +1330,11 @@ socket.on('actualizarLobby', (datos) => {
             <div class="rank-num">${index + 1}</div>
             <div class="rank-nombre" style="${claseNombre}">
                 <div class="status-circle ${claseEstado}"></div>
-                ${icono} ${j.nombre} ${botonExpulsar}
+                ${icono} ${j.nombre}
             </div>
             <div class="rank-wins">${j.victorias || 0}</div>
             <div class="rank-saldo">S/. ${(j.saldo || 0).toFixed(2)}</div>
+            <div class="rank-kick">${botonExpulsar}</div>
         `;
         lobbyListaJugadores.appendChild(div);
     });
@@ -1932,7 +1940,7 @@ window.actualizarModalGestion = function(jugadores) {
     
     jugadores.forEach((j, index) => {
         const div = document.createElement('div');
-        div.className = 'fila-ranking';
+        div.className = 'fila-ranking-modal';
         
         const icono = j.esAnfitrion ? '👑' : '🧑';
         const claseNombre = j.esAnfitrion ? 'color:#f1c40f;' : '';
@@ -1945,11 +1953,13 @@ window.actualizarModalGestion = function(jugadores) {
         
         div.innerHTML = `
             <div class="rank-num">${index + 1}</div>
-            <div class="rank-nombre" style="${claseNombre}">
+            <div class="rank-nombre" style="${claseNombre}; color: #2d3436; text-shadow: none;">
                 <div class="status-circle ${claseEstado}"></div>
-                ${icono} ${j.nombre} ${botonExpulsar}
+                ${icono} ${j.nombre}
             </div>
+            <div class="rank-wins">${j.victorias || 0}</div>
             <div class="rank-saldo">S/. ${(j.saldo || 0).toFixed(2)}</div>
+            <div class="rank-kick">${botonExpulsar}</div>
         `;
         listaGestionJugadores.appendChild(div);
     });

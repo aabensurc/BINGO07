@@ -314,7 +314,7 @@
 /* --- RANKING TABLA (LOBBY) --- */
 .ranking-header {
     display: grid;
-    grid-template-columns: 30px 1fr 60px 80px; /* # | Nombre | Wins | Saldo */
+    grid-template-columns: 30px 1fr 60px 80px 40px; /* # | Nombre | Wins | Saldo | Acciones */
     padding: 10px;
     background: rgba(0, 0, 0, 0.3);
     border-radius: 10px 10px 0 0;
@@ -333,7 +333,7 @@
 
 .fila-ranking {
     display: grid;
-    grid-template-columns: 30px 1fr 60px 80px;
+    grid-template-columns: 30px 1fr 60px 80px 40px;
     padding: 12px 10px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     align-items: center;
@@ -356,6 +356,35 @@
 .rank-nombre { font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left;}
 .rank-wins { text-align: center; color: #ffffff; font-weight: 900; }
 .rank-saldo { text-align: right; color: #ffffff; font-weight: 900; }
+.rank-kick { text-align: center; }
+
+/* --- MODAL DE GESTIÓN TABLA --- */
+.ranking-header-modal {
+    display: grid;
+    grid-template-columns: 30px 1fr 60px 80px 40px;
+    padding: 10px;
+    background: #2d3436;
+    border-radius: 5px 5px 0 0;
+    font-size: 11px;
+    font-weight: 900;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.fila-ranking-modal {
+    display: grid;
+    grid-template-columns: 30px 1fr 60px 80px 40px;
+    padding: 12px 10px;
+    border-bottom: 1px solid #dfe6e9;
+    align-items: center;
+    font-size: 14px;
+    color: #333;
+    background: #fdfdfd;
+}
+.fila-ranking-modal:nth-child(even) { background: #f5f6fa; }
+.fila-ranking-modal .rank-wins, .fila-ranking-modal .rank-saldo { color: #2d3436; }
+
 
 /* --- BADGE SALDO (EN JUEGO) --- */
 .badge-saldo {
